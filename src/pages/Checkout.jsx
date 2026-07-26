@@ -6,6 +6,7 @@ import { useApp } from '../context/AppContext';
 import { PLAN } from '../data/mockData';
 import { trackEvent } from '../utils/analytics';
 import { apiStartSubscription } from '../api/client';
+import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 export default function Checkout() {
   const { siteData, template, subdomain, theme, user, login, register, logout, saveSiteToBackend } = useApp();
@@ -65,7 +66,7 @@ export default function Checkout() {
               />
               <div className="min-w-0">
                 <p className="font-semibold truncate">{siteData.nombreNegocio}</p>
-                {subdomain && <p className="text-sm text-gold-500 truncate">{subdomain}.sitiowebdigital.com.ar</p>}
+                {subdomain && <p className="text-sm text-gold-500 truncate">{subdomain}.{ROOT_DOMAIN}</p>}
               </div>
             </div>
           </div>

@@ -19,6 +19,7 @@ import { useApp } from '../context/AppContext';
 import { PLAN, slugify } from '../data/mockData';
 import { validateImageFiles } from '../utils/imageValidation';
 import { apiGetSubscription, apiCancelSubscription, apiGetSupportUnread, apiMarkSupportSeen } from '../api/client';
+import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const PREVIEW_SECTIONS = [
   { id: 'header', type: 'header' },
@@ -397,7 +398,7 @@ function PageRow({ page, navigate }) {
             <span className="text-[10px] font-mono text-ink-500">{page.codigo}</span>
           </div>
           <p className="text-xs text-gold-500 mt-0.5 truncate">
-            {page.subdomain ? `${page.subdomain}.sitiowebdigital.com.ar` : 'Todavía no elegiste un subdominio'}
+            {page.subdomain ? `${page.subdomain}.${ROOT_DOMAIN}` : 'Todavía no elegiste un subdominio'}
           </p>
           <div className="flex items-center gap-2 flex-wrap mt-1.5">
             <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${status.textClass}`}>
@@ -899,7 +900,7 @@ function SubdomainSection({ subdomain, siteData, updateSubdomain, siteLocked }) 
               maxLength={30}
               className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-sm text-white outline-none disabled:opacity-50"
             />
-            <span className="pr-3.5 text-sm text-ink-500 whitespace-nowrap">.sitiowebdigital.com.ar</span>
+            <span className="pr-3.5 text-sm text-ink-500 whitespace-nowrap">.{ROOT_DOMAIN}</span>
           </div>
         </div>
         {status && (

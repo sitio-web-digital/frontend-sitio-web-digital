@@ -10,6 +10,7 @@ import { uploadImage } from '../../utils/uploadImage';
 import { trackEvent } from '../../utils/analytics';
 import { slugify } from '../../data/mockData';
 import { apiCheckSubdomainAvailability } from '../../api/client';
+import { ROOT_DOMAIN } from '../../utils/rootDomain';
 
 // Las secciones que trae CADA plantilla ya definen su propia variante (hero
 // "split", "centro", "fondo", "ofertas", etc.) más los campos propios de esa
@@ -157,7 +158,7 @@ function SubdominioSugerido({ nombreNegocio }) {
     <div className="mt-3 text-xs">
       <p className="font-mono break-all leading-relaxed">
         <span className="text-white">{slug}</span>
-        <span className="text-ink-500">.sitiowebdigital.com.ar</span>
+        <span className="text-ink-500">.{ROOT_DOMAIN}</span>
       </p>
       {estado === 'checking' && <p className="text-ink-500 mt-1">Comprobando disponibilidad…</p>}
       {estado === 'available' && <p className="text-green-400 font-semibold mt-1">✓ Disponible</p>}

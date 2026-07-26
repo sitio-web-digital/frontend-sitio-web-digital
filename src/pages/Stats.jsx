@@ -15,6 +15,7 @@ import {
 import { TrendUpIcon, WhatsAppIcon, PhoneCallIcon, PinIcon } from '../components/icons';
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
+import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 // Serie fija (no aleatoria) para que el gráfico no salte entre renders.
 const VISITAS_14D = [
@@ -81,7 +82,7 @@ export default function Stats() {
               </span>
             )}
             <span>·</span>
-            <span>{subdomain}.sitiowebdigital.com.ar</span>
+            <span>{subdomain}.{ROOT_DOMAIN}</span>
           </div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-balance">
             Estadísticas de {siteData.nombreNegocio}

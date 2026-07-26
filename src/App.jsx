@@ -17,16 +17,14 @@ import Admin from './pages/Admin';
 import AnalyticsHome from './pages/AnalyticsHome';
 import PublicSite from './pages/PublicSite';
 import { initClickTracking, trackPageView } from './utils/analytics';
+import { ROOT_DOMAIN } from './utils/rootDomain';
 
 // Subdominio "real" detectado por hostname (producción, una vez que la DNS
 // esté apuntada a mano — ver charla sobre publicar páginas) o simulado con
 // ?site=<subdominio> (desarrollo local, o para probar puntualmente en
 // cualquier entorno) — devuelve null si esta carga es del panel/SaaS en sí
 // (ROOT_DOMAIN, localhost, o cualquier otro host), no la página en vivo de
-// un cliente. Configurable por VITE_ROOT_DOMAIN porque mientras no esté el
-// dominio final (sitiowebdigital.com.ar) en Cloudflare, el deploy de prueba
-// usa un dominio temporario (ver server/.github o el tunnel del runner).
-const ROOT_DOMAIN = import.meta.env.VITE_ROOT_DOMAIN || 'sitiowebdigital.com.ar';
+// un cliente.
 
 function detectPublicSubdomain() {
   const forced = new URLSearchParams(window.location.search).get('site');

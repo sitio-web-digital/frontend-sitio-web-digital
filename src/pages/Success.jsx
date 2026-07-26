@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
 import { useApp } from '../context/AppContext';
+import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 export default function Success() {
   const { siteData, template, subdomain, published, theme } = useApp();
@@ -48,7 +49,7 @@ export default function Success() {
                 </span>
               </div>
               <p className="text-sm text-gold-500 mt-0.5">
-                {subdomain}.sitiowebdigital.com.ar
+                {subdomain}.{ROOT_DOMAIN}
               </p>
             </div>
           </div>

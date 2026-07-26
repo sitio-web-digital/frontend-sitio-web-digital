@@ -4,6 +4,7 @@ import BrowserChrome from '../components/BrowserChrome';
 import SitePreview from '../components/SitePreview';
 import Button from '../components/Button';
 import { useApp } from '../context/AppContext';
+import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 export default function SubdomainPreview() {
   const {
@@ -35,7 +36,7 @@ export default function SubdomainPreview() {
 
   return (
     <div className="min-h-screen bg-navy-950">
-      <BrowserChrome url={subdomain ? `${subdomain}.sitiowebdigital.com.ar` : 'tunegocio.sitiowebdigital.com.ar'} />
+      <BrowserChrome url={subdomain ? `${subdomain}.${ROOT_DOMAIN}` : `tunegocio.${ROOT_DOMAIN}`} />
 
       <SitePreview
         template={template}
