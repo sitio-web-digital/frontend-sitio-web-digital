@@ -174,6 +174,15 @@ export async function apiStartSubscription() {
   return request('/subscription/me/start', { method: 'POST', token });
 }
 
+// Publica directo, sin pasar por Mercado Pago — solo funciona si la cuenta
+// tiene una página gratis regalada por un admin (el backend revalida esto
+// mismo, nunca confiar solo en el freeSubscriptions del token).
+export async function apiPublishFree() {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión para publicar tu página.' };
+  return request('/subscription/me/publish-free', { method: 'POST', token });
+}
+
 // Respaldo sin webhook: le pide al backend que consulte directo en Mercado
 // Pago si ya hay una suscripción confirmada para esta cuenta.
 export async function apiRefreshSubscription() {

@@ -5,14 +5,26 @@ import AuthGate from '../components/AuthGate';
 import { useApp } from '../context/AppContext';
 import { PLAN } from '../data/mockData';
 import { trackEvent } from '../utils/analytics';
-import { apiStartSubscription } from '../api/client';
+import { apiStartSubscription, apiPublishFree } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 export default function Checkout() {
-  const { siteData, template, subdomain, theme, user, login, register, logout, saveSiteToBackend } = useApp();
+  const {
+    siteData,
+    template,
+    subdomain,
+    theme,
+    user,
+    login,
+    register,
+    logout,
+    saveSiteToBackend,
+    refreshSiteStatus,
+  } = useApp();
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle'); // idle | processing
   const [error, setError] = useState('');
+  const isFree = (user?.freeSubscriptions ?? 0) > 0;
 
   useEffect(() => {
     if (!template || !siteData) navigate('/plantillas', { replace: true });
@@ -39,6 +51,25 @@ export default function Checkout() {
     }
     trackEvent('funnel', 'checkout_redirigido_mp', {});
     window.location.href = result.checkoutUrl;
+  };
+
+  // Cuentas con página gratis regalada por un admin (ver Admin > Usuarios) —
+  // se saltea Mercado Pago, pero el backend revalida freeSubscriptions antes
+  // de publicar (nunca confiar solo en lo que dice el token acá).
+  const publicarGratis = async () => {
+    if (!subdomain) return;
+    setStatus('processing');
+    setError('');
+    await saveSiteToBackend({ published: false });
+    const result = await apiPublishFree();
+    if (!result.ok) {
+      setStatus('idle');
+      setError(result.error || 'No se pudo publicar. Probá de nuevo en un momento.');
+      return;
+    }
+    await refreshSiteStatus();
+    trackEvent('funnel', 'checkout_publicado_gratis', {});
+    navigate('/exito');
   };
 
   return (
@@ -111,6 +142,52 @@ export default function Checkout() {
           {!user ? (
             <div className="sticky top-8">
               <AuthGate login={login} register={register} />
+            </div>
+          ) : isFree ? (
+            <div className="rounded-2xl bg-white text-neutral-900 overflow-hidden shadow-2xl sticky top-8">
+              <div className="bg-emerald-500 px-6 py-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg leading-none">🎁</span>
+                  <span className="text-white font-semibold text-sm">Página gratis</span>
+                </div>
+                <span className="text-white/80 text-xs">
+                  {user.email} ·{' '}
+                  <button onClick={logout} className="underline hover:text-white transition-colors">
+                    Salir
+                  </button>
+                </span>
+              </div>
+
+              <div className="p-6">
+                <p className="text-sm font-semibold text-emerald-600 mb-1">Tenés una página gratis</p>
+                <p className="text-sm text-neutral-500 mb-6">
+                  Esta cuenta puede publicar sin pagar — te la habilitó un admin.
+                </p>
+
+                {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
+                <button
+                  onClick={publicarGratis}
+                  disabled={status === 'processing' || !subdomain}
+                  data-track="checkout_publicar_gratis"
+                  title={!subdomain ? 'Elegí tu subdominio en Configuración antes de publicar.' : undefined}
+                  className={`w-full rounded-xl font-semibold py-3.5 flex items-center justify-center gap-2 transition-colors ${
+                    !subdomain
+                      ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                      : 'bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-80'
+                  }`}
+                >
+                  {status === 'processing' ? (
+                    <>
+                      <Spinner /> Publicando...
+                    </>
+                  ) : !subdomain ? (
+                    'Elegí tu subdominio primero'
+                  ) : (
+                    'Publicar gratis'
+                  )}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="rounded-2xl bg-white text-neutral-900 overflow-hidden shadow-2xl sticky top-8">
