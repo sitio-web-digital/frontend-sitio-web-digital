@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+
+# Fotos subidas desde el editor (ver server/src/routes/uploads.js) — son
+# datos de usuario, no código.
+server/uploads/*
+!server/uploads/.gitkeep
+
+# El backend vive en su propio repo (backend-sitio-web-digital), con su
+# propio git independiente acá adentro — no es parte de este repo de frontend.
+/server/
+
+# Config/skills propios de Claude Code, no del producto.
+/.claude/
+/.agents/
+/agent/
+skills-lock.json
+
+# Mockups originales usados como referencia para importar cada plantilla —
+# son material de diseño, no código de la app (quedan en el disco, pero no
+# se versionan acá).
+*(standalone).html
+*(standalone) (1).html
+SitioWeb Digital - Home.html
+show-json-example.mjs
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
