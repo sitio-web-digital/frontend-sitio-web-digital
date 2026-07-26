@@ -17,21 +17,24 @@ import Admin from './pages/Admin';
 import AnalyticsHome from './pages/AnalyticsHome';
 import PublicSite from './pages/PublicSite';
 import { initClickTracking, trackPageView } from './utils/analytics';
-import { ROOT_DOMAIN } from './utils/rootDomain';
+import { ROOT_DOMAIN, APP_HOSTNAME } from './utils/rootDomain';
 
 // Subdominio "real" detectado por hostname (producción, una vez que la DNS
 // esté apuntada a mano — ver charla sobre publicar páginas) o simulado con
 // ?site=<subdominio> (desarrollo local, o para probar puntualmente en
 // cualquier entorno) — devuelve null si esta carga es del panel/SaaS en sí
-// (ROOT_DOMAIN, localhost, o cualquier otro host), no la página en vivo de
-// un cliente.
-
+// (APP_HOSTNAME, localhost, o cualquier otro host), no la página en vivo de
+// un cliente. El chequeo de APP_HOSTNAME va ANTES del de ROOT_DOMAIN a
+// propósito: mientras dure el dominio de prueba, la app vive en un
+// subdominio fijo de la misma zona donde viven los subdominios de cliente
+// (ver utils/rootDomain.js), así que hay que descartarlo primero para no
+// confundirlo con uno más.
 function detectPublicSubdomain() {
   const forced = new URLSearchParams(window.location.search).get('site');
   if (forced) return forced.toLowerCase();
 
   const host = window.location.hostname;
-  if (host === ROOT_DOMAIN || host === `www.${ROOT_DOMAIN}` || host === 'localhost' || host === '127.0.0.1') {
+  if (host === APP_HOSTNAME || host === `www.${APP_HOSTNAME}` || host === 'localhost' || host === '127.0.0.1') {
     return null;
   }
   return host.endsWith(`.${ROOT_DOMAIN}`) ? host.slice(0, -(ROOT_DOMAIN.length + 1)) : null;
