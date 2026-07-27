@@ -535,7 +535,7 @@ function SaveTemplateModal({ rubros, editing, onCreateRubro, onSave, onClose }) 
   const [selected, setSelected] = useState(editing?.rubros || []);
   const [published, setPublished] = useState(editing ? !!editing.published : true);
   const [showNuevoRubro, setShowNuevoRubro] = useState(false);
-  const [nuevoRubro, setNuevoRubro] = useState({ label: '', icon: '✨', accent: '#9d6400' });
+  const [nuevoRubro, setNuevoRubro] = useState({ label: '', accent: '#9d6400' });
   const [saving, setSaving] = useState(false);
   const [creatingRubro, setCreatingRubro] = useState(false);
   const [error, setError] = useState('');
@@ -555,7 +555,7 @@ function SaveTemplateModal({ rubros, editing, onCreateRubro, onSave, onClose }) 
       return;
     }
     setSelected((prev) => [...prev, result.rubro.id]);
-    setNuevoRubro({ label: '', icon: '✨', accent: '#9d6400' });
+    setNuevoRubro({ label: '', accent: '#9d6400' });
     setShowNuevoRubro(false);
   };
 
@@ -635,7 +635,7 @@ function SaveTemplateModal({ rubros, editing, onCreateRubro, onSave, onClose }) 
                       : 'border-white/15 text-ink-300 hover:border-white/30'
                   }`}
                 >
-                  <span>{r.icon}</span> {r.label}
+                  {r.label}
                 </button>
               ))}
               <button
@@ -657,15 +657,6 @@ function SaveTemplateModal({ rubros, editing, onCreateRubro, onSave, onClose }) 
                     placeholder="Ej: Panaderías"
                     maxLength={40}
                     className="w-full border border-white/10 bg-navy-850 px-2.5 py-2 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors"
-                  />
-                </div>
-                <div className="w-16">
-                  <label className="block text-[11px] text-ink-500 mb-1">Ícono</label>
-                  <input
-                    value={nuevoRubro.icon}
-                    onChange={(e) => setNuevoRubro((v) => ({ ...v, icon: e.target.value }))}
-                    maxLength={4}
-                    className="w-full border border-white/10 bg-navy-850 px-2.5 py-2 text-sm text-white text-center outline-none focus:border-gold-500 transition-colors"
                   />
                 </div>
                 <div className="w-16">

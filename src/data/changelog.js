@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.4.1',
+    date: '2026-07-29',
+    changes: [
+      { type: 'mejora', text: 'Se sacaron los emojis de los rubros (creados y de fábrica) en Admin, el editor y la galería de plantillas — sin íconos raros.' },
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-07-29',
     changes: [

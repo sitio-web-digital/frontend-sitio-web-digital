@@ -77,9 +77,7 @@ export default function Gallery() {
         {/* Otras opciones, agrupadas por rubro */}
         {grupos.map((g) => (
           <div key={g.rubro.id} className="mb-12">
-            <h2 className="text-sm font-semibold text-ink-400 uppercase tracking-wide mb-5">
-              {g.rubro.icon} {g.rubro.label}
-            </h2>
+            <h2 className="text-sm font-semibold text-ink-400 uppercase tracking-wide mb-5">{g.rubro.label}</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {g.templates.map((t, i) => (
                 <TemplateCard key={t.id} template={t} onElegir={elegir} delay={i * 80} />
