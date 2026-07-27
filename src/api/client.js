@@ -234,7 +234,9 @@ export async function apiGetSupportThread(ticketId) {
   const token = getToken();
   if (!token) return null;
   const result = await request(`/support/${ticketId}/messages`, { token });
-  return result.ok ? { asunto: result.asunto, messages: result.messages } : null;
+  return result.ok
+    ? { asunto: result.asunto, status: result.status, claimedByName: result.claimedByName, messages: result.messages }
+    : null;
 }
 
 export async function apiSendSupportMessage(ticketId, { mensaje, adjuntos }) {
@@ -246,6 +248,22 @@ export async function apiSendSupportMessage(ticketId, { mensaje, adjuntos }) {
     token,
   });
   return result.ok ? { ok: true, message: result.message } : result;
+}
+
+// Solo un admin — marca quién está atendiendo el ticket (informativo, no
+// bloquea a otros admins de responder igual).
+export async function apiClaimSupportTicket(ticketId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/support/${ticketId}/claim`, { method: 'PATCH', token });
+}
+
+// Solo un admin — cierra el ticket (sigue pudiéndose visitar, pero no admite
+// mensajes nuevos hasta que cambie el estado).
+export async function apiCloseSupportTicket(ticketId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/support/${ticketId}/close`, { method: 'PATCH', token });
 }
 
 // Endpoints de administración: protegidos en el backend con requireRole('admin')

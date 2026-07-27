@@ -641,7 +641,18 @@ function SoporteSection({ tickets, onOpenNew, currentUserId, unreadIds = [] }) {
                       <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" aria-label="Respuesta nueva" />
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{t.asunto}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold truncate">{t.asunto}</p>
+                        <span
+                          className={`shrink-0 text-[0.65rem] font-semibold uppercase px-1.5 py-0.5 border rounded ${
+                            t.status === 'cerrado'
+                              ? 'text-ink-400 bg-white/5 border-white/15'
+                              : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25'
+                          }`}
+                        >
+                          {t.status === 'cerrado' ? 'Cerrado' : 'Abierto'}
+                        </span>
+                      </div>
                       <p className="text-xs text-ink-500 mt-0.5">
                         {new Date(t.createdAt).toLocaleDateString('es-AR', {
                           day: '2-digit',

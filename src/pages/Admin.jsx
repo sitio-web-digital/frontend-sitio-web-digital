@@ -317,7 +317,14 @@ export default function Admin() {
             />
           )}
           {section === 'soporte' && (
-            <SoporteSection tickets={tickets} currentUserId={user.id} unreadIds={unreadSupport.tickets.map((t) => t.id)} />
+            <SoporteSection
+              tickets={tickets}
+              currentUserId={user.id}
+              unreadIds={unreadSupport.tickets.map((t) => t.id)}
+              onTicketUpdated={(ticketId, patch) =>
+                setTickets((list) => list.map((t) => (t.id === ticketId ? { ...t, ...patch } : t)))
+              }
+            />
           )}
           {section === 'versiones' && <VersionesSection />}
         </div>
@@ -1461,7 +1468,7 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete }) {
 // Todas las consultas de soporte de todos los usuarios (a diferencia del
 // Dashboard del usuario, que solo ve las propias). Al abrir una, el admin
 // puede seguir el chat completo y responderle directo a esa cuenta.
-function SoporteSection({ tickets, currentUserId, unreadIds = [] }) {
+function SoporteSection({ tickets, currentUserId, unreadIds = [], onTicketUpdated }) {
   const [expandedId, setExpandedId] = useState(null);
 
   return (
@@ -1483,7 +1490,18 @@ function SoporteSection({ tickets, currentUserId, unreadIds = [] }) {
                       <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" aria-label="Mensaje nuevo" />
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{t.asunto}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold truncate">{t.asunto}</p>
+                        <span
+                          className={`shrink-0 text-[0.65rem] font-semibold uppercase px-1.5 py-0.5 border rounded ${
+                            t.status === 'cerrado'
+                              ? 'text-ink-400 bg-white/5 border-white/15'
+                              : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25'
+                          }`}
+                        >
+                          {t.status === 'cerrado' ? 'Cerrado' : 'Abierto'}
+                        </span>
+                      </div>
                       <p className="text-xs text-ink-500 mt-0.5">
                         {t.userName} · {t.userEmail} ·{' '}
                         {new Date(t.createdAt).toLocaleDateString('es-AR', {
@@ -1493,12 +1511,20 @@ function SoporteSection({ tickets, currentUserId, unreadIds = [] }) {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
+                        {t.claimedByName && <> · Tomado por {t.claimedByName}</>}
                       </p>
                     </div>
                   </div>
                   <span className="text-xs text-ink-500 shrink-0">{isOpen ? 'Ocultar' : 'Ver'}</span>
                 </button>
-                {isOpen && <SupportThread ticketId={t.id} currentUserId={currentUserId} />}
+                {isOpen && (
+                  <SupportThread
+                    ticketId={t.id}
+                    currentUserId={currentUserId}
+                    isAdmin
+                    onTicketUpdated={(patch) => onTicketUpdated?.(t.id, patch)}
+                  />
+                )}
               </div>
             );
           })}
