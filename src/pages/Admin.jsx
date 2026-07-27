@@ -294,6 +294,7 @@ function AdminHeader({ user, logout, navigate }) {
         <span className="text-ink-500 font-normal text-sm">· admin</span>
       </div>
       <div className="flex items-center gap-4 text-sm text-ink-400">
+        <span className="hidden sm:inline text-ink-500 text-xs">v1.0.0</span>
         <span className="hidden sm:inline">{user.email}</span>
         <button
           onClick={() => {

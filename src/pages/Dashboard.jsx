@@ -294,7 +294,6 @@ function SideNav({ section, onChange, unreadCount = 0 }) {
           )}
         </button>
       ))}
-      <p className="hidden lg:block mt-4 px-3.5 text-[0.65rem] text-ink-500">SitioWeb Digital v1.0.0</p>
     </nav>
   );
 }
