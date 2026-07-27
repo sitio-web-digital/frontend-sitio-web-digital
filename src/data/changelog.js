@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.5.0',
+    date: '2026-07-29',
+    changes: [
+      { type: 'mejora', text: 'La edición del dominio de una página se movió de "Configuración" (genérico) a la fila de esa página en Resumen — cada página va a tener el suyo, no es un dato de la cuenta.' },
+      { type: 'nuevo', text: 'Dashboard > Resumen: cada página publicada y paga muestra la fecha del próximo cobro y el monto.' },
+    ],
+  },
+  {
     version: '1.4.1',
     date: '2026-07-29',
     changes: [

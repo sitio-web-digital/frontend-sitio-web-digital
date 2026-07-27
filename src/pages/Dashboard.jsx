@@ -169,6 +169,7 @@ export default function Dashboard() {
             subdomain,
             status: published ? 'publicada' : 'borrador',
             mpStatus: mpSubscription.status,
+            nextPaymentDate: mpSubscription.nextPaymentDate,
             locked: siteLocked,
             template,
             siteData,
@@ -202,7 +203,13 @@ export default function Dashboard() {
 
         <div className="min-w-0 animate-fade-in-up">
           {section === 'resumen' && (
-            <ResumenSection primerNombre={primerNombre} pages={pages} navigate={navigate} />
+            <ResumenSection
+              primerNombre={primerNombre}
+              pages={pages}
+              navigate={navigate}
+              updateSubdomain={updateSubdomain}
+              isFree={(user.freeSubscriptions ?? 0) > 0}
+            />
           )}
           {section === 'suscripcion' && (
             <SubscriptionSection
@@ -225,14 +232,6 @@ export default function Dashboard() {
           {section === 'cuenta' && (
             <div className="space-y-6">
               <SettingsSection user={user} updateProfile={updateProfile} />
-              {hasSite && (
-                <SubdomainSection
-                  subdomain={subdomain}
-                  siteData={siteData}
-                  updateSubdomain={updateSubdomain}
-                  siteLocked={siteLocked}
-                />
-              )}
             </div>
           )}
         </div>
@@ -327,7 +326,7 @@ function SideNav({ section, onChange, unreadCount = 0 }) {
 // KPIs primero (arriba de todo, antes de la lista de páginas): son agregados
 // de las páginas publicadas, mismos íconos que /estadisticas para que se
 // sienta el mismo dato en los dos lugares.
-function ResumenSection({ primerNombre, pages, navigate }) {
+function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, isFree }) {
   const publicadas = pages.filter((p) => p.status === 'publicada');
   const visitas = publicadas.reduce((acc, p) => acc + p.kpis.visitas, 0);
   const whatsapp = publicadas.reduce((acc, p) => acc + p.kpis.whatsapp, 0);
@@ -366,7 +365,7 @@ function ResumenSection({ primerNombre, pages, navigate }) {
       </div>
       <div className="space-y-3">
         {pages.map((p) => (
-          <PageRow key={p.id} page={p} navigate={navigate} />
+          <PageRow key={p.id} page={p} navigate={navigate} updateSubdomain={updateSubdomain} isFree={isFree} />
         ))}
         {pages.length === 0 && (
           <div className="border border-dashed border-white/15 bg-navy-850 p-6 text-center">
@@ -384,8 +383,12 @@ function ResumenSection({ primerNombre, pages, navigate }) {
   );
 }
 
-function PageRow({ page, navigate }) {
+function PageRow({ page, navigate, updateSubdomain, isFree }) {
   const status = STATUS_INFO[page.status];
+  const proximoCobro =
+    page.status === 'publicada' && !isFree && page.mpStatus === 'authorized' && page.nextPaymentDate
+      ? new Date(page.nextPaymentDate).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : null;
 
   return (
     <div className="border border-white/10 bg-navy-850 flex flex-col sm:flex-row gap-4 p-4">
@@ -408,9 +411,12 @@ function PageRow({ page, navigate }) {
             <p className="font-display font-semibold truncate">{page.nombreNegocio}</p>
             <span className="text-[10px] font-mono text-ink-500">{page.codigo}</span>
           </div>
-          <p className="text-xs text-gold-500 mt-0.5 truncate">
-            {page.subdomain ? `${page.subdomain}.${ROOT_DOMAIN}` : 'Todavía no elegiste un subdominio'}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+            <p className="text-xs text-gold-500 truncate">
+              {page.subdomain ? `${page.subdomain}.${ROOT_DOMAIN}` : 'Todavía no elegiste un subdominio'}
+            </p>
+            <DomainEditor page={page} updateSubdomain={updateSubdomain} />
+          </div>
           <div className="flex items-center gap-2 flex-wrap mt-1.5">
             <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${status.textClass}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${status.dotClass}`} />
@@ -421,6 +427,9 @@ function PageRow({ page, navigate }) {
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                 Edición pausada por soporte
               </span>
+            )}
+            {proximoCobro && (
+              <span className="text-xs text-ink-400">Próximo cobro: {proximoCobro} · ${PLAN.precio.toLocaleString('es-AR')}/mes</span>
             )}
           </div>
           <p className="text-xs text-ink-500 mt-1.5">
@@ -886,16 +895,20 @@ function SettingsSection({ user, updateProfile }) {
   );
 }
 
-// Elegir/cambiar el subdominio propio — a diferencia de nombre/email, no es
-// un dato de perfil sino la identidad pública de la página (lo que resuelve
-// GET /api/public/sites/:subdomain para cualquier visitante), así que vive
-// en su propio panel con su propia validación del lado del servidor.
-function SubdomainSection({ subdomain, siteData, updateSubdomain, siteLocked }) {
-  const [value, setValue] = useState(subdomain || slugify(siteData?.nombreNegocio || ''));
+// Elegir/cambiar el dominio de ESTA página puntual — vive en su fila
+// (PageRow), no en una pestaña de "Configuración" genérica, porque no es un
+// dato de perfil de la cuenta sino la identidad pública de esa página
+// específica (lo que resuelve GET /api/public/sites/:subdomain). El día que
+// una cuenta pueda tener más de una página, cada una va a seguir editando
+// su propio dominio acá mismo, en su propia fila — por eso no vive en un
+// lugar único por cuenta.
+function DomainEditor({ page, updateSubdomain }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(page.subdomain || slugify(page.nombreNegocio || ''));
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const dirty = value.trim() !== (subdomain || '');
+  const dirty = value.trim() !== (page.subdomain || '');
 
   const submit = async (e) => {
     e.preventDefault();
@@ -903,39 +916,59 @@ function SubdomainSection({ subdomain, siteData, updateSubdomain, siteLocked }) 
     setStatus(null);
     const result = await updateSubdomain(value.trim());
     setBusy(false);
-    setStatus(result.ok ? { type: 'ok', msg: 'Subdominio actualizado.' } : { type: 'error', msg: result.error });
+    if (result.ok) {
+      setStatus(null);
+      setEditing(false);
+    } else {
+      setStatus({ type: 'error', msg: result.error });
+    }
   };
 
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setValue(page.subdomain || slugify(page.nombreNegocio || ''));
+          setStatus(null);
+          setEditing(true);
+        }}
+        disabled={page.locked}
+        className="text-xs font-semibold text-ink-500 hover:text-white underline decoration-dotted underline-offset-2 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+      >
+        Cambiar dominio
+      </button>
+    );
+  }
+
   return (
-    <Panel title="Tu subdominio">
-      <form onSubmit={submit} className="space-y-3 max-w-sm">
-        <div>
-          <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
-            Subdominio
-          </label>
-          <div className="flex items-center border border-white/10 bg-navy-900 focus-within:border-gold-500 transition-colors">
-            <input
-              value={value}
-              onChange={(e) => setValue(e.target.value.toLowerCase())}
-              disabled={siteLocked}
-              maxLength={30}
-              className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-sm text-white outline-none disabled:opacity-50"
-            />
-            <span className="pr-3.5 text-sm text-ink-500 whitespace-nowrap">.{ROOT_DOMAIN}</span>
-          </div>
-        </div>
-        {status && (
-          <p className={`text-xs ${status.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{status.msg}</p>
-        )}
-        <button
-          type="submit"
-          disabled={!dirty || busy || !value.trim() || siteLocked}
-          className="w-full px-4 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none"
-        >
-          {busy ? 'Guardando...' : 'Guardar subdominio'}
-        </button>
-      </form>
-    </Panel>
+    <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center border border-white/10 bg-navy-900 focus-within:border-gold-500 transition-colors">
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value.toLowerCase())}
+          maxLength={30}
+          className="min-w-0 w-28 bg-transparent px-2.5 py-1.5 text-xs text-white outline-none"
+        />
+        <span className="pr-2.5 text-xs text-ink-500 whitespace-nowrap">.{ROOT_DOMAIN}</span>
+      </div>
+      <button
+        type="submit"
+        disabled={!dirty || busy || !value.trim()}
+        className="px-2.5 py-1.5 bg-gold-500 hover:bg-gold-400 disabled:opacity-40 transition-colors text-navy-950 font-bold text-xs"
+      >
+        {busy ? 'Guardando...' : 'Guardar'}
+      </button>
+      <button
+        type="button"
+        onClick={() => setEditing(false)}
+        className="px-2.5 py-1.5 border border-white/15 hover:bg-white/5 transition-colors text-xs font-semibold text-white"
+      >
+        Cancelar
+      </button>
+      {status && <p className="w-full text-xs text-red-400">{status.msg}</p>}
+    </form>
   );
 }
 
