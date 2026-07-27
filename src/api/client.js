@@ -156,6 +156,31 @@ export async function apiGetSiteStatus() {
   return result.ok ? { locked: result.locked, published: result.published } : { locked: false, published: false };
 }
 
+const EMPTY_STATS = { totalVisitas: 0, totalWhatsapp: 0, visitasDelta: null, whatsappDelta: null, visitasPorDia: [], fuentes: [] };
+
+// KPIs reales de la página publicada (Dashboard > Resumen y Estadísticas) —
+// ver server/src/routes/sites.js > GET /me/stats.
+export async function apiGetSiteStats() {
+  const token = getToken();
+  if (!token) return EMPTY_STATS;
+  const result = await request('/sites/me/stats', { token });
+  return result.ok ? result : EMPTY_STATS;
+}
+
+// Pública, sin sesión — la llama PublicSite.jsx en cada visita real y en
+// cada clic a un link de WhatsApp, "fire and forget": nunca debe romper la
+// visita de un cliente final si falla.
+export async function apiTrackSiteEvent(subdomain, eventType, referrerBucket) {
+  try {
+    await request(`/public/sites/${encodeURIComponent(subdomain)}/track`, {
+      method: 'POST',
+      body: { eventType, referrerBucket },
+    });
+  } catch {
+    // no-op
+  }
+}
+
 // Suscripción real de Mercado Pago de la página del usuario logueado (ver
 // Checkout.jsx, SuscripcionConfirmar.jsx y Dashboard > Suscripción).
 export async function apiGetSubscription() {

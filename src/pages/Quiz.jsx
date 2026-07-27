@@ -16,6 +16,7 @@ import { useApp } from '../context/AppContext';
 import { useDraftPreview } from '../hooks/useDraftPreview';
 import { useQuizLeadTracking } from '../hooks/useQuizLeadTracking';
 import { extractDominantColor } from '../utils/extractColor';
+import { validateArgentinePhone } from '../utils/phoneValidation';
 
 const TOTAL_STEPS = 4;
 
@@ -52,7 +53,7 @@ export default function Quiz() {
   const canContinue =
     (step === 1 && !!quiz.nombreNegocio?.trim()) ||
     (step === 2 && !!quiz.tipoNegocio?.trim()) ||
-    step === 3 ||
+    (step === 3 && validateArgentinePhone(quiz.whatsapp).ok) ||
     step === 4;
 
   if (stage === 'loading') return <BuscandoPlantillaScreen templateId={draftTemplate.id} />;

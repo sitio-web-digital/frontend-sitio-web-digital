@@ -6,7 +6,13 @@ import SupportThread from '../components/support/SupportThread';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify } from '../data/mockData';
 import { validateImageFiles } from '../utils/imageValidation';
-import { apiGetSubscription, apiCancelSubscription, apiGetSupportUnread, apiMarkSupportSeen } from '../api/client';
+import {
+  apiGetSubscription,
+  apiCancelSubscription,
+  apiGetSupportUnread,
+  apiMarkSupportSeen,
+  apiGetSiteStats,
+} from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const PREVIEW_SECTIONS = [
@@ -132,6 +138,26 @@ export default function Dashboard() {
     };
   }, [user, hasSite]);
 
+  // KPIs reales de la página publicada (visitas y clics de WhatsApp de
+  // verdad, ver server/src/routes/sites.js > GET /me/stats) — antes
+  // hardcodeado. Se sondea igual que la suscripción, para que una visita
+  // recién llegada se refleje sin recargar.
+  const [siteStats, setSiteStats] = useState({ totalVisitas: 0, totalWhatsapp: 0 });
+  useEffect(() => {
+    if (!user || !hasSite) return undefined;
+    let cancelado = false;
+    const check = async () => {
+      const stats = await apiGetSiteStats();
+      if (!cancelado) setSiteStats(stats);
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
+  }, [user, hasSite]);
+
   // El backend hoy guarda una sola página por cuenta — cuando soporte
   // varias, esta lista pasa a traerlas todas en vez de armar solo esta.
   const pages = useMemo(() => {
@@ -148,12 +174,12 @@ export default function Dashboard() {
             siteData,
             theme,
             logoUrl,
-            kpis: { visitas: 1284, whatsapp: 312 },
+            kpis: { visitas: siteStats.totalVisitas, whatsapp: siteStats.totalWhatsapp },
           },
         ]
       : [];
     return real.map((p) => ({ ...p, codigo: codigoPagina(p.id) }));
-  }, [hasSite, siteData, subdomain, published, siteLocked, template, theme, logoUrl, mpSubscription]);
+  }, [hasSite, siteData, subdomain, published, siteLocked, template, theme, logoUrl, mpSubscription, siteStats]);
 
   if (!user) return null;
 
@@ -406,7 +432,10 @@ function PageRow({ page, navigate }) {
         <div className="flex flex-wrap gap-2 shrink-0">
           {page.status === 'publicada' ? (
             <>
-              <RowButton onClick={() => navigate('/preview')} primary>
+              <RowButton
+                onClick={() => window.open(`https://${page.subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}
+                primary
+              >
                 Ver
               </RowButton>
               {page.locked ? (

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import SitePreview from '../components/SitePreview';
 import { TEMPLATES, getTemplateById } from '../data/mockData';
 import { hydrateSite } from '../utils/siteSchema';
-import { apiGetPublicSite, apiListCatalogTemplates } from '../api/client';
+import { apiGetPublicSite, apiListCatalogTemplates, apiTrackSiteEvent } from '../api/client';
+import { classifyReferrer } from '../utils/analytics';
 
 // La página en vivo de un cliente, vista por un visitante anónimo real — sin
 // AppProvider, sin TermsGate, sin HashRouter (ver la detección en App.jsx).
@@ -37,6 +38,22 @@ export default function PublicSite({ subdomain }) {
       cancelled = true;
     };
   }, [subdomain]);
+
+  // Visita real (KPIs de Dashboard/Estadísticas) — una por carga de página,
+  // recién cuando se confirma que existe y está publicada. Clic en cualquier
+  // link de WhatsApp del sitio, delegado por atributo (hay varios en
+  // SitePreview: hero, floating widget, productos...), sin tener que cablear
+  // un handler en cada uno.
+  useEffect(() => {
+    if (state.status !== 'ready') return undefined;
+    apiTrackSiteEvent(subdomain, 'visita', classifyReferrer(document.referrer));
+
+    const onClick = (e) => {
+      if (e.target.closest('a[href*="wa.me"]')) apiTrackSiteEvent(subdomain, 'whatsapp_click');
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [state.status, subdomain]);
 
   if (state.status === 'loading') return <div className="min-h-screen bg-navy-950" />;
 

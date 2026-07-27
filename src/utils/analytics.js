@@ -81,6 +81,26 @@ export function acceptTerms() {
   }
 }
 
+// Clasificación gruesa del origen de una visita a partir de document.referrer
+// — la usa PublicSite.jsx para la "Fuente de tráfico" real de Estadísticas.
+// Ojo: varias apps (Instagram, WhatsApp) recortan el referrer desde su
+// navegador interno, así que esas visitas suelen caer en 'directo' aunque
+// hayan venido de ahí — es una limitación real del navegador, no algo que se
+// pueda evitar del lado nuestro.
+export function classifyReferrer(referrer) {
+  if (!referrer) return 'directo';
+  try {
+    const host = new URL(referrer).hostname.toLowerCase();
+    if (host.includes('instagram')) return 'instagram';
+    if (host.includes('google')) return 'google';
+    if (host.includes('whatsapp') || host.includes('wa.me')) return 'whatsapp';
+    if (host.includes(window.location.hostname)) return 'directo';
+    return 'otro';
+  } catch {
+    return 'directo';
+  }
+}
+
 // Delegación por atributo `data-track` — sirve tanto para botones en JSX
 // como para los fragmentos de HTML crudo de la Home (dangerouslySetInnerHTML,
 // ver src/pages/home-*.html), sin tener que cablear un onClick en cada uno.

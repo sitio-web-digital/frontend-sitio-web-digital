@@ -11,6 +11,7 @@ import { trackEvent } from '../../utils/analytics';
 import { slugify } from '../../data/mockData';
 import { apiCheckSubdomainAvailability } from '../../api/client';
 import { ROOT_DOMAIN } from '../../utils/rootDomain';
+import { validateArgentinePhone } from '../../utils/phoneValidation';
 
 // Las secciones que trae CADA plantilla ya definen su propia variante (hero
 // "split", "centro", "fondo", "ofertas", etc.) más los campos propios de esa
@@ -195,8 +196,13 @@ export function StepRubro({ value, onChange, onEnter }) {
 }
 
 // Paso 3: frase de portada (el titular del Hero) + WhatsApp, para el botón
-// principal de contacto — ambos opcionales, se pueden cargar después.
+// principal de contacto — la frase es opcional; el WhatsApp también se
+// puede dejar vacío, pero si se carga algo tiene que ser un celular
+// argentino válido (10 dígitos, código de área real — ver
+// utils/phoneValidation.js), por ahora solo pedimos números de Argentina.
 export function StepMensaje({ frase, whatsapp, onFraseChange, onWhatsappChange }) {
+  const check = validateArgentinePhone(whatsapp);
+
   return (
     <div>
       <QuestionTitle eyebrow="Paso 3 de 4">Tu mensaje</QuestionTitle>
@@ -222,12 +228,16 @@ export function StepMensaje({ frase, whatsapp, onFraseChange, onWhatsappChange }
         type="tel"
         value={whatsapp}
         onChange={(e) => onWhatsappChange(sanitizeWhatsapp(e.target.value))}
-        placeholder="Ej: 11 4567-8901"
+        placeholder="Ej: 381 648-7545"
         maxLength={WHATSAPP_MAX}
-        className="w-full border border-white/10 bg-navy-850 px-4 py-3.5 text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors"
+        className={`w-full border bg-navy-850 px-4 py-3.5 text-white placeholder:text-ink-500 outline-none transition-colors ${
+          !check.ok ? 'border-red-500/60 focus:border-red-500' : 'border-white/10 focus:border-gold-500'
+        }`}
       />
+      {!check.ok && <p className="text-xs text-red-400 mt-1.5">{check.error}</p>}
       <p className="text-sm text-ink-500 mt-3">
-        Los dos son opcionales, los podés cargar o cambiar después desde el editor.
+        La frase es opcional. El WhatsApp también, pero si lo cargás tiene que ser un número de Argentina válido —
+        por ahora solo pedimos números de acá (código de área + número, sin 0 ni 15).
       </p>
     </div>
   );
