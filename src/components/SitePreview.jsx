@@ -594,6 +594,9 @@ export default function SitePreview({
                 direccion={direccion}
                 telefono={telefono}
                 onUpdateContacto={(patch) => onSetSectionStyle?.(sec.id, patch)}
+                onUpdateHorarios={field('horarios')}
+                onUpdateDireccion={field('direccion')}
+                onUpdateTelefono={field('telefono')}
               />
             )}
             {sec.type === 'precios' && (
@@ -6749,6 +6752,9 @@ function SeccionContacto({
   telefono,
   horarios,
   onUpdateContacto,
+  onUpdateHorarios,
+  onUpdateDireccion,
+  onUpdateTelefono,
 }) {
   const btnColor = buttonColor || palette.inkHex || '#171717';
   const set = (field) => (v) => onUpdateContacto?.({ [field]: v });
@@ -6831,17 +6837,29 @@ function SeccionContacto({
 
   // "mapa" es el default de las plantillas de cliente: datos (horarios/
   // dirección/contacto) + un mapa simulado, sin formulario — el visitante
-  // escribe por WhatsApp, no llena un form web.
+  // escribe por WhatsApp, no llena un form web. horarios/direccion/telefono
+  // son campos globales de siteData (no de esta sección), por eso sus
+  // onChange van por field(name) desde el llamador, no por onUpdateContacto
+  // (que solo toca campos propios de ESTA sección, como contactoImagenUrl).
   if (variant === 'mapa') {
-    const dato = (label, value) =>
+    const dato = (label, value, onChangeValue, maxLength) =>
       (value || editable) && (
         <div>
           <p className="font-mono text-xs uppercase tracking-wide mb-1" style={{ color: palette.inkSoft }}>
             {label}
           </p>
-          <p className="text-[15px]" style={{ color: palette.ink }}>
-            {value || '—'}
-          </p>
+          <Editable
+            editable={editable}
+            value={value ?? ''}
+            onChange={onChangeValue}
+            tag="p"
+            block
+            placeholder="—"
+            styleKey={`contacto.${label}`}
+            style={{ color: palette.ink }}
+            className="text-[15px]"
+            maxLength={maxLength}
+          />
         </div>
       );
     return (
@@ -6862,16 +6880,41 @@ function SeccionContacto({
             maxLength={40}
           />
           <div className="flex flex-col gap-5">
-            {dato('Horarios', horarios)}
-            {dato('Dirección', direccion)}
-            {dato('Contacto', telefono)}
+            {dato('Horarios', horarios, onUpdateHorarios, 60)}
+            {dato('Dirección', direccion, onUpdateDireccion, 120)}
+            {dato('Contacto', telefono, onUpdateTelefono, 40)}
           </div>
         </div>
-        <div className="min-h-[220px] flex items-center justify-center" style={{ background: palette.line }}>
-          <span className="font-mono text-xs uppercase" style={{ color: palette.inkSoft }}>
-            Mapa (simulado)
-          </span>
-        </div>
+        <label
+          className={`group/mapimg relative min-h-[220px] flex items-center justify-center overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+          style={{ background: palette.line }}
+        >
+          {imagenUrl ? (
+            <img src={imagenUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <span className="font-mono text-xs uppercase" style={{ color: palette.inkSoft }}>
+              Mapa (simulado)
+            </span>
+          )}
+          {editable && (
+            <>
+              <span className="absolute inset-0 bg-black/0 group-hover/mapimg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/mapimg:opacity-100">
+                <span className="text-white text-xs font-semibold flex items-center gap-1.5">
+                  <PencilIcon className="w-4 h-4" /> {imagenUrl ? 'Cambiar imagen' : 'Subir foto o captura del mapa'}
+                </span>
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onUpdateContacto?.({ contactoImagenUrl: await uploadImage(file) });
+                }}
+              />
+            </>
+          )}
+        </label>
       </section>
     );
   }

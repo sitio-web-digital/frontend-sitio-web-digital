@@ -48,8 +48,8 @@ const SERVER_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 // hero, etc.) y devuelve una URL que sigue funcionando después, para cualquier
 // persona — a diferencia de URL.createObjectURL(file), que solo vale
 // mientras dure esa pestaña. Si todavía no hay sesión iniciada (ej. el logo
-// del quiz, antes de crear cuenta), no hay dónde subirla: quien llama tiene
-// que quedarse con el blob: local como respaldo en ese caso.
+// del quiz, antes de crear cuenta), no hay dónde subirla: quien llama
+// (uploadImage.js) se queda con una data: URL local como respaldo en ese caso.
 export async function apiUploadImage(file) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión para subir esta imagen.' };
@@ -67,7 +67,13 @@ export async function apiUploadImage(file) {
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) return { ok: false, error: data.error || 'No se pudo subir la imagen.' };
-  return { ok: true, url: `${SERVER_ORIGIN}${data.url}` };
+  // Desde la migración a S3/CloudFront, el backend ya devuelve una URL
+  // absoluta (https://<cloudfront>/uploads/...) — anteponerle SERVER_ORIGIN
+  // (algo de antes, cuando las fotos se servían localmente en una ruta
+  // relativa) generaba un string roto tipo
+  // "http://localhost:4000https://...cloudfront.net/...". Rompía TODAS las
+  // subidas reales de gente ya logueada desde que se hizo esa migración.
+  return { ok: true, url: data.url };
 }
 
 export async function apiLogin({ email, password }) {
