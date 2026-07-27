@@ -362,6 +362,12 @@ export async function apiAdminSetFreeSubscriptions(userId, freeSubscriptions) {
   });
 }
 
+export async function apiAdminDeleteUser(userId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/admin/users/${userId}`, { method: 'DELETE', token });
+}
+
 // Telemetría (ver src/utils/analytics.js): pública, no requiere sesión — la
 // mayoría de los eventos pasan mientras todavía es un visitante anónimo. Si
 // hay sesión iniciada, mandamos el token igual para que el backend asocie el
@@ -423,9 +429,11 @@ export async function apiAdminListLeads({ page = 1, pageSize = 20, period, q } =
 
 // Se llama al tocar "Acepto y continúo" en TermsGate — deja constancia de
 // que esa sesión anónima aceptó los términos, para poder demostrarlo
-// después si guardamos algún dato suyo (ver leads.js).
+// después si guardamos algún dato suyo (ver leads.js). Si hay sesión
+// iniciada, manda el token también: el backend de paso marca esa cuenta
+// como aceptada (users.terms_accepted_at) para no volver a pedírselo.
 export async function apiAcceptTerms({ sessionId }) {
-  return request('/terms/accept', { method: 'POST', body: { sessionId } });
+  return request('/terms/accept', { method: 'POST', body: { sessionId }, token: getToken() });
 }
 
 // Descarga de reportes en PDF (Admin > Analytics/Leads): a diferencia del

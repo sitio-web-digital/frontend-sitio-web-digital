@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import Logo from './Logo';
 import { acceptTerms } from '../utils/analytics';
+import { useApp } from '../context/AppContext';
 
-// Términos y condiciones: se muestran siempre al entrar (sin recordar la
-// aceptación en localStorage/sessionStorage para no repetirlo en cada
-// visita), a pedido — pero cada aceptación SÍ queda registrada del lado del
-// servidor (ver acceptTerms() en utils/analytics.js), porque guardamos
-// datos de gente que ni se registra (los leads del quiz) y necesitamos
-// poder demostrar que esa persona aceptó antes de que le guardáramos nada.
+// Términos y condiciones: para una cuenta logueada que YA los aceptó antes
+// (users.terms_accepted_at, ver terms.js), no se vuelven a mostrar — se
+// revalida contra la base en cada carga (vía el user que ya trae authReady
+// de AppContext), nunca alcanza con "ya lo acepté en este navegador antes".
+// Para quien todavía no tiene cuenta (anónimo, ej. los leads del quiz) o
+// tiene una cuenta que nunca aceptó, se sigue mostrando siempre — cada
+// aceptación anónima igual queda registrada del lado del servidor (ver
+// acceptTerms() en utils/analytics.js), porque necesitamos poder demostrar
+// que esa persona aceptó antes de que le guardáramos cualquier dato.
 const SECCIONES = [
   {
     titulo: '1. Objeto',
@@ -72,8 +76,16 @@ const SECCIONES = [
 ];
 
 export default function TermsGate({ children }) {
-  const [open, setOpen] = useState(true);
+  const { authReady, user } = useApp();
   const [checked, setChecked] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  // Mientras no sepamos si hay una sesión restaurada (token guardado de una
+  // visita anterior), no decidimos todavía si mostrar el gate — evita un
+  // parpadeo del modal para alguien que ya lo tiene aceptado.
+  if (!authReady) return <>{children}</>;
+
+  const open = !dismissed && !user?.termsAcceptedAt;
 
   return (
     <>
@@ -117,7 +129,7 @@ export default function TermsGate({ children }) {
                 disabled={!checked}
                 onClick={() => {
                   acceptTerms();
-                  setOpen(false);
+                  setDismissed(true);
                 }}
                 className="w-full bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold py-3.5 disabled:opacity-40 disabled:pointer-events-none"
               >

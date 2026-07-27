@@ -26,6 +26,7 @@ import {
   apiAdminListUsers,
   apiAdminCreateUser,
   apiAdminSetFreeSubscriptions,
+  apiAdminDeleteUser,
   apiAdminAnalyticsSummary,
   apiAdminListLeads,
   apiDownloadLeadsReport,
@@ -39,6 +40,7 @@ import {
   apiAdminMarkSupportSeen,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
+import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
 import SupportThread from '../components/support/SupportThread';
 
 const NAV_ITEMS = [
@@ -50,6 +52,7 @@ const NAV_ITEMS = [
   { id: 'suscripciones', label: 'Suscripciones' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'soporte', label: 'Soporte' },
+  { id: 'versiones', label: 'Versiones' },
 ];
 
 const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -85,6 +88,19 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [unreadSupport, setUnreadSupport] = useState({ count: 0, tickets: [] });
   const [supportToast, setSupportToast] = useState(null);
+  // "Qué cambió" — se muestra una vez por versión nueva, comparando contra la
+  // última que este navegador ya vio (no hace falta nada del lado del
+  // servidor, es solo un aviso interno para el equipo, no algo legal como
+  // los Términos y Condiciones).
+  const [showVersionModal, setShowVersionModal] = useState(false);
+  useEffect(() => {
+    const lastSeen = localStorage.getItem('sitiowebdigital.lastSeenVersion');
+    if (lastSeen !== CURRENT_VERSION) setShowVersionModal(true);
+  }, []);
+  const dismissVersionModal = () => {
+    localStorage.setItem('sitiowebdigital.lastSeenVersion', CURRENT_VERSION);
+    setShowVersionModal(false);
+  };
 
   useEffect(() => {
     if (!authReady) return;
@@ -208,6 +224,13 @@ export default function Admin() {
     setUsers((list) => list.map((u) => (u.id === userId ? { ...u, freeSubscriptions: result.freeSubscriptions } : u)));
   };
 
+  const deleteUser = async (userId) => {
+    const result = await apiAdminDeleteUser(userId);
+    if (!result.ok) return result;
+    setUsers((list) => list.filter((u) => u.id !== userId));
+    return result;
+  };
+
   // Publica/despublica una plantilla creada por el admin — mientras no esté
   // publicada, no la ve ningún usuario en la galería ni se la recomienda el quiz.
   const toggleTemplatePublished = async (templateId, currentlyPublished) => {
@@ -245,6 +268,17 @@ export default function Admin() {
     <div className="min-h-screen bg-navy-900 text-white">
       <AdminHeader user={user} logout={logout} navigate={navigate} />
 
+      {showVersionModal && (
+        <VersionModal
+          entry={CHANGELOG[0]}
+          onClose={dismissVersionModal}
+          onVerTodas={() => {
+            dismissVersionModal();
+            setSection('versiones');
+          }}
+        />
+      )}
+
       {supportToast && (
         <SupportToast
           data={supportToast}
@@ -275,11 +309,17 @@ export default function Admin() {
           )}
           {section === 'suscripciones' && <SuscripcionesSection subscriptions={subscriptions} />}
           {section === 'usuarios' && (
-            <UsuariosSection users={users} onCreate={createUser} onSetFreeSubscriptions={setFreeSubscriptions} />
+            <UsuariosSection
+              users={users}
+              onCreate={createUser}
+              onSetFreeSubscriptions={setFreeSubscriptions}
+              onDelete={deleteUser}
+            />
           )}
           {section === 'soporte' && (
             <SoporteSection tickets={tickets} currentUserId={user.id} unreadIds={unreadSupport.tickets.map((t) => t.id)} />
           )}
+          {section === 'versiones' && <VersionesSection />}
         </div>
       </div>
     </div>
@@ -294,7 +334,7 @@ function AdminHeader({ user, logout, navigate }) {
         <span className="text-ink-500 font-normal text-sm">· admin</span>
       </div>
       <div className="flex items-center gap-4 text-sm text-ink-400">
-        <span className="hidden sm:inline text-ink-500 text-xs">v1.0.0</span>
+        <span className="hidden sm:inline text-ink-500 text-xs">v{CURRENT_VERSION}</span>
         <span className="hidden sm:inline">{user.email}</span>
         <button
           onClick={() => {
@@ -1183,7 +1223,7 @@ function SuscripcionesSection({ subscriptions }) {
 // Alta de cuentas y gestión de suscripciones gratuitas (cuentas de prueba a
 // las que se les regala el servicio) — no cuentan como ingreso en
 // Suscripciones/Resumen mientras freeSubscriptions sea >= 1.
-function UsuariosSection({ users, onCreate, onSetFreeSubscriptions }) {
+function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', freeSubscriptions: 0 });
   const [formError, setFormError] = useState('');
@@ -1316,12 +1356,13 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions }) {
                 <th className="pb-2 pr-4 font-semibold">Email</th>
                 <th className="pb-2 pr-4 font-semibold">Rol</th>
                 <th className="pb-2 pr-4 font-semibold">Alta</th>
-                <th className="pb-2 font-semibold text-right">Suscripciones gratuitas</th>
+                <th className="pb-2 pr-4 font-semibold text-right">Suscripciones gratuitas</th>
+                <th className="pb-2 font-semibold text-right">Acción</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
-                <UserRow key={u.id} u={u} onSetFreeSubscriptions={onSetFreeSubscriptions} />
+                <UserRow key={u.id} u={u} onSetFreeSubscriptions={onSetFreeSubscriptions} onDelete={onDelete} />
               ))}
             </tbody>
           </table>
@@ -1331,9 +1372,25 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions }) {
   );
 }
 
-function UserRow({ u, onSetFreeSubscriptions }) {
+function UserRow({ u, onSetFreeSubscriptions, onDelete }) {
   const [value, setValue] = useState(u.freeSubscriptions);
   const dirty = Number(value) !== Number(u.freeSubscriptions);
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const confirmarEliminar = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    const result = await onDelete(u.id);
+    if (!result.ok) {
+      setDeleteError(result.error || 'No se pudo eliminar la cuenta.');
+      setDeleting(false);
+      return;
+    }
+    // Si salió bien, la fila desaparece de la lista (onDelete ya la sacó del
+    // estado en Admin()) — no hace falta tocar nada más acá.
+  };
 
   return (
     <tr className="border-b border-white/5">
@@ -1349,7 +1406,7 @@ function UserRow({ u, onSetFreeSubscriptions }) {
         </span>
       </td>
       <td className="py-2.5 pr-4 text-ink-500">{new Date(u.createdAt).toLocaleDateString('es-AR')}</td>
-      <td className="py-2.5 text-right">
+      <td className="py-2.5 pr-4 text-right">
         <div className="inline-flex items-center gap-2">
           <input
             type="number"
@@ -1366,6 +1423,36 @@ function UserRow({ u, onSetFreeSubscriptions }) {
             Guardar
           </button>
         </div>
+      </td>
+      <td className="py-2.5 text-right">
+        {u.role === 'admin' ? (
+          <span className="text-xs text-ink-500 italic">No se puede eliminar</span>
+        ) : confirming ? (
+          <div className="inline-flex items-center gap-2">
+            {deleteError && <span className="text-xs text-red-400">{deleteError}</span>}
+            <button
+              onClick={confirmarEliminar}
+              disabled={deleting}
+              className="px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors text-xs font-semibold"
+            >
+              {deleting ? 'Eliminando...' : 'Confirmar'}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={deleting}
+              className="px-2.5 py-1.5 border border-white/15 hover:bg-white/5 transition-colors text-xs font-semibold text-white"
+            >
+              Volver
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirming(true)}
+            className="px-2.5 py-1.5 border border-white/15 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 transition-colors text-xs font-semibold text-white"
+          >
+            Eliminar
+          </button>
+        )}
       </td>
     </tr>
   );
@@ -1417,6 +1504,106 @@ function SoporteSection({ tickets, currentUserId, unreadIds = [] }) {
           })}
         </div>
       )}
+    </Panel>
+  );
+}
+
+const CHANGE_TYPE_INFO = {
+  nuevo: { label: 'Nuevo', className: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25' },
+  mejora: { label: 'Mejora', className: 'text-sky-400 bg-sky-400/10 border-sky-400/25' },
+  fix: { label: 'Fix', className: 'text-amber-400 bg-amber-400/10 border-amber-400/25' },
+};
+
+// Aviso de "qué cambió" al entrar con una versión nueva del front (ver el
+// efecto en Admin() que decide cuándo mostrarlo, comparando contra
+// localStorage). Es un aviso interno para el equipo, no algo que necesite
+// quedar registrado del lado del servidor.
+function VersionModal({ entry, onClose, onVerTodas }) {
+  return (
+    <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md border border-white/10 bg-navy-850 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2">
+          <span className="text-white font-semibold text-sm">Novedades de v{entry.version}</span>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-ink-400 hover:text-white transition-colors text-lg leading-none">
+            ✕
+          </button>
+        </div>
+        <div className="p-6">
+          <ul className="space-y-1.5 mb-5">
+            {entry.changes.map((c, i) => {
+              const info = CHANGE_TYPE_INFO[c.type] ?? CHANGE_TYPE_INFO.nuevo;
+              return (
+                <li key={i} className="flex items-start gap-2 text-sm text-ink-300">
+                  <span className={`shrink-0 mt-0.5 text-[0.65rem] font-semibold uppercase px-1.5 py-0.5 border rounded ${info.className}`}>
+                    {info.label}
+                  </span>
+                  {c.text}
+                </li>
+              );
+            })}
+          </ul>
+          <div className="flex gap-2">
+            <button
+              onClick={onVerTodas}
+              className="flex-1 px-3 py-2.5 border border-white/15 hover:bg-white/5 transition-colors text-sm font-semibold"
+            >
+              Ver todas las versiones
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 px-3 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Historial de versiones — lee CHANGELOG (src/data/changelog.js), que se
+// actualiza a mano cada vez que se hace un cambio o arreglo. Ver también
+// VersionModal más arriba, que muestra el mismo tipo de aviso una vez por
+// versión nueva.
+function VersionesSection() {
+  return (
+    <Panel icon={<LayoutIcon className="w-4 h-4 text-gold-500" />} title="Versiones">
+      <div className="space-y-6">
+        {CHANGELOG.map((entry) => (
+          <div key={entry.version} className="border border-white/10 bg-navy-900 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="font-display font-bold text-white">v{entry.version}</span>
+              <span className="text-xs text-ink-500">
+                {/* T00:00:00 sin zona (no "Z") para que se interprete en hora local, no UTC — si
+                    no, un date-only string como "2026-07-27" corre un día para atrás en
+                    cualquier huso horario detrás de UTC. */}
+                {new Date(`${entry.date}T00:00:00`).toLocaleDateString('es-AR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+            <ul className="space-y-1.5">
+              {entry.changes.map((c, i) => {
+                const info = CHANGE_TYPE_INFO[c.type] ?? CHANGE_TYPE_INFO.nuevo;
+                return (
+                  <li key={i} className="flex items-start gap-2 text-sm text-ink-300">
+                    <span className={`shrink-0 mt-0.5 text-[0.65rem] font-semibold uppercase px-1.5 py-0.5 border rounded ${info.className}`}>
+                      {info.label}
+                    </span>
+                    {c.text}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
     </Panel>
   );
 }
