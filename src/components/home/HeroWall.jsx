@@ -97,6 +97,8 @@ export default function HeroWall() {
       { tiles: buildRow(2, 7, 190, selectableTemplates), dir: 'left', duration: 60, depth: 0 },
       { tiles: buildRow(3, 6, 165, selectableTemplates), dir: 'right', duration: 50, depth: 1 },
       { tiles: buildRow(4, 7, 190, selectableTemplates), dir: 'left', duration: 52, depth: 0 },
+      { tiles: buildRow(5, 6, 165, selectableTemplates), dir: 'right', duration: 58, depth: 1 },
+      { tiles: buildRow(6, 7, 190, selectableTemplates), dir: 'left', duration: 54, depth: 0 },
     ];
   }, [selectableTemplates]);
 

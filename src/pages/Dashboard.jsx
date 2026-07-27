@@ -3,18 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
 import Logo from '../components/Logo';
 import SupportThread from '../components/support/SupportThread';
-import {
-  TagIcon,
-  LockIcon,
-  GlobeIcon,
-  TrendUpIcon,
-  WhatsAppIcon,
-  HelpCircleIcon,
-  SendIcon,
-  XIcon,
-  ImageIcon,
-  PlusIcon,
-} from '../components/icons';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify } from '../data/mockData';
 import { validateImageFiles } from '../utils/imageValidation';
@@ -306,6 +294,7 @@ function SideNav({ section, onChange, unreadCount = 0 }) {
           )}
         </button>
       ))}
+      <p className="hidden lg:block mt-4 px-3.5 text-[0.65rem] text-ink-500">SitioWeb Digital v1.0.0</p>
     </nav>
   );
 }
@@ -319,9 +308,9 @@ function ResumenSection({ primerNombre, pages, navigate }) {
   const whatsapp = publicadas.reduce((acc, p) => acc + p.kpis.whatsapp, 0);
 
   const kpis = [
-    { label: 'Páginas activas', value: String(publicadas.length), icon: GlobeIcon },
-    { label: 'Visitas totales', value: visitas.toLocaleString('es-AR'), icon: TrendUpIcon },
-    { label: 'Clics en WhatsApp', value: whatsapp.toLocaleString('es-AR'), icon: WhatsAppIcon },
+    { label: 'Páginas activas', value: String(publicadas.length) },
+    { label: 'Visitas totales', value: visitas.toLocaleString('es-AR') },
+    { label: 'Clics en WhatsApp', value: whatsapp.toLocaleString('es-AR') },
   ];
 
   return (
@@ -334,9 +323,6 @@ function ResumenSection({ primerNombre, pages, navigate }) {
       <div className="grid grid-cols-3 gap-4 mb-8">
         {kpis.map((k) => (
           <div key={k.label} className="border border-white/10 bg-navy-850 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <k.icon className="w-4 h-4 text-gold-500" />
-            </div>
             <p className="font-display text-2xl font-bold">{k.value}</p>
             <p className="text-xs text-ink-400 mt-0.5">{k.label}</p>
           </div>
@@ -350,7 +336,7 @@ function ResumenSection({ primerNombre, pages, navigate }) {
           data-track="dashboard_crear_pagina"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
         >
-          <PlusIcon className="w-3.5 h-3.5" /> Crear nueva página
+          Crear nueva página
         </button>
       </div>
       <div className="space-y-3">
@@ -473,7 +459,7 @@ function SubscriptionSection({ pages, hasSite, setPublished, saveSiteToBackend, 
   const total = isFree ? 0 : publicadas.length * PLAN.precio;
 
   return (
-    <Panel icon={<TagIcon className="w-4 h-4 text-gold-500" />} title="Suscripción">
+    <Panel title="Suscripción">
       <p className="text-sm text-ink-300 mb-1">
         {PLAN.nombre} — ${PLAN.precio.toLocaleString('es-AR')} {PLAN.moneda}/{PLAN.ciclo} por página publicada.
       </p>
@@ -520,7 +506,7 @@ function SubscriptionSection({ pages, hasSite, setPublished, saveSiteToBackend, 
         data-track="dashboard_crear_pagina"
         className="inline-flex items-center gap-1.5 mt-5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
       >
-        <PlusIcon className="w-3.5 h-3.5" /> Crear nueva página
+        Crear nueva página
       </button>
     </Panel>
   );
@@ -627,14 +613,13 @@ function SoporteSection({ tickets, onOpenNew, currentUserId, unreadIds = [] }) {
 
   return (
     <Panel
-      icon={<HelpCircleIcon className="w-4 h-4 text-gold-500" />}
       title="Soporte"
       action={
         <button
           onClick={onOpenNew}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
         >
-          <PlusIcon className="w-3.5 h-3.5" /> Nueva consulta
+          Nueva consulta
         </button>
       }
     >
@@ -727,12 +712,9 @@ function NewTicketModal({ onClose, onSubmit }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <HelpCircleIcon className="w-4 h-4 text-gold-500" />
-            <span className="text-white font-semibold text-sm">Contactar a soporte</span>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-ink-400 hover:text-white transition-colors">
-            <XIcon className="w-4 h-4" />
+          <span className="text-white font-semibold text-sm">Contactar a soporte</span>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-ink-400 hover:text-white transition-colors text-lg leading-none">
+            ✕
           </button>
         </div>
 
@@ -778,15 +760,15 @@ function NewTicketModal({ onClose, onSubmit }) {
                     type="button"
                     onClick={() => removeAdjunto(i)}
                     aria-label="Quitar"
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-navy-950 border border-white/15 text-white flex items-center justify-center"
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-navy-950 border border-white/15 text-white flex items-center justify-center text-[0.6rem] leading-none"
                   >
-                    <XIcon className="w-2.5 h-2.5" />
+                    ✕
                   </button>
                 </div>
               ))}
               {adjuntos.length < 3 && (
-                <label className="w-16 h-16 shrink-0 border-2 border-dashed border-white/15 hover:border-gold-500/60 transition-colors cursor-pointer flex items-center justify-center text-ink-400">
-                  <ImageIcon className="w-5 h-5" />
+                <label className="w-16 h-16 shrink-0 border-2 border-dashed border-white/15 hover:border-gold-500/60 transition-colors cursor-pointer flex items-center justify-center text-ink-400 text-xl">
+                  +
                   <input type="file" accept="image/*" multiple className="hidden" onChange={onFiles} disabled={busy} />
                 </label>
               )}
@@ -800,7 +782,7 @@ function NewTicketModal({ onClose, onSubmit }) {
             disabled={!asunto.trim() || !mensaje.trim() || busy}
             className="w-full inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold py-3 disabled:opacity-40 disabled:pointer-events-none"
           >
-            <SendIcon className="w-4 h-4" /> {busy ? 'Enviando...' : 'Enviar mensaje'}
+            {busy ? 'Enviando...' : 'Enviar mensaje'}
           </button>
         </form>
       </div>
@@ -826,7 +808,7 @@ function SettingsSection({ user, updateProfile }) {
   };
 
   return (
-    <Panel icon={<LockIcon className="w-4 h-4 text-gold-500" />} title="Configuración de la cuenta">
+    <Panel title="Configuración de la cuenta">
       <form onSubmit={submit} className="space-y-3 max-w-sm">
         <div>
           <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
@@ -886,7 +868,7 @@ function SubdomainSection({ subdomain, siteData, updateSubdomain, siteLocked }) 
   };
 
   return (
-    <Panel icon={<GlobeIcon className="w-4 h-4 text-gold-500" />} title="Tu subdominio">
+    <Panel title="Tu subdominio">
       <form onSubmit={submit} className="space-y-3 max-w-sm">
         <div>
           <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
@@ -919,15 +901,12 @@ function SubdomainSection({ subdomain, siteData, updateSubdomain, siteLocked }) 
 }
 
 // Chrome compartido por las secciones de Suscripción/Configuración: franja
-// oscura con ícono + título (mismo patrón que el header de AuthGate).
-function Panel({ icon, title, action, children }) {
+// oscura con título (mismo patrón que el header de AuthGate).
+function Panel({ title, action, children }) {
   return (
     <div className="border border-white/10 bg-navy-850 overflow-hidden">
       <div className="bg-navy-950 border-b border-white/8 px-5 py-3.5 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-white font-semibold text-sm">{title}</span>
-        </div>
+        <span className="text-white font-semibold text-sm">{title}</span>
         {action}
       </div>
       <div className="p-5">{children}</div>

@@ -14,6 +14,8 @@ import {
   PhoneCallIcon,
   DownloadIcon,
   LayoutIcon,
+  EyeIcon,
+  EyeOffIcon,
 } from '../components/icons';
 import { useApp } from '../context/AppContext';
 import {
@@ -1185,6 +1187,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions }) {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', freeSubscriptions: 0 });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -1244,14 +1247,24 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions }) {
           </div>
           <div>
             <label className="text-xs text-ink-400 block mb-1">Contraseña</label>
-            <input
-              required
-              type="password"
-              minLength={6}
-              value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-              className="w-full border border-white/10 bg-navy-850 px-3 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors"
-            />
+            <div className="relative">
+              <input
+                required
+                type={showPassword ? 'text' : 'password'}
+                minLength={6}
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                className="w-full border border-white/10 bg-navy-850 pl-3 pr-9 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute right-0 top-0 h-full px-2.5 text-ink-500 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOffIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="text-xs text-ink-400 block mb-1">Rol</label>
