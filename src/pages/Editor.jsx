@@ -245,10 +245,6 @@ export default function Editor() {
           })}
         </div>
         <div className="flex items-center gap-2.5">
-          <span className="hidden xl:inline font-mono text-[0.7rem] uppercase tracking-[0.1em] text-ink-500 mr-0.5">
-            Paso 3 · Personalizá tu página
-          </span>
-
           {/* Diseño global: todo lo que cambia toda la página de una, agrupado
               como un solo control segmentado en vez de botones sueltos. */}
           <div className="flex items-center border border-white/10 divide-x divide-white/10 shrink-0">

@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.7.0',
+    date: '2026-07-28',
+    changes: [
+      { type: 'mejora', text: 'Editor: se sacó el texto "Paso 3 · Personalizá tu página" de la barra superior.' },
+      { type: 'fix', text: 'Editor: el menú de formato de texto (negrita, color, ícono, etc.) ya no queda tapado al editar secciones cortas ancladas arriba de todo (Header, Barra de aviso) — ahora se abre hacia abajo cuando no entra arriba.' },
+      { type: 'fix', text: 'Portada (Hero): ahora se puede cambiar la foto directamente desde la sección, en todas sus distribuciones — antes solo mostraba la primera foto de la galería sin forma de reemplazarla.' },
+      { type: 'nuevo', text: 'Beneficios / confianza: cada ítem tiene su propio selector de ícono, y la sección suma una segunda distribución en tarjetas (antes solo tenía la fila angosta).' },
+      { type: 'nuevo', text: 'Zonas de cobertura: nueva distribución en pastillas sueltas, además de la lista con tilde de siempre.' },
+      { type: 'nuevo', text: 'Productos o servicios (distribución "Lista de precios"): tocar un ítem manda directo al WhatsApp del negocio con un mensaje que ya menciona ese servicio puntual.' },
+      { type: 'mejora', text: 'El selector de distribución de "Productos o servicios" ahora agrupa las opciones en Productos / Servicios / Precios, en vez de mostrar las 9 juntas sin distinción.' },
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-07-29',
     changes: [

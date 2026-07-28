@@ -427,6 +427,7 @@ export default function SitePreview({
                 heroOfertas={sec.heroOfertas ?? []}
                 onUpdateHeroOfertas={(heroOfertas) => onSetSectionStyle?.(sec.id, { heroOfertas })}
                 heroImagen={sec.heroImagen}
+                onUpdateHeroImagen={(v) => onSetSectionStyle?.(sec.id, { heroImagen: v })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 descripcion={sec.descripcion}
@@ -825,6 +826,7 @@ export default function SitePreview({
             )}
             {sec.type === 'beneficios' && (
               <SeccionBeneficios
+                variant={sec.variant}
                 items={sec.items ?? []}
                 onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
                 palette={palette}
@@ -924,6 +926,7 @@ export default function SitePreview({
             )}
             {sec.type === 'zonas' && (
               <SeccionZonas
+                variant={sec.variant}
                 zonas={sec.zonas ?? []}
                 onUpdate={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
                 titulo={sec.titulo}
@@ -1492,6 +1495,42 @@ function FixedPopover({ anchorRef, align = 'end', gap = 8, className = '', onClo
 // `variant`, que es lo único que decide cómo se acomoda el contenido existente.
 function SectionVariantPicker({ type, variant, onChange, onClose, anchorRef, align }) {
   const variantes = SECTION_VARIANTS[type] ?? [];
+  // Algunos tipos de sección (hoy, "productos") juntan distribuciones para
+  // usos bastante distintos entre sí — mostrar precios, listar servicios sin
+  // foto, o un catálogo de productos con foto — bajo el mismo `type`. Sin
+  // agrupar, las 9 opciones se ven como una sola grilla pareja y no queda
+  // claro cuál conviene para cada caso. Si ninguna variante declaró `group`,
+  // se muestra la grilla plana de siempre (el resto de los tipos de sección).
+  const hasGroups = variantes.some((v) => v.group);
+  const grupos = variantes.reduce((acc, v) => {
+    const g = v.group || '';
+    (acc[g] ||= []).push(v);
+    return acc;
+  }, {});
+
+  const grid = (items) => (
+    <div className="grid grid-cols-2 gap-2">
+      {items.map((v) => (
+        <button
+          key={v.id}
+          type="button"
+          onClick={() => onChange(v.id)}
+          aria-label={v.label}
+          className={`rounded-lg border transition-colors p-2 text-center ${
+            v.id === variant
+              ? 'border-gold-500 bg-gold-500/5'
+              : 'border-neutral-200 hover:border-gold-500 hover:bg-gold-500/5'
+          }`}
+        >
+          <div className="h-12 rounded-md bg-neutral-50 border border-neutral-100 mb-1.5 p-2 flex items-center justify-center overflow-hidden">
+            <VariantSkeleton kind={v.skeleton} />
+          </div>
+          <span className="text-[11px] font-semibold text-neutral-700">{v.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <FixedPopover
       anchorRef={anchorRef}
@@ -1500,26 +1539,14 @@ function SectionVariantPicker({ type, variant, onChange, onClose, anchorRef, ali
       className="w-64 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left"
     >
       <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2 px-1">Distribución</p>
-      <div className="grid grid-cols-2 gap-2">
-        {variantes.map((v) => (
-          <button
-            key={v.id}
-            type="button"
-            onClick={() => onChange(v.id)}
-            aria-label={v.label}
-            className={`rounded-lg border transition-colors p-2 text-center ${
-              v.id === variant
-                ? 'border-gold-500 bg-gold-500/5'
-                : 'border-neutral-200 hover:border-gold-500 hover:bg-gold-500/5'
-            }`}
-          >
-            <div className="h-12 rounded-md bg-neutral-50 border border-neutral-100 mb-1.5 p-2 flex items-center justify-center overflow-hidden">
-              <VariantSkeleton kind={v.skeleton} />
+      {hasGroups
+        ? Object.entries(grupos).map(([g, items], i) => (
+            <div key={g || 'sin-grupo'} className={i > 0 ? 'mt-3' : ''}>
+              {g && <p className="text-[10px] font-bold uppercase tracking-wide text-gold-600 mb-1.5 px-1">{g}</p>}
+              {grid(items)}
             </div>
-            <span className="text-[11px] font-semibold text-neutral-700">{v.label}</span>
-          </button>
-        ))}
-      </div>
+          ))
+        : grid(variantes)}
     </FixedPopover>
   );
 }
@@ -2490,6 +2517,18 @@ function VariantSkeleton({ kind }) {
       </div>
     );
   }
+  if (kind === 'beneficiosGrid') {
+    return (
+      <div className="grid grid-cols-2 gap-1 w-full h-full">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="border border-neutral-300 rounded-sm flex flex-col justify-center gap-0.5 p-1">
+            <div className="w-2 h-2 rounded-full border border-neutral-400" />
+            <div className={`${bar} h-1 w-3/4`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
   if (kind === 'productosTarifario') {
     return (
       <div className="flex flex-col gap-1.5 w-full h-full justify-center">
@@ -2518,6 +2557,15 @@ function VariantSkeleton({ kind }) {
             <div className="w-1.5 h-1.5 rounded-full border border-neutral-400 shrink-0" />
             <div className={`${bar} h-1 flex-1`} />
           </div>
+        ))}
+      </div>
+    );
+  }
+  if (kind === 'zonasChips') {
+    return (
+      <div className="flex flex-wrap gap-1 w-full h-full items-center content-center">
+        {['w-6', 'w-4', 'w-5', 'w-3.5', 'w-4'].map((w, i) => (
+          <div key={i} className={`h-2.5 rounded-full border border-neutral-400 ${w}`} />
         ))}
       </div>
     );
@@ -2854,7 +2902,7 @@ function AnimatedTag({ tag, anim, className, style, children, ...rest }) {
 
 // Grilla de íconos para elegir — todos SVG propios del sitio, sin ningún ícono
 // de terceros ni de una fuente con copyright.
-function IconPicker({ value, onChange, onClose }) {
+function IconPicker({ value, onChange, onClose, library = ICON_LIBRARY, components = ICON_COMPONENTS }) {
   return (
     <>
       <div className="fixed inset-0 z-30" onClick={onClose} />
@@ -2877,8 +2925,8 @@ function IconPicker({ value, onChange, onClose }) {
           >
             —
           </button>
-          {ICON_LIBRARY.map((ic) => {
-            const Icon = ICON_COMPONENTS[ic.id];
+          {library.map((ic) => {
+            const Icon = components[ic.id];
             return (
               <button
                 key={ic.id}
@@ -2907,9 +2955,17 @@ function IconPicker({ value, onChange, onClose }) {
 
 // Botón que muestra el ícono elegido (o un "+" punteado si no hay ninguno) y
 // abre el selector — se usa en FAQ, testimonios y los datos de "Sobre nosotros".
-function IconSlot({ editable, value, onChange, size = 'w-8 h-8', iconSize = 'w-4 h-4' }) {
+function IconSlot({
+  editable,
+  value,
+  onChange,
+  size = 'w-8 h-8',
+  iconSize = 'w-4 h-4',
+  library = ICON_LIBRARY,
+  components = ICON_COMPONENTS,
+}) {
   const [open, setOpen] = useState(false);
-  const Icon = value ? ICON_COMPONENTS[value] : null;
+  const Icon = value ? components[value] : null;
 
   if (!editable) {
     return Icon ? (
@@ -2932,7 +2988,15 @@ function IconSlot({ editable, value, onChange, size = 'w-8 h-8', iconSize = 'w-4
       >
         {Icon ? <Icon className={iconSize} /> : <PlusIcon className="w-3 h-3" />}
       </button>
-      {open && <IconPicker value={value} onChange={onChange} onClose={() => setOpen(false)} />}
+      {open && (
+        <IconPicker
+          value={value}
+          onChange={onChange}
+          onClose={() => setOpen(false)}
+          library={library}
+          components={components}
+        />
+      )}
     </span>
   );
 }
@@ -2978,10 +3042,33 @@ function HoverFlyout({ trigger, children, align = 'left', panelClassName = 'w-44
 // y "Color" abren un submenú al pasar el cursor por encima. Como el resto
 // del sistema, aplica al campo completo (no hay negrita/color parcial
 // dentro de un mismo párrafo).
-function TextStyleToolbar({ styleKey }) {
+//
+// Posicionado con `position:fixed` a partir del rect real del campo (mismo
+// mecanismo que FixedPopover, ver su comentario) en vez de `absolute
+// bottom-full`: en secciones cortas ancladas arriba de todo (Header, franja
+// de aviso) no había aire arriba del campo, y el menú quedaba recortado por
+// el `overflow-hidden` del marco del editor — acá se mide el alto ya
+// renderizado y, si no entra arriba, se abre hacia abajo.
+function TextStyleToolbar({ styleKey, anchorRef }) {
   const { textStyles, onSetTextStyle } = useContext(TextStyleCtx);
   const current = textStyles[styleKey] || {};
   const [iconOpen, setIconOpen] = useState(false);
+  const toolbarRef = useRef(null);
+  const [posStyle, setPosStyle] = useState({ position: 'fixed', top: -9999, left: -9999, visibility: 'hidden' });
+
+  useLayoutEffect(() => {
+    const anchor = anchorRef?.current;
+    const panel = toolbarRef.current;
+    if (!anchor || !panel) return;
+    const anchorRect = anchor.getBoundingClientRect();
+    const rect = panel.getBoundingClientRect();
+    const gap = 6;
+    const spaceAbove = anchorRect.top - gap;
+    const openBelow = rect.height > spaceAbove;
+    const top = openBelow ? anchorRect.bottom + gap : Math.max(8, anchorRect.top - rect.height - gap);
+    const left = Math.min(Math.max(anchorRect.left, 8), Math.max(8, window.innerWidth - rect.width - 8));
+    setPosStyle({ position: 'fixed', top, left, visibility: 'visible' });
+  }, [anchorRef]);
   const hasOverride = !!(
     current.fontFamily ||
     current.color ||
@@ -3016,7 +3103,9 @@ function TextStyleToolbar({ styleKey }) {
 
   return (
     <div
-      className="absolute bottom-full left-0 mb-1.5 z-30 flex items-center gap-0.5 whitespace-nowrap rounded-lg border border-white/10 bg-navy-950 shadow-xl px-1 py-1"
+      ref={toolbarRef}
+      style={posStyle}
+      className="z-40 flex items-center gap-0.5 whitespace-nowrap rounded-lg border border-white/10 bg-navy-950 shadow-xl px-1 py-1"
       onMouseDown={(e) => e.preventDefault()}
     >
       <HoverFlyout
@@ -3229,6 +3318,7 @@ function Editable({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? '');
+  const editAnchorRef = useRef(null);
   // Todo texto editable tiene un tope de caracteres — si el que llama no pasó
   // uno puntual, se usa un default razonable según sea de una línea o un
   // párrafo, así ninguna sección se puede llenar de texto interminable.
@@ -3301,8 +3391,8 @@ function Editable({
     // inline) — evita que el input, con w-full, quede adentro de un contenedor
     // que se encoge a su contenido y termine con un ancho circular/impredecible.
     return (
-      <span className="relative block w-full">
-        {styleKey && <TextStyleToolbar styleKey={styleKey} />}
+      <span ref={editAnchorRef} className="relative block w-full">
+        {styleKey && <TextStyleToolbar styleKey={styleKey} anchorRef={editAnchorRef} />}
         {multiline ? <textarea rows={3} {...commonProps} /> : <input type={type} {...commonProps} />}
       </span>
     );
@@ -3902,6 +3992,7 @@ function SeccionHero({
   heroOfertas = [],
   onUpdateHeroOfertas,
   heroImagen,
+  onUpdateHeroImagen,
   titulo,
   onUpdateTitulo,
   descripcion,
@@ -4000,15 +4091,37 @@ function SeccionHero({
       </div>
     );
 
+  // Si esta sección tiene su propia foto puesta a mano (heroImagen), esa
+  // gana — si no, sigue mostrando la primera de la galería como hacía
+  // siempre (mismo patrón que SeccionSobreNosotros > imagen).
+  const handleHeroImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateHeroImagen?.(await uploadImage(file));
+  };
+
   const imagePanel = (heroImg) => (
-    <div className="relative aspect-[4/5] bg-black/5 overflow-hidden">
-      {heroImg ? (
-        <img src={heroImg} alt="" className="w-full h-full object-cover" style={{ filter: 'grayscale(0.15) contrast(1.05)' }} />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
-          Agregá fotos en tu galería
-        </div>
-      )}
+    <div className="relative aspect-[4/5] bg-black/5 overflow-hidden group/hero">
+      <label
+        className={`absolute inset-0 ${editable ? 'cursor-pointer' : ''}`}
+        title={editable ? 'Cambiar foto' : undefined}
+      >
+        {heroImg ? (
+          <img src={heroImg} alt="" className="w-full h-full object-cover" style={{ filter: 'grayscale(0.15) contrast(1.05)' }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+            Agregá fotos en tu galería
+          </div>
+        )}
+        {editable && (
+          <>
+            <span className="absolute inset-0 bg-black/0 group-hover/hero:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/hero:opacity-100">
+              <span className="text-white text-xs font-semibold">Cambiar foto</span>
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+          </>
+        )}
+      </label>
       {captionBox()}
     </div>
   );
@@ -4136,7 +4249,7 @@ function SeccionHero({
   // Imagen de fondo a sangre, texto encima con velo oscuro — para rubros que
   // quieren abrir con una foto grande (locales, obras, viandas).
   if (variant === 'fondo') {
-    const heroImg = galeria?.[0];
+    const heroImg = heroImagen || galeria?.[0];
     const fondoStyle = heroImg
       ? {
           backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.4) 60%, rgba(0,0,0,.15) 100%), url(${heroImg})`,
@@ -4203,10 +4316,11 @@ function SeccionHero({
               );
             })}
           </div>
-          {editable && !heroImg && (
-            <p className="inline-flex items-center gap-1.5 mt-5 text-white/70 text-xs">
-              <ImageIcon className="w-3.5 h-3.5" /> Agregá una foto en tu galería para usarla de fondo acá
-            </p>
+          {editable && (
+            <label className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer">
+              <ImageIcon className="w-3.5 h-3.5" /> {heroImg ? 'Cambiar fondo' : 'Agregar foto de fondo'}
+              <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+            </label>
           )}
         </div>
       </section>
@@ -4215,7 +4329,7 @@ function SeccionHero({
 
   // Variante "centrado" (default): grid asimétrico texto+imagen — el estándar
   // editorial de la plantilla, nunca centrado de verdad.
-  const heroImg = galeria?.[0];
+  const heroImg = heroImagen || galeria?.[0];
   return (
     <section className="relative px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1.1fr_0.9fr] gap-10 @lg:gap-16 items-end">
@@ -5636,60 +5750,80 @@ function SeccionProductos({
       ) : variant === 'tarifario' ? (
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-col">
-            {productos.map((p) => (
-              <div
-                key={p.id}
-                className="relative flex items-baseline justify-between gap-4 py-3.5 border-b"
-                style={{ borderColor: palette.line }}
-              >
-                <Editable
-                  editable={editable}
-                  value={p.nombre}
-                  onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
-                  tag="span"
-                  styleKey={`producto.${p.id}.nombre`}
-                  placeholder="Nombre del servicio"
-                  style={{ color: palette.ink }}
-                  className="text-sm @lg:text-base"
-                  maxLength={60}
-                />
-                <div className="flex items-center gap-2 shrink-0">
+            {productos.map((p) => {
+              // En modo lectura (página ya publicada), tocar la fila manda al
+              // WhatsApp del negocio con el nombre del servicio ya cargado en
+              // el mensaje — así se sigue la charla puntual por ese ítem, sin
+              // tener que escribir de cero. Mientras se edita, la fila no es
+              // un link (si no, tocarla para editar el texto abriría WhatsApp
+              // en vez de dejar escribir).
+              const RowTag = !editable && whatsapp ? 'a' : 'div';
+              const rowLinkProps =
+                !editable && whatsapp
+                  ? {
+                      href: waLink(whatsapp, nombreNegocio, `Hola! Quiero consultar por "${p.nombre}".`),
+                      target: '_blank',
+                      rel: 'noreferrer',
+                    }
+                  : {};
+              return (
+                <RowTag
+                  key={p.id}
+                  {...rowLinkProps}
+                  className={`relative flex items-baseline justify-between gap-4 py-3.5 px-2 -mx-2 border-b no-underline transition-colors ${
+                    !editable && whatsapp ? 'hover:bg-current/[0.04]' : ''
+                  }`}
+                  style={{ borderColor: palette.line, color: palette.ink }}
+                >
                   <Editable
                     editable={editable}
-                    value={p.desc}
-                    onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                    value={p.nombre}
+                    onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
                     tag="span"
-                    styleKey={`producto.${p.id}.desc`}
-                    placeholder="desde"
-                    style={{ color: palette.inkSoft }}
-                    className="font-mono text-xs uppercase"
-                    maxLength={20}
+                    styleKey={`producto.${p.id}.nombre`}
+                    placeholder="Nombre del servicio"
+                    style={{ color: palette.ink }}
+                    className="text-sm @lg:text-base"
+                    maxLength={60}
                   />
-                  <Editable
-                    editable={editable}
-                    value={p.precio}
-                    onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
-                    tag="span"
-                    type="number"
-                    styleKey={`producto.${p.id}.precio`}
-                    format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
-                    style={{ color: accent }}
-                    className="font-mono font-bold text-sm @lg:text-base"
-                  />
-                  {editable && (
-                    <button
-                      type="button"
-                      onClick={() => onRemoveProducto?.(p.id)}
-                      aria-label={`Quitar ${p.nombre}`}
-                      className="opacity-40 hover:opacity-100 transition-opacity"
-                      style={{ color: palette.ink }}
-                    >
-                      <XIcon className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Editable
+                      editable={editable}
+                      value={p.desc}
+                      onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                      tag="span"
+                      styleKey={`producto.${p.id}.desc`}
+                      placeholder="desde"
+                      style={{ color: palette.inkSoft }}
+                      className="font-mono text-xs uppercase"
+                      maxLength={20}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.precio}
+                      onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                      tag="span"
+                      type="number"
+                      styleKey={`producto.${p.id}.precio`}
+                      format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                      style={{ color: accent }}
+                      className="font-mono font-bold text-sm @lg:text-base"
+                    />
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveProducto?.(p.id)}
+                        aria-label={`Quitar ${p.nombre}`}
+                        className="opacity-40 hover:opacity-100 transition-opacity"
+                        style={{ color: palette.ink }}
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </RowTag>
+              );
+            })}
           </div>
           {editable && (
             <form onSubmit={submit} className="mt-6 border-2 border-dashed p-4 flex flex-wrap gap-2 items-center" style={{ borderColor: palette.line }}>
@@ -8451,10 +8585,21 @@ const BENEFICIOS_ICONOS = {
   'urgent-bolt': UrgentBoltIcon,
 };
 
+const BENEFICIOS_ICON_LIBRARY = [
+  { id: 'shield', label: 'Garantía' },
+  { id: 'check', label: 'Check' },
+  { id: 'card', label: 'Pago' },
+  { id: 'bolt', label: 'Rapidez' },
+  { id: 'clipboard', label: 'Presupuesto' },
+  { id: 'lightbulb', label: 'Idea' },
+  { id: 'urgent-bolt', label: 'Urgencias' },
+];
+
 // Fila de puntos clave con ícono + título + descripción (garantías, tiempos
 // de entrega, medios de pago) — para reforzar confianza a mitad de página,
 // separados por finas líneas verticales.
 function SeccionBeneficios({
+  variant = 'fila',
   items = [],
   onUpdate,
   editable,
@@ -8477,57 +8622,75 @@ function SeccionBeneficios({
   // no hacerle aparecer un encabezado a las secciones que ya viven sin uno.
   const showHeading = editable || titulo || eyebrow;
 
-  return (
-    <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
-      {showHeading && (
-        <div className="max-w-5xl mx-auto mb-8">
-          <Editable
-            editable={editable}
-            value={eyebrow}
-            onChange={onUpdateEyebrow}
-            tag="span"
-            block
-            styleKey="beneficios.eyebrow"
-            placeholder="Eyebrow (opcional)"
-            style={{ color: accent }}
-            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
-            maxLength={40}
-          />
-          <Editable
-            editable={editable}
-            value={titulo}
-            onChange={onUpdateTitulo}
-            tag="h2"
-            block
-            styleKey="beneficios.titulo"
-            placeholder="Título (opcional)"
-            style={{ color: headingColor || palette.ink }}
-            className="font-serif text-2xl @lg:text-3xl"
-            maxLength={70}
-          />
-        </div>
-      )}
-      <div className="max-w-5xl mx-auto flex flex-wrap @lg:flex-nowrap gap-8">
-        {items.map((it, i) => {
-          const Icon = BENEFICIOS_ICONOS[it.icon] || CheckCircleIcon;
-          return (
-            <div
-              key={it.id}
-              className="relative flex-1 min-w-[160px] @lg:pl-8"
-              style={i > 0 ? { borderLeft: `1px solid ${palette.line}` } : undefined}
-            >
+  const heading = showHeading && (
+    <div className="max-w-5xl mx-auto mb-8">
+      <Editable
+        editable={editable}
+        value={eyebrow}
+        onChange={onUpdateEyebrow}
+        tag="span"
+        block
+        styleKey="beneficios.eyebrow"
+        placeholder="Eyebrow (opcional)"
+        style={{ color: accent }}
+        className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+        maxLength={40}
+      />
+      <Editable
+        editable={editable}
+        value={titulo}
+        onChange={onUpdateTitulo}
+        tag="h2"
+        block
+        styleKey="beneficios.titulo"
+        placeholder="Título (opcional)"
+        style={{ color: headingColor || palette.ink }}
+        className="font-serif text-2xl @lg:text-3xl"
+        maxLength={70}
+      />
+    </div>
+  );
+
+  const iconSlot = (it) =>
+    editable ? (
+      <IconSlot
+        editable
+        value={it.icon}
+        onChange={(id) => update(it.id, { icon: id })}
+        library={BENEFICIOS_ICON_LIBRARY}
+        components={BENEFICIOS_ICONOS}
+        size="w-8 h-8"
+        iconSize="w-5 h-5"
+      />
+    ) : (
+      (() => {
+        const Icon = BENEFICIOS_ICONOS[it.icon] || CheckCircleIcon;
+        return <Icon className="w-8 h-8" style={{ color: accent }} />;
+      })()
+    );
+
+  // "grid" — tarjetas con borde en 2/4 columnas, para cuando esta sección
+  // hace de listado de servicios propiamente dicho (no una fila angosta de
+  // confianza a media página). Mismo contenido, más presencia visual.
+  if (variant === 'grid') {
+    return (
+      <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
+        {heading}
+        <div className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-4 gap-4">
+          {items.map((it) => (
+            <div key={it.id} className="relative border p-5 flex flex-col gap-2" style={{ borderColor: palette.line }}>
               {editable && (
                 <button
                   type="button"
                   onClick={() => remove(it.id)}
                   aria-label={`Quitar ${it.titulo}`}
-                  className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
+                  className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
                   style={{ color: palette.ink }}
                 >
-                  <XIcon className="w-4 h-4" />
+                  <XIcon className="w-3.5 h-3.5" />
                 </button>
               )}
-              <Icon className="w-8 h-8 mb-3" style={{ color: accent }} />
+              <div className="mb-1">{iconSlot(it)}</div>
               <Editable
                 editable={editable}
                 value={it.titulo}
@@ -8537,7 +8700,7 @@ function SeccionBeneficios({
                 styleKey={`beneficio.${it.id}.titulo`}
                 placeholder="Título"
                 style={{ color: palette.ink }}
-                className="font-semibold text-sm mb-1"
+                className="font-semibold text-sm"
                 maxLength={50}
               />
               <Editable
@@ -8554,8 +8717,73 @@ function SeccionBeneficios({
                 maxLength={140}
               />
             </div>
-          );
-        })}
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-4 text-sm font-semibold"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar
+            </button>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // "fila" (default): puntos clave separados por líneas verticales, pensada
+  // como franja angosta de confianza a media página.
+  return (
+    <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
+      {heading}
+      <div className="max-w-5xl mx-auto flex flex-wrap @lg:flex-nowrap gap-8">
+        {items.map((it, i) => (
+          <div
+            key={it.id}
+            className="relative flex-1 min-w-[160px] @lg:pl-8"
+            style={i > 0 ? { borderLeft: `1px solid ${palette.line}` } : undefined}
+          >
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(it.id)}
+                aria-label={`Quitar ${it.titulo}`}
+                className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
+                style={{ color: palette.ink }}
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            )}
+            <div className="mb-3">{iconSlot(it)}</div>
+            <Editable
+              editable={editable}
+              value={it.titulo}
+              onChange={(v) => update(it.id, { titulo: v })}
+              tag="p"
+              block
+              styleKey={`beneficio.${it.id}.titulo`}
+              placeholder="Título"
+              style={{ color: palette.ink }}
+              className="font-semibold text-sm mb-1"
+              maxLength={50}
+            />
+            <Editable
+              editable={editable}
+              value={it.desc}
+              onChange={(v) => update(it.id, { desc: v })}
+              tag="p"
+              block
+              multiline
+              styleKey={`beneficio.${it.id}.desc`}
+              placeholder="Descripción breve"
+              style={{ color: palette.inkSoft }}
+              className="text-xs leading-relaxed"
+              maxLength={140}
+            />
+          </div>
+        ))}
         {editable && (
           <button
             type="button"
@@ -9252,6 +9480,7 @@ function SeccionAnuncio({ mensaje, onUpdateMensaje, telefono, editable, bgColor,
 // oficios y servicios a domicilio que quieren dejar claro, de un vistazo,
 // hasta dónde llegan.
 function SeccionZonas({
+  variant = 'lista',
   zonas = [],
   onUpdate,
   titulo,
@@ -9270,31 +9499,93 @@ function SeccionZonas({
   const add = () => onUpdate?.([...zonas, { id: `zona-${Date.now()}`, nombre: 'Nueva zona' }]);
   const textoSuave = textColor || 'rgba(255,255,255,0.85)';
 
+  const heading = (
+    <>
+      <Editable
+        editable={editable}
+        value={eyebrow ?? 'Zonas de cobertura'}
+        onChange={onUpdateEyebrow}
+        tag="span"
+        block
+        styleKey="zonas.eyebrow"
+        style={{ color: accent }}
+        className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+        maxLength={40}
+      />
+      <Editable
+        editable={editable}
+        value={titulo ?? 'Llegamos a estos barrios en el día'}
+        onChange={onUpdateTitulo}
+        tag="h2"
+        block
+        styleKey="zonas.titulo"
+        style={{ color: headingColor || '#ffffff' }}
+        className="font-serif text-2xl @lg:text-3xl mb-8 max-w-lg text-balance"
+        maxLength={90}
+      />
+    </>
+  );
+
+  // "chips" — barrios como pastillas sueltas (tag cloud), en vez de la
+  // grilla prolija con tilde de "lista" — se siente menos a formulario,
+  // mejor cuando son muchas zonas con nombres de largo parejo.
+  if (variant === 'chips') {
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
+        <div className="max-w-5xl mx-auto">
+          {heading}
+          <div className="flex flex-wrap gap-2.5">
+            {zonas.map((z) => (
+              <div
+                key={z.id}
+                className="relative inline-flex items-center gap-1.5 border rounded-full pl-3.5 pr-3 py-1.5"
+                style={{ borderColor: accent || 'rgba(255,255,255,0.3)' }}
+              >
+                <Editable
+                  editable={editable}
+                  value={z.nombre}
+                  onChange={(v) => update(z.id, { nombre: v })}
+                  tag="span"
+                  styleKey={`zona.${z.id}.nombre`}
+                  placeholder="Barrio o zona"
+                  style={{ color: textoSuave }}
+                  className="text-sm"
+                  maxLength={30}
+                />
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => remove(z.id)}
+                    aria-label={`Quitar ${z.nombre}`}
+                    className="opacity-40 hover:opacity-100 transition-opacity"
+                    style={{ color: textoSuave }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full border-2 border-dashed px-3.5 py-1.5"
+                style={{ borderColor: 'rgba(255,255,255,0.25)', color: textoSuave }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" /> Agregar
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // "lista" (default): grilla prolija con tilde de check.
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
       <div className="max-w-5xl mx-auto">
-        <Editable
-          editable={editable}
-          value={eyebrow ?? 'Zonas de cobertura'}
-          onChange={onUpdateEyebrow}
-          tag="span"
-          block
-          styleKey="zonas.eyebrow"
-          style={{ color: accent }}
-          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
-          maxLength={40}
-        />
-        <Editable
-          editable={editable}
-          value={titulo ?? 'Llegamos a estos barrios en el día'}
-          onChange={onUpdateTitulo}
-          tag="h2"
-          block
-          styleKey="zonas.titulo"
-          style={{ color: headingColor || '#ffffff' }}
-          className="font-serif text-2xl @lg:text-3xl mb-8 max-w-lg text-balance"
-          maxLength={90}
-        />
+        {heading}
         <div className="grid grid-cols-2 @lg:grid-cols-5 gap-x-6 gap-y-3">
           {zonas.map((z) => (
             <div key={z.id} className="relative flex items-center gap-2">
