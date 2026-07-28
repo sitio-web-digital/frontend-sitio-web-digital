@@ -300,15 +300,15 @@ function SupportToast({ data, onVer, onClose }) {
 
 function SideNav({ section, onChange, unreadCount = 0 }) {
   return (
-    <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:px-0">
+    <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:p-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl">
       {NAV_ITEMS.map((item) => (
         <button
           key={item.id}
           onClick={() => onChange(item.id)}
-          className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 text-sm font-semibold border-l-2 transition-colors ${
+          className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             section === item.id
-              ? 'border-gold-500 bg-white/5 text-white'
-              : 'border-transparent text-ink-400 hover:text-white hover:bg-white/5'
+              ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
+              : 'text-ink-400 hover:text-white hover:bg-white/5'
           }`}
         >
           {item.label}
@@ -344,14 +344,7 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, isFree
         <p className="text-ink-400 text-sm mt-1">Así vienen tus páginas.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="border border-white/10 bg-navy-850 p-4">
-            <p className="font-display text-2xl font-bold">{k.value}</p>
-            <p className="text-xs text-ink-400 mt-0.5">{k.label}</p>
-          </div>
-        ))}
-      </div>
+      <StatStrip items={kpis} cols={3} />
 
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Tus páginas</p>
@@ -383,6 +376,30 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, isFree
   );
 }
 
+// Franja única de KPIs con divisores internos, en vez de N cajas iguales
+// repetidas — mismo dato, se lee de un vistazo en vez de escanear tarjetas
+// sueltas. En mobile se cae a un grid de celdas separadas por líneas finas
+// (truco del gap-px + fondo del contenedor) porque el cálculo de qué borde va
+// a la izquierda/arriba solo da bien cuando las columnas visibles son `cols`.
+function StatStrip({ items, cols = 3 }) {
+  const colsClass = cols === 4 ? 'sm:grid-cols-4' : cols === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3';
+  return (
+    <div className={`grid grid-cols-2 ${colsClass} gap-px sm:gap-0 bg-white/10 sm:bg-transparent sm:border sm:border-white/10 mb-8`}>
+      {items.map((k, i) => (
+        <div
+          key={k.label}
+          className={`bg-navy-850 px-5 py-4 ${i % cols !== 0 ? 'sm:border-l sm:border-white/10' : ''} ${
+            i >= cols ? 'sm:border-t sm:border-white/10' : ''
+          }`}
+        >
+          <p className="font-display text-2xl font-bold tabular-nums">{k.value ?? '—'}</p>
+          <p className="text-xs text-ink-400 mt-1">{k.label}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PageRow({ page, navigate, updateSubdomain, isFree }) {
   const status = STATUS_INFO[page.status];
   const proximoCobro =
@@ -391,7 +408,7 @@ function PageRow({ page, navigate, updateSubdomain, isFree }) {
       : null;
 
   return (
-    <div className="border border-white/10 bg-navy-850 flex flex-col sm:flex-row gap-4 p-4">
+    <div className="border border-white/10 bg-navy-850 hover:border-white/20 transition-colors flex flex-col sm:flex-row gap-4 p-4">
       <div className="w-full sm:w-40 h-24 shrink-0 overflow-hidden relative bg-white border border-white/10">
         <div className="absolute inset-0 origin-top-left scale-[0.3] w-[333%] pointer-events-none">
           <SitePreview
@@ -578,7 +595,7 @@ function SubscriptionRow({ page, setPublished, saveSiteToBackend, navigate, isFr
   };
 
   return (
-    <div className="border border-white/10 bg-navy-900 px-4 py-3">
+    <div className="border border-white/10 bg-navy-900 hover:border-white/20 transition-colors px-4 py-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -669,7 +686,7 @@ function SoporteSection({ tickets, onOpenNew, currentUserId, unreadIds = [] }) {
           {tickets.map((t) => {
             const isOpen = expandedId === t.id;
             return (
-              <div key={t.id} className="border border-white/10 bg-navy-900">
+              <div key={t.id} className="border border-white/10 bg-navy-900 hover:border-white/20 transition-colors">
                 <button
                   onClick={() => setExpandedId(isOpen ? null : t.id)}
                   className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
@@ -972,16 +989,20 @@ function DomainEditor({ page, updateSubdomain }) {
   );
 }
 
-// Chrome compartido por las secciones de Suscripción/Configuración: franja
-// oscura con título (mismo patrón que el header de AuthGate).
+// Chrome compartido por las secciones de Suscripción/Configuración: título
+// con un tilde de acento en vez de la franja oscura de header que se repetía
+// en cada panel — mismo borde, menos "plantilla de admin genérica".
 function Panel({ title, action, children }) {
   return (
-    <div className="border border-white/10 bg-navy-850 overflow-hidden">
-      <div className="bg-navy-950 border-b border-white/8 px-5 py-3.5 flex items-center justify-between gap-3">
-        <span className="text-white font-semibold text-sm">{title}</span>
+    <section className="border border-white/10 bg-navy-850">
+      <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
+        <h2 className="font-display text-base font-bold text-white flex items-center gap-2.5">
+          <span className="w-1 h-4 bg-gold-500 rounded-full shrink-0" />
+          {title}
+        </h2>
         {action}
       </div>
-      <div className="p-5">{children}</div>
-    </div>
+      <div className="px-5 pb-5">{children}</div>
+    </section>
   );
 }

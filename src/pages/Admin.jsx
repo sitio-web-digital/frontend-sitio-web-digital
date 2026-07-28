@@ -2,21 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import {
-  GlobeIcon,
-  TagIcon,
-  HelpCircleIcon,
-  TrendUpIcon,
-  SearchIcon,
-  UsersIcon,
-  PlusIcon,
-  XIcon,
-  PhoneCallIcon,
-  DownloadIcon,
-  LayoutIcon,
-  EyeIcon,
-  EyeOffIcon,
-} from '../components/icons';
+import { SearchIcon, PlusIcon, XIcon, DownloadIcon, EyeIcon, EyeOffIcon } from '../components/icons';
 import { useApp } from '../context/AppContext';
 import {
   apiAdminSummary,
@@ -359,15 +345,15 @@ function AdminHeader({ user, logout, navigate }) {
 
 function SideNav({ section, onChange, unreadCount = 0 }) {
   return (
-    <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:px-0">
+    <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:p-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl">
       {NAV_ITEMS.map((item) => (
         <button
           key={item.id}
           onClick={() => onChange(item.id)}
-          className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 text-sm font-semibold border-l-2 transition-colors ${
+          className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             section === item.id
-              ? 'border-gold-500 bg-white/5 text-white'
-              : 'border-transparent text-ink-400 hover:text-white hover:bg-white/5'
+              ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
+              : 'text-ink-400 hover:text-white hover:bg-white/5'
           }`}
         >
           {item.label}
@@ -415,14 +401,13 @@ function ResumenSection({ summary, tickets }) {
   const ingresoMensual = (summary?.paidSites ?? 0) * PLAN.precio;
 
   const kpis = [
-    { label: 'Cuentas registradas', value: summary?.totalUsers, icon: GlobeIcon },
-    { label: 'Suscripciones activas', value: summary?.publishedSites, icon: TrendUpIcon },
+    { label: 'Cuentas registradas', value: summary?.totalUsers },
+    { label: 'Suscripciones activas', value: summary?.publishedSites },
     {
       label: 'Ingreso mensual estimado',
       value: summary ? `$${ingresoMensual.toLocaleString('es-AR')}` : undefined,
-      icon: TagIcon,
     },
-    { label: 'Consultas de soporte', value: summary?.totalTickets, icon: HelpCircleIcon },
+    { label: 'Consultas de soporte', value: summary?.totalTickets },
   ];
 
   return (
@@ -432,17 +417,7 @@ function ResumenSection({ summary, tickets }) {
         <p className="text-ink-400 text-sm mt-1">KPIs generales de SitioWeb Digital.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="border border-white/10 bg-navy-850 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <k.icon className="w-4 h-4 text-gold-500" />
-            </div>
-            <p className="font-display text-2xl font-bold">{k.value ?? '—'}</p>
-            <p className="text-xs text-ink-400 mt-0.5">{k.label}</p>
-          </div>
-        ))}
-      </div>
+      <StatStrip items={kpis} cols={4} />
 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-3">Últimas consultas</p>
       {tickets.length === 0 ? (
@@ -450,7 +425,7 @@ function ResumenSection({ summary, tickets }) {
       ) : (
         <div className="space-y-2">
           {tickets.slice(0, 3).map((t) => (
-            <div key={t.id} className="border border-white/10 bg-navy-850 px-4 py-3">
+            <div key={t.id} className="border border-white/10 bg-navy-850 hover:border-white/20 transition-colors px-4 py-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold truncate">{t.asunto}</p>
                 <span className="text-xs text-ink-500 shrink-0">{t.userEmail}</span>
@@ -460,6 +435,28 @@ function ResumenSection({ summary, tickets }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Franja única de KPIs con divisores internos, en vez de N cajas iguales
+// repetidas — mismo componente que Dashboard.jsx > StatStrip (ver ahí el
+// comentario sobre el fallback mobile con gap-px).
+function StatStrip({ items, cols = 3 }) {
+  const colsClass = cols === 4 ? 'sm:grid-cols-4' : cols === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3';
+  return (
+    <div className={`grid grid-cols-2 ${colsClass} gap-px sm:gap-0 bg-white/10 sm:bg-transparent sm:border sm:border-white/10 mb-8`}>
+      {items.map((k, i) => (
+        <div
+          key={k.label}
+          className={`bg-navy-850 px-5 py-4 ${i % cols !== 0 ? 'sm:border-l sm:border-white/10' : ''} ${
+            i >= cols ? 'sm:border-t sm:border-white/10' : ''
+          }`}
+        >
+          <p className="font-display text-2xl font-bold tabular-nums">{k.value ?? '—'}</p>
+          <p className="text-xs text-ink-400 mt-1">{k.label}</p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -480,7 +477,7 @@ export function AnalyticsSection() {
 
   if (!analytics) {
     return (
-      <Panel icon={<TrendUpIcon className="w-4 h-4 text-gold-500" />} title="Analytics">
+      <Panel title="Analytics">
         <p className="text-sm text-ink-400">Cargando datos...</p>
       </Panel>
     );
@@ -509,20 +506,14 @@ export function AnalyticsSection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <div className="border border-white/10 bg-navy-850 p-4">
-          <p className="font-display text-2xl font-bold">{totalSessions}</p>
-          <p className="text-xs text-ink-400 mt-0.5">Sesiones registradas</p>
-        </div>
-        <div className="border border-white/10 bg-navy-850 p-4">
-          <p className="font-display text-2xl font-bold">{funnel[funnel.length - 1]?.count ?? 0}</p>
-          <p className="text-xs text-ink-400 mt-0.5">Páginas publicadas (del embudo)</p>
-        </div>
-        <div className="border border-white/10 bg-navy-850 p-4">
-          <p className="font-display text-2xl font-bold">{conversionTotal}%</p>
-          <p className="text-xs text-ink-400 mt-0.5">Conversión landing → publicada</p>
-        </div>
-      </div>
+      <StatStrip
+        items={[
+          { label: 'Sesiones registradas', value: totalSessions },
+          { label: 'Páginas publicadas (del embudo)', value: funnel[funnel.length - 1]?.count ?? 0 },
+          { label: 'Conversión landing → publicada', value: `${conversionTotal}%` },
+        ]}
+        cols={3}
+      />
 
       <div className="border border-white/10 bg-navy-850 p-6 mb-6">
         <h2 className="font-display font-semibold mb-0.5">Sesiones por día</h2>
@@ -637,7 +628,7 @@ export function AnalyticsSection() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Panel icon={<TrendUpIcon className="w-4 h-4 text-gold-500" />} title="Botones más tocados">
+        <Panel title="Botones más tocados">
           {topClicks.length === 0 ? (
             <p className="text-sm text-ink-400">Todavía no hay clics registrados.</p>
           ) : (
@@ -652,7 +643,7 @@ export function AnalyticsSection() {
           )}
         </Panel>
 
-        <Panel icon={<GlobeIcon className="w-4 h-4 text-gold-500" />} title="Páginas más vistas">
+        <Panel title="Páginas más vistas">
           {topPages.length === 0 ? (
             <p className="text-sm text-ink-400">Todavía no hay vistas registradas.</p>
           ) : (
@@ -790,7 +781,7 @@ export function LeadsSection() {
   const totalPages = Math.max(1, Math.ceil(total / LEADS_PAGE_SIZE));
 
   return (
-    <Panel icon={<PhoneCallIcon className="w-4 h-4 text-gold-500" />} title="Leads del quiz">
+    <Panel title="Leads del quiz">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
         <p className="text-sm text-ink-400 max-w-2xl">
           Lo que cada visitante va completando en el quiz — negocio, rubro, necesidad y teléfono si lo llega a dejar —
@@ -844,7 +835,7 @@ export function LeadsSection() {
               </thead>
               <tbody>
                 {leads.map((l) => (
-                  <tr key={l.id} className="border-b border-white/5">
+                  <tr key={l.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                     <td className="py-2.5 pr-4 font-semibold">{l.nombreNegocio || '—'}</td>
                     <td className="py-2.5 pr-4 text-ink-300">{l.rubro || '—'}</td>
                     <td className="py-2.5 pr-4 text-ink-300 font-mono">{l.telefono || '—'}</td>
@@ -931,7 +922,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
 
   return (
     <div className="space-y-6">
-      <Panel icon={<LayoutIcon className="w-4 h-4 text-gold-500" />} title="Plantillas creadas por el admin">
+      <Panel title="Plantillas creadas por el admin">
         <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
           <p className="text-sm text-ink-400 max-w-2xl">
             Te lleva directo al editor con una página completamente vacía — armala sección por sección con el
@@ -964,7 +955,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
               </thead>
               <tbody>
                 {templates.map((t) => (
-                  <tr key={t.id} className="border-b border-white/5">
+                  <tr key={t.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                     <td className="py-2.5 pr-4 font-semibold">{t.nombre}</td>
                     <td className="py-2.5 pr-4 text-ink-300">
                       {(t.rubros || [])
@@ -1023,7 +1014,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
         )}
       </Panel>
 
-      <Panel icon={<TagIcon className="w-4 h-4 text-gold-500" />} title="Rubros creados">
+      <Panel title="Rubros creados">
         <p className="text-sm text-ink-400 mb-4">
           Además de los 6 de fábrica (gastronomía, belleza, oficios, comercio, salud, otro) — se crean desde el
           mismo modal de "Guardar como plantilla" en el editor.
@@ -1033,7 +1024,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
         ) : (
           <div className="space-y-2">
             {rubros.map((r) => (
-              <div key={r.id} className="flex items-center justify-between gap-3 border border-white/10 bg-navy-900 px-4 py-2.5">
+              <div key={r.id} className="flex items-center justify-between gap-3 border border-white/10 bg-navy-900 hover:border-white/20 transition-colors px-4 py-2.5">
                 <span className="inline-flex items-center gap-2 text-sm">
                   <span className="font-semibold text-white">{r.label}</span>
                   <span
@@ -1073,7 +1064,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish }) {
     : sites;
 
   return (
-    <Panel icon={<GlobeIcon className="w-4 h-4 text-gold-500" />} title="Todas las páginas">
+    <Panel title="Todas las páginas">
       <div className="relative mb-4 max-w-sm">
         <SearchIcon className="w-4 h-4 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
@@ -1101,7 +1092,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish }) {
             </thead>
             <tbody>
               {filtered.map((s) => (
-                <tr key={s.id} className="border-b border-white/5">
+                <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                   <td className="py-2.5 pr-4 font-mono text-ink-400">{s.id}</td>
                   <td className="py-2.5 pr-4 font-semibold">{s.nombre || '—'}</td>
                   <td className="py-2.5 pr-4 text-ink-300">
@@ -1176,7 +1167,7 @@ function SuscripcionesSection({ subscriptions }) {
   const total = subscriptions.filter((s) => (s.freeSubscriptions ?? 0) <= 0).length * PLAN.precio;
 
   return (
-    <Panel icon={<TagIcon className="w-4 h-4 text-gold-500" />} title="Suscripciones activas">
+    <Panel title="Suscripciones activas">
       <p className="text-sm text-ink-300 mb-1">
         {PLAN.nombre} — ${PLAN.precio.toLocaleString('es-AR')} {PLAN.moneda}/{PLAN.ciclo} por página publicada.
       </p>
@@ -1202,7 +1193,7 @@ function SuscripcionesSection({ subscriptions }) {
               {subscriptions.map((s) => {
                 const isFree = (s.freeSubscriptions ?? 0) > 0;
                 return (
-                  <tr key={s.id} className="border-b border-white/5">
+                  <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                     <td className="py-2.5 pr-4 font-semibold">{s.nombre || '—'}</td>
                     <td className="py-2.5 pr-4 text-ink-300">{s.email}</td>
                     <td className="py-2.5 pr-4 text-ink-500">
@@ -1257,7 +1248,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete }) 
   };
 
   return (
-    <Panel icon={<UsersIcon className="w-4 h-4 text-gold-500" />} title="Usuarios">
+    <Panel title="Usuarios">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-ink-400">
           Creá cuentas directo (por ejemplo para clientes de prueba) y asigná suscripciones gratuitas.
@@ -1399,7 +1390,7 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete }) {
   };
 
   return (
-    <tr className="border-b border-white/5">
+    <tr className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
       <td className="py-2.5 pr-4 font-semibold">{u.name}</td>
       <td className="py-2.5 pr-4 text-ink-300">{u.email}</td>
       <td className="py-2.5 pr-4">
@@ -1471,7 +1462,7 @@ function SoporteSection({ tickets, currentUserId, unreadIds = [], onTicketUpdate
   const [expandedId, setExpandedId] = useState(null);
 
   return (
-    <Panel icon={<HelpCircleIcon className="w-4 h-4 text-gold-500" />} title="Todas las consultas de soporte">
+    <Panel title="Todas las consultas de soporte">
       {tickets.length === 0 ? (
         <p className="text-sm text-ink-400">Todavía no hay consultas de soporte.</p>
       ) : (
@@ -1479,7 +1470,7 @@ function SoporteSection({ tickets, currentUserId, unreadIds = [], onTicketUpdate
           {tickets.map((t) => {
             const isOpen = expandedId === t.id;
             return (
-              <div key={t.id} className="border border-white/10 bg-navy-900">
+              <div key={t.id} className="border border-white/10 bg-navy-900 hover:border-white/20 transition-colors">
                 <button
                   onClick={() => setExpandedId(isOpen ? null : t.id)}
                   className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
@@ -1596,10 +1587,10 @@ function VersionModal({ entry, onClose, onVerTodas }) {
 // versión nueva.
 function VersionesSection() {
   return (
-    <Panel icon={<LayoutIcon className="w-4 h-4 text-gold-500" />} title="Versiones">
+    <Panel title="Versiones">
       <div className="space-y-6">
         {CHANGELOG.map((entry) => (
-          <div key={entry.version} className="border border-white/10 bg-navy-900 p-4">
+          <div key={entry.version} className="border border-white/10 bg-navy-900 hover:border-white/20 transition-colors p-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="font-display font-bold text-white">v{entry.version}</span>
               <span className="text-xs text-ink-500">
@@ -1725,14 +1716,20 @@ function DownloadReportButton({ onDownload, label }) {
   );
 }
 
-function Panel({ icon, title, children }) {
+// Título con un tilde de acento en vez de la franja oscura de header que se
+// repetía en cada panel (mismo tratamiento que Dashboard.jsx > Panel, para
+// que los dos paneles internos se sientan parte del mismo sistema).
+function Panel({ title, action, children }) {
   return (
-    <div className="border border-white/10 bg-navy-850 overflow-hidden">
-      <div className="bg-navy-950 border-b border-white/8 px-5 py-3.5 flex items-center gap-2">
-        {icon}
-        <span className="text-white font-semibold text-sm">{title}</span>
+    <section className="border border-white/10 bg-navy-850">
+      <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
+        <h2 className="font-display text-base font-bold text-white flex items-center gap-2.5">
+          <span className="w-1 h-4 bg-gold-500 rounded-full shrink-0" />
+          {title}
+        </h2>
+        {action}
       </div>
-      <div className="p-5">{children}</div>
-    </div>
+      <div className="px-5 pb-5">{children}</div>
+    </section>
   );
 }
