@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.8.2',
+    date: '2026-07-29',
+    changes: [
+      { type: 'nuevo', text: 'Admin > Plantillas: ahora también se listan las plantillas de fábrica (incluida Estudio Lumen), marcadas como "De fábrica" — antes solo se veían las creadas por un admin, y no había forma de confirmar desde acá que las de fábrica existían.' },
+    ],
+  },
+  {
     version: '1.8.1',
     date: '2026-07-29',
     changes: [

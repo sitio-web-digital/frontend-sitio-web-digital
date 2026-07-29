@@ -25,7 +25,7 @@ import {
   apiAdminGetSupportUnread,
   apiAdminMarkSupportSeen,
 } from '../api/client';
-import { PLAN } from '../data/mockData';
+import { PLAN, TEMPLATES, RUBROS } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
 import SupportThread from '../components/support/SupportThread';
 
@@ -920,13 +920,27 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
     navigate('/editor');
   };
 
+  // Las de fábrica (TEMPLATES, mockData.js) no viven en la base — no tienen
+  // fecha de creación real ni un estado publicado/borrador que administrar
+  // acá, y "Editar" no aplica porque no hay ninguna fila de base de datos
+  // que abrir. Se muestran igual en esta misma tabla (antes solo se veían
+  // en la Galería del quiz, y no quedaba claro que existían) pero con esas
+  // tres columnas apagadas en vez de con botones que no harían nada.
+  const filas = [
+    ...templates.map((t) => ({ ...t, esDeFabrica: false })),
+    ...TEMPLATES.map((t) => ({ id: t.id, nombre: t.nombre, rubros: t.rubros, esDeFabrica: true })),
+  ];
+  const rubroLabels = [...rubros, ...RUBROS];
+
   return (
     <div className="space-y-6">
       <Panel title="Plantillas creadas por el admin">
         <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
           <p className="text-sm text-ink-400 max-w-2xl">
             Te lleva directo al editor con una página completamente vacía — armala sección por sección con el
-            mismo "+" de agregar contenido, y guardala con "Guardar como plantilla" cuando esté lista.
+            mismo "+" de agregar contenido, y guardala con "Guardar como plantilla" cuando esté lista. Las de
+            fábrica (fila gris, "De fábrica") vienen con el código y se ven igual en la Galería del quiz, pero no
+            se administran desde acá.
           </p>
           <button
             onClick={crearDesdeCero}
@@ -936,33 +950,39 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
           </button>
         </div>
         {editError && <p className="text-sm text-red-400 mb-3">{editError}</p>}
-        {templates.length === 0 ? (
-          <p className="text-sm text-ink-400">
-            Todavía no hay ninguna. Tocá "Crear nueva plantilla" arriba y empezá a agregar secciones — después usá
-            "Guardar como plantilla" en el editor.
+        {templates.length === 0 && (
+          <p className="text-sm text-ink-400 mb-4">
+            Todavía no creaste ninguna propia. Tocá "Crear nueva plantilla" arriba y empezá a agregar secciones —
+            después usá "Guardar como plantilla" en el editor.
           </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
-                  <th className="pb-2 pr-4 font-semibold">Nombre</th>
-                  <th className="pb-2 pr-4 font-semibold">Rubros</th>
-                  <th className="pb-2 pr-4 font-semibold">Estado</th>
-                  <th className="pb-2 pr-4 font-semibold">Creada</th>
-                  <th className="pb-2 font-semibold text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {templates.map((t) => (
-                  <tr key={t.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                    <td className="py-2.5 pr-4 font-semibold">{t.nombre}</td>
-                    <td className="py-2.5 pr-4 text-ink-300">
-                      {(t.rubros || [])
-                        .map((rId) => rubros.find((r) => r.id === rId)?.label || rId)
-                        .join(', ') || '—'}
-                    </td>
-                    <td className="py-2.5 pr-4">
+        )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
+                <th className="pb-2 pr-4 font-semibold">Nombre</th>
+                <th className="pb-2 pr-4 font-semibold">Rubros</th>
+                <th className="pb-2 pr-4 font-semibold">Estado</th>
+                <th className="pb-2 pr-4 font-semibold">Creada</th>
+                <th className="pb-2 font-semibold text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filas.map((t) => (
+                <tr key={`${t.esDeFabrica ? 'fabrica' : 'admin'}-${t.id}`} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                  <td className="py-2.5 pr-4 font-semibold">{t.nombre}</td>
+                  <td className="py-2.5 pr-4 text-ink-300">
+                    {(t.rubros || [])
+                      .map((rId) => rubroLabels.find((r) => r.id === rId)?.label || rId)
+                      .join(', ') || '—'}
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    {t.esDeFabrica ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-ink-400" />
+                        De fábrica
+                      </span>
+                    ) : (
                       <span
                         className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
                           t.published ? 'text-emerald-400' : 'text-ink-400'
@@ -971,11 +991,15 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
                         <span className={`w-1.5 h-1.5 rounded-full ${t.published ? 'bg-emerald-400' : 'bg-white/20'}`} />
                         {t.published ? 'Publicada' : 'Borrador'}
                       </span>
-                    </td>
-                    <td className="py-2.5 pr-4 text-ink-500">
-                      {new Date(t.createdAt).toLocaleDateString('es-AR')}
-                    </td>
-                    <td className="py-2.5 text-right">
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-4 text-ink-500">
+                    {t.esDeFabrica ? '—' : new Date(t.createdAt).toLocaleDateString('es-AR')}
+                  </td>
+                  <td className="py-2.5 text-right">
+                    {t.esDeFabrica ? (
+                      <span className="text-xs text-ink-500 italic">Vive en el código, no se edita acá</span>
+                    ) : (
                       <div className="flex flex-wrap justify-end gap-2">
                         <button
                           onClick={() => editar(t.id)}
@@ -1005,13 +1029,13 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
                           Borrar
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Panel>
 
       <Panel title="Rubros creados">
