@@ -141,16 +141,12 @@ export function AppProvider({ children }) {
   const templates = useMemo(() => [...TEMPLATES, ...customTemplates], [customTemplates]);
   const rubros = useMemo(() => [...RUBROS, ...customRubros], [customRubros]);
   // Lo que se le OFRECE a quien tiene que elegir plantilla (galería, quiz):
-  // solo las creadas desde el editor por el admin, para que el catálogo real
-  // sea el que se ve. `templates` (con las de fábrica incluidas) se sigue
-  // usando para resolver sitios ya existentes que quedaron con una plantilla
-  // de fábrica, así no se rompen al cargarlos. Si todavía no hay ninguna
-  // plantilla propia publicada, mostramos las de fábrica como respaldo para
-  // no dejar la galería vacía.
-  const selectableTemplates = useMemo(
-    () => (customTemplates.length > 0 ? customTemplates : TEMPLATES),
-    [customTemplates]
-  );
+  // fábrica + las creadas desde el editor por el admin, siempre las dos
+  // juntas (mismo orden que `templates`, fábrica primero). Antes, apenas
+  // existía una plantilla propia, tapaba el catálogo de fábrica entero —
+  // eso escondía plantillas de fábrica nuevas (ej. Estudio Lumen) sin que
+  // se notara por qué.
+  const selectableTemplates = templates;
 
   // Cada vez que cambia el logo (en el quiz o después, desde el editor) se
   // recalcula automáticamente una paleta de colores a partir de él, para

@@ -10,10 +10,9 @@ import { recomendarPlantillaPorTexto, recomendarPlantillaPorTags } from '../data
 export default function Gallery() {
   const { quiz, selectableTemplates, rubros, chooseTemplate, logoUrl } = useApp();
   const navigate = useNavigate();
-  // Solo se ofrecen las plantillas creadas desde el editor (las de fábrica
-  // quedan de respaldo únicamente si todavía no hay ninguna propia, ver
-  // `selectableTemplates` en AppContext) — así el catálogo que ve la gente
-  // es siempre el real, no el de ejemplo del prototipo.
+  // Se ofrecen las plantillas de fábrica y las creadas desde el editor,
+  // siempre juntas (ver `selectableTemplates` en AppContext) — antes, apenas
+  // existía una plantilla propia, tapaba el catálogo de fábrica entero.
   //
   // `quiz.tipoNegocio` es texto libre (lo que haya escrito en el paso 2, no
   // un id fijo) — antes acá se buscaba por id exacto contra TIPOS_NEGOCIO,

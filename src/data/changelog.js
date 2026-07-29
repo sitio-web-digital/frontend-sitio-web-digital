@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.8.1',
+    date: '2026-07-29',
+    changes: [
+      { type: 'fix', text: 'Galería de plantillas: las de fábrica (incluida Estudio Lumen) ya no quedan ocultas apenas existe una plantilla propia creada por un admin — ahora se muestran siempre las dos juntas.' },
+    ],
+  },
+  {
     version: '1.8.0',
     date: '2026-07-29',
     changes: [
