@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.9.1',
+    date: '2026-07-29',
+    changes: [
+      { type: 'nuevo', text: 'Portada (Hero, distribución "Imagen de fondo"): se le puede poner una frase corta al lado de los botones (ej: "14 años · 400+ sesiones").' },
+      { type: 'nuevo', text: 'Precios y planes: un plan puede mostrar un precio de texto libre (ej: "A medida") en vez de un monto fijo.' },
+      { type: 'nuevo', text: 'Testimonios: cada uno puede llevar un cargo o contexto corto debajo del nombre (ej: "Directora de arte").' },
+      { type: 'fix', text: 'Menciones/marquee: se agregó el separador "·" entre menciones, como en el diseño original.' },
+    ],
+  },
+  {
     version: '1.9.0',
     date: '2026-07-29',
     changes: [

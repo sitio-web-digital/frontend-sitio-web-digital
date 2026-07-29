@@ -4467,29 +4467,41 @@ function SeccionHero({
             style={{ color: textColor || 'rgba(255,255,255,0.82)' }}
             className="text-base @lg:text-lg leading-relaxed mb-8 text-balance"
           />
-          <div className="flex flex-wrap items-center gap-3">
-            {HERO_BUTTON_SLOTS.map((slot, idx) => {
-              const v = botonesData[slot.key];
-              const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
-              if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
-              return (
-                <ButtonObject
-                  key={slot.key}
-                  value={v}
-                  onChange={(patch) =>
-                    onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
-                  }
-                  editable={editable}
-                  seccionesDisponibles={seccionesDisponibles}
-                  nombreNegocio={nombreNegocio}
-                  defaultFuncion={slot.defaultFuncion}
-                  defaultLabel={slot.defaultLabel}
-                  defaultColor={idx === 0 ? accent : '#ffffff'}
-                  defaultTarget={defaultTarget}
-                  outline={idx > 0}
-                />
-              );
-            })}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {HERO_BUTTON_SLOTS.map((slot, idx) => {
+                const v = botonesData[slot.key];
+                const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
+                if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+                return (
+                  <ButtonObject
+                    key={slot.key}
+                    value={v}
+                    onChange={(patch) =>
+                      onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
+                    }
+                    editable={editable}
+                    seccionesDisponibles={seccionesDisponibles}
+                    nombreNegocio={nombreNegocio}
+                    defaultFuncion={slot.defaultFuncion}
+                    defaultLabel={slot.defaultLabel}
+                    defaultColor={idx === 0 ? accent : '#ffffff'}
+                    defaultTarget={defaultTarget}
+                    outline={idx > 0}
+                  />
+                );
+              })}
+            </div>
+            <Editable
+              editable={editable}
+              value={caption}
+              onChange={onUpdateCaption}
+              tag="span"
+              placeholder="Frase corta (ej: 14 años · 400+ sesiones)"
+              maxLength={60}
+              style={{ color: 'rgba(255,255,255,0.55)' }}
+              className="font-mono text-xs @lg:text-sm"
+            />
           </div>
           {editable && (
             <label className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer">
@@ -6247,6 +6259,17 @@ function TestimonioCard({ t, editable, onUpdate, onRemove, accent, palette = {} 
               {t.verificado ? `Reseña verificada${t.fuente ? ` · ${t.fuente === 'facebook' ? 'Facebook' : 'Google'}` : ''}` : 'Cliente'}
             </p>
           )}
+          <Editable
+            editable={editable}
+            value={t.cargo}
+            onChange={(v) => onUpdate?.({ cargo: v })}
+            tag="p"
+            block
+            placeholder="Cargo o contexto (opcional, ej: Directora de arte)"
+            style={{ color: palette.inkSoft }}
+            className="text-xs mt-0.5"
+            maxLength={40}
+          />
         </div>
       </div>
       <Editable
@@ -7468,18 +7491,32 @@ function SeccionPrecios({
                 className="font-serif text-2xl"
                 maxLength={40}
               />
-              <div className="flex items-baseline gap-1">
-                <Editable
-                  editable={editable}
-                  value={p.precio}
-                  onChange={(v) => onUpdatePlan?.(p.id, { precio: Number(v) || 0 })}
-                  tag="span"
-                  type="number"
-                  styleKey={`plan.${p.id}.precio`}
-                  format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
-                  style={{ color: palette.ink }}
-                  className="font-mono font-bold text-2xl"
-                />
+              <div className="flex items-baseline gap-1 flex-wrap">
+                {p.precioTexto ? (
+                  <Editable
+                    editable={editable}
+                    value={p.precioTexto}
+                    onChange={(v) => onUpdatePlan?.(p.id, { precioTexto: v })}
+                    tag="span"
+                    styleKey={`plan.${p.id}.precioTexto`}
+                    placeholder="Ej: A medida"
+                    style={{ color: palette.ink }}
+                    className="font-mono font-bold text-2xl"
+                    maxLength={20}
+                  />
+                ) : (
+                  <Editable
+                    editable={editable}
+                    value={p.precio}
+                    onChange={(v) => onUpdatePlan?.(p.id, { precio: Number(v) || 0 })}
+                    tag="span"
+                    type="number"
+                    styleKey={`plan.${p.id}.precio`}
+                    format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                    style={{ color: palette.ink }}
+                    className="font-mono font-bold text-2xl"
+                  />
+                )}
                 <span className="text-sm inline-flex items-baseline" style={{ color: palette.inkSoft }}>
                   /
                   <Editable
@@ -7492,6 +7529,17 @@ function SeccionPrecios({
                     maxLength={20}
                   />
                 </span>
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdatePlan?.(p.id, p.precioTexto ? { precioTexto: undefined } : { precioTexto: 'A medida' })
+                    }
+                    className="text-[10px] underline decoration-dotted opacity-60 hover:opacity-100 transition-opacity ml-1"
+                  >
+                    {p.precioTexto ? 'Usar precio numérico' : 'Usar texto libre'}
+                  </button>
+                )}
               </div>
               <ul className="flex flex-col gap-1.5 flex-1">
                 {(p.features || []).map((f, i) => (
@@ -10017,7 +10065,7 @@ function SeccionMarquee({ mensajes = [], onUpdate, editable, bgColor, textColor,
             className="text-base font-semibold px-8 whitespace-nowrap shrink-0"
             style={{ color: textoSuave }}
           >
-            {m.texto}
+            {m.texto} ·
           </span>
         ))}
       </div>
