@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.9.0',
+    date: '2026-07-29',
+    changes: [
+      { type: 'fix', text: 'Estudio Lumen pasó a ser una plantilla real y editable (como cualquier otra creada desde "Guardar como plantilla") en vez de una entrada fija en el código — ahora aparece en Admin > Plantillas con sus botones de Editar/Despublicar/Borrar, igual que las demás.' },
+      { type: 'nuevo', text: 'Las plantillas ahora pueden llevar su propia paleta completa (fondo/texto/bordes), no solo un color de acento — necesario para que Estudio Lumen mantenga su fondo oscuro siendo una plantilla real de base de datos.' },
+    ],
+  },
+  {
     version: '1.8.2',
     date: '2026-07-29',
     changes: [
