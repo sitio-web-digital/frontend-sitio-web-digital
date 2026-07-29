@@ -284,6 +284,26 @@ export default function SitePreview({
   // sitio (ej. la galería de plantillas de ejemplo).
   const cart = useCart(template && siteData ? `${template.id}-${slugify(siteData.nombreNegocio || '')}` : null);
 
+  // Algunas plantillas (ej. Estudio Lumen) traen su propia tipografía además
+  // de su propia paleta — se inyecta la hoja de Google Fonts una sola vez por
+  // plantilla (mismo patrón que importGoogleFont en AppContext) y se pisan
+  // las variables --font-serif/--font-mono/--font-editorial en el wrapper de
+  // acá abajo, así todas las clases font-serif/font-mono ya existentes en
+  // cada sección heredan la fuente propia de la plantilla sin tocar el resto
+  // de la app (esas variables son globales por default, ver src/index.css).
+  const fontsOverride = template?.paletteOverride?.fonts;
+  useEffect(() => {
+    if (!fontsOverride?.googleFontsHref) return;
+    const id = `tpl-fonts-${template.id}`;
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = fontsOverride.googleFontsHref;
+      document.head.appendChild(link);
+    }
+  }, [template?.id, fontsOverride?.googleFontsHref]);
+
   if (!template || !siteData) return null;
   const accent = theme?.accent ?? template.accent;
   // Escala neutra ink/inkSoft/bg/line — a diferencia de accent/accentSoft, no
@@ -356,7 +376,18 @@ export default function SitePreview({
     <TextStyleCtx.Provider value={{ textStyles, onSetTextStyle }}>
     <div
       className="@container font-editorial"
-      style={{ background: wrapperBg, color: palette.ink, fontFamily: theme?.font?.family || undefined }}
+      style={{
+        background: wrapperBg,
+        color: palette.ink,
+        fontFamily: theme?.font?.family || undefined,
+        ...(fontsOverride
+          ? {
+              '--font-serif': fontsOverride.serif,
+              '--font-mono': fontsOverride.mono,
+              '--font-editorial': fontsOverride.editorial,
+            }
+          : {}),
+      }}
     >
       {/* Zona reordenable: "+" entre cada bloque para insertar exactamente ahí,
           o (mientras se arrastra una sección) una línea que marca dónde caería */}
@@ -4425,37 +4456,54 @@ function SeccionHero({
   // quieren abrir con una foto grande (locales, obras, viandas).
   if (variant === 'fondo') {
     const heroImg = heroImagen || galeria?.[0];
-    const fondoStyle = heroImg
-      ? {
-          backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.4) 60%, rgba(0,0,0,.15) 100%), url(${heroImg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }
-      : { background: palette.ink };
+    const easeLumen = [0.16, 1, 0.3, 1];
     return (
-      <section className="relative overflow-hidden px-6 @lg:px-10 py-20 @lg:py-32" style={fondoStyle}>
-        <div className="max-w-2xl">
-          <Editable
-            editable={editable}
-            value={rubroLabel}
-            onChange={field('rubroLabel')}
-            tag="span"
-            block
-            styleKey="hero.rubroLabel"
-            style={{ color: accent }}
-            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+      <section className="relative overflow-hidden px-6 @lg:px-10 py-20 @lg:py-32">
+        {heroImg ? (
+          <motion.div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.4) 60%, rgba(0,0,0,.15) 100%), url(${heroImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            initial={{ scale: 1.12 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 2.2, ease: easeLumen }}
           />
-          <Editable
-            editable={editable}
-            value={titulo ?? nombreNegocio}
-            onChange={onUpdateTitulo || field('nombreNegocio')}
-            tag="h1"
-            block
-            styleKey="hero.nombreNegocio"
-            placeholder="Nombre del negocio"
-            style={{ color: headingColor || '#ffffff' }}
-            className="font-serif text-4xl @lg:text-6xl leading-[1.05] tracking-tight mb-5 text-balance"
-          />
+        ) : (
+          <div className="absolute inset-0" style={{ background: palette.ink }} />
+        )}
+        <div className="relative max-w-2xl">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.9, delay: 0.2 }}>
+            <Editable
+              editable={editable}
+              value={rubroLabel}
+              onChange={field('rubroLabel')}
+              tag="span"
+              block
+              styleKey="hero.rubroLabel"
+              style={{ color: accent }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: easeLumen, delay: 0.35 }}
+          >
+            <Editable
+              editable={editable}
+              value={titulo ?? nombreNegocio}
+              onChange={onUpdateTitulo || field('nombreNegocio')}
+              tag="h1"
+              block
+              styleKey="hero.nombreNegocio"
+              placeholder="Nombre del negocio"
+              style={{ color: headingColor || '#ffffff' }}
+              className="font-serif text-4xl @lg:text-6xl leading-[1.05] tracking-tight mb-5 text-balance"
+            />
+          </motion.div>
           <Editable
             editable={editable}
             value={descripcion ?? sobreNosotros}
@@ -4467,7 +4515,12 @@ function SeccionHero({
             style={{ color: textColor || 'rgba(255,255,255,0.82)' }}
             className="text-base @lg:text-lg leading-relaxed mb-8 text-balance"
           />
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <motion.div
+            className="flex flex-wrap items-center gap-x-6 gap-y-3"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: easeLumen, delay: 0.55 }}
+          >
             <div className="flex flex-wrap items-center gap-3">
               {HERO_BUTTON_SLOTS.map((slot, idx) => {
                 const v = botonesData[slot.key];
@@ -4502,7 +4555,7 @@ function SeccionHero({
               style={{ color: 'rgba(255,255,255,0.55)' }}
               className="font-mono text-xs @lg:text-sm"
             />
-          </div>
+          </motion.div>
           {editable && (
             <label className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer">
               <ImageIcon className="w-3.5 h-3.5" /> {heroImg ? 'Cambiar fondo' : 'Agregar foto de fondo'}
@@ -6244,7 +6297,7 @@ function TestimonioCard({ t, editable, onUpdate, onRemove, accent, palette = {} 
             block
             styleKey={`testimonio.${t.id}.nombre`}
             style={{ color: palette.ink }}
-            className="text-sm font-semibold truncate"
+            className="font-serif font-semibold truncate"
           />
           {editable ? (
             <div className="flex items-center gap-0.5 mt-0.5">
@@ -6267,7 +6320,7 @@ function TestimonioCard({ t, editable, onUpdate, onRemove, accent, palette = {} 
             block
             placeholder="Cargo o contexto (opcional, ej: Directora de arte)"
             style={{ color: palette.inkSoft }}
-            className="text-xs mt-0.5"
+            className="font-mono text-xs mt-0.5"
             maxLength={40}
           />
         </div>
@@ -6609,7 +6662,7 @@ function SeccionTestimonios({
         </div>
       ) : variant === 'scroll' ? (
         <div className="max-w-6xl mx-auto -mx-6 @lg:mx-0 px-6 @lg:px-0">
-          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-3">
             {testimonios.map((t) => (
               <div key={t.id} className="shrink-0 snap-start w-[280px]">
                 <TestimonioCard
@@ -10062,7 +10115,7 @@ function SeccionMarquee({ mensajes = [], onUpdate, editable, bgColor, textColor,
         {loop.map((m, i) => (
           <span
             key={`${m.id}-${i}`}
-            className="text-base font-semibold px-8 whitespace-nowrap shrink-0"
+            className="font-serif text-base font-semibold px-8 whitespace-nowrap shrink-0"
             style={{ color: textoSuave }}
           >
             {m.texto} ·
@@ -10119,7 +10172,7 @@ function SeccionSeries({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <Reveal className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
             <Editable
               editable={editable}
@@ -10191,7 +10244,7 @@ function SeccionSeries({
               </button>
             )}
           </div>
-        </div>
+        </Reveal>
 
         {!activeItem ? (
           <p className="text-sm" style={{ color: palette.inkSoft }}>
@@ -10329,7 +10382,7 @@ function SeccionArchivo({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-wrap items-baseline justify-between gap-3 mb-8 pb-5 border-b" style={{ borderColor: palette.line }}>
+        <Reveal className="flex flex-wrap items-baseline justify-between gap-3 mb-8 pb-5 border-b" style={{ borderColor: palette.line }}>
           <Editable
             editable={editable}
             value={titulo ?? 'Archivo'}
@@ -10349,12 +10402,14 @@ function SeccionArchivo({
             className="font-mono text-xs"
             maxLength={60}
           />
-        </div>
+        </Reveal>
 
         <div className="grid grid-cols-2 @lg:grid-cols-4 auto-rows-[140px] @lg:auto-rows-[190px] gap-3">
-          {items.map((it) => (
-            <div
+          {items.map((it, idx) => (
+            <Reveal
+              as="div"
               key={it.id}
+              delay={Math.min(idx * 0.06, 0.3)}
               className="relative group/archivo overflow-hidden bg-black/5"
               style={{ gridColumn: `span ${it.colSpan || 1}`, gridRow: `span ${it.rowSpan || 1}` }}
             >
@@ -10390,7 +10445,7 @@ function SeccionArchivo({
                   <img
                     src={it.imagen}
                     alt={it.titulo}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover/archivo:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover/archivo:scale-[1.07] group-hover/archivo:brightness-110"
                   />
                 </button>
               ) : null}
@@ -10453,7 +10508,7 @@ function SeccionArchivo({
                   </button>
                 </div>
               )}
-            </div>
+            </Reveal>
           ))}
           {editable && (
             <button

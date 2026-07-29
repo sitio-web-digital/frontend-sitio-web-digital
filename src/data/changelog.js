@@ -5,6 +5,17 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.10.0',
+    date: '2026-07-29',
+    changes: [
+      { type: 'nuevo', text: 'Las plantillas ahora también pueden llevar su propia tipografía (además de su propia paleta) — necesario para que Estudio Lumen se vea con sus fuentes reales (Syne, DM Sans, JetBrains Mono) en vez de las genéricas del resto del sitio.' },
+      { type: 'fix', text: 'Estudio Lumen: se reemplazaron todas las fotos de relleno por las fotos reales de la plantilla original (portada, series y archivo).' },
+      { type: 'fix', text: 'Portada con imagen de fondo: la foto ahora hace un leve acercamiento al cargar, y el texto entra con una animación escalonada, igual que en el diseño original de Estudio Lumen.' },
+      { type: 'fix', text: 'Archivo con zoom: el efecto al pasar el mouse sobre una foto (agrandado + brillo) y la animación de entrada al hacer scroll ahora coinciden con el diseño original.' },
+      { type: 'fix', text: 'Menciones/marquee y testimonios en fila: velocidad del texto en movimiento ajustada, y se le sacó la barra de scroll visible a los testimonios.' },
+    ],
+  },
+  {
     version: '1.9.1',
     date: '2026-07-29',
     changes: [

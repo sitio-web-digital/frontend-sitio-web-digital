@@ -108,6 +108,16 @@ body::after {
   background: var(--color-navy-500);
 }
 
+/* Para filas con scroll horizontal donde la barra distrae del contenido
+   (ej. Testimonios en fila) — oculta la barra sin bloquear el scroll. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -159,7 +169,7 @@ body::after {
   to { transform: translateX(-50%); }
 }
 .animate-marquee {
-  animation: marquee-scroll 28s linear infinite;
+  animation: marquee-scroll 26s linear infinite;
 }
 
 /* Loops chicos que se ven en el selector de animaciones de texto — muestran
