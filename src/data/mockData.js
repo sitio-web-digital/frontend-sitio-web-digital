@@ -1014,7 +1014,10 @@ export const SECTION_VARIANTS = {
     { id: 'grid', label: 'Tarjetas en grilla', skeleton: 'beneficiosGrid' },
   ],
   marquee: [{ id: 'scroll', label: 'Texto en movimiento', skeleton: 'marqueeScroll' }],
-  series: [{ id: 'tabs', label: 'Tabs con imagen', skeleton: 'seriesTabs' }],
+  series: [
+    { id: 'tabs', label: 'Tabs con imagen', skeleton: 'seriesTabs' },
+    { id: 'lista', label: 'Lista vertical con imagen', skeleton: 'seriesTabs' },
+  ],
   archivo: [{ id: 'bento', label: 'Grilla con lightbox', skeleton: 'archivoBento' }],
   estadisticas: [{ id: 'fila', label: 'Fila de números', skeleton: 'estadisticasFila' }],
   vidriera: [{ id: 'rotativa', label: 'Foto rotativa', skeleton: 'vidrieraRotativa' }],

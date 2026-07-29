@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.11.0',
+    date: '2026-07-29',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Tinta Negra": estudio de tatuajes, fondo oscuro, acento terracota y tipografía Bebas Neue/Barlow/Cormorant Garamond.' },
+      { type: 'nuevo', text: 'Productos o servicios (distribución "Catálogo con filtro"): cada ítem puede marcarse como Disponible o Reservado, con una etiqueta sobre la foto.' },
+      { type: 'nuevo', text: 'Equipo (distribución "Fotos grandes"): cada persona puede sumar una bio corta y etiquetas de especialidad.' },
+      { type: 'nuevo', text: 'Series / colecciones: nueva distribución en lista vertical (además de los tabs) para elegir qué foto y detalle mostrar.' },
+      { type: 'nuevo', text: 'Menciones/marquee: el separador entre menciones y la velocidad del texto ahora se pueden ajustar por plantilla.' },
+      { type: 'nuevo', text: 'Portada con imagen de fondo: la foto puede llevar un filtro (blanco y negro, contraste, etc.) propio de la plantilla.' },
+      { type: 'nuevo', text: 'Pasos numerados: se le puede sumar un recuadro destacado con un aviso corto y un botón (ej. seña de reserva) al final.' },
+      { type: 'fix', text: 'Series / colecciones: la foto no se veía en algunos casos por un problema de tamaño del contenedor.' },
+    ],
+  },
+  {
     version: '1.10.0',
     date: '2026-07-29',
     changes: [
