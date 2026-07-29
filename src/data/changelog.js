@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.8.0',
+    date: '2026-07-29',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Estudio Lumen": fondo oscuro, acento dorado y tipografía editorial — pensada para fotógrafos y estudios creativos.' },
+      { type: 'nuevo', text: 'Sección "Menciones / marquee": texto en movimiento continuo para medios, premios o clientes con los que trabajaste.' },
+      { type: 'nuevo', text: 'Sección "Series / colecciones": tabs que muestran una foto y un detalle distinto por cada serie o colección de trabajos.' },
+      { type: 'nuevo', text: 'Sección "Archivo con zoom": grilla de fotos en distintos tamaños que se amplían en pantalla completa al tocarlas.' },
+      { type: 'nuevo', text: 'Pasos: nueva distribución con foto fija al costado, pasos numerados y una grilla de datos técnicos (cámara, equipo, etc).' },
+      { type: 'nuevo', text: 'Testimonios: nueva distribución en fila con scroll horizontal.' },
+      { type: 'nuevo', text: 'Formulario de contacto: nueva distribución sin formulario, directo a WhatsApp con los datos de contacto al lado.' },
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-07-28',
     changes: [

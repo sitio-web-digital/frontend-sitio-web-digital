@@ -172,7 +172,7 @@ const SECTION_HELP = {
   testimonios: {
     title: 'Testimonios',
     tips: [
-      'Con Distribución elegís entre tarjetas o carrusel.',
+      'Con Distribución elegís entre tarjetas, carrusel, reseña destacada o fila con scroll.',
       '"Conectar reseñas verificadas" simula traer reseñas de Google o Facebook.',
       'También podés cargar testimonios a mano: nombre, comentario y puntaje.',
     ],
@@ -187,8 +187,29 @@ const SECTION_HELP = {
   contacto: {
     title: 'Formulario de contacto',
     tips: [
-      'Con Distribución elegís entre formulario centrado o imagen + formulario.',
+      'Con Distribución elegís entre formulario centrado, imagen + formulario, formulario + mapa, o directo a WhatsApp sin formulario.',
       'Editá el título, los textos de los campos, y sumá campos propios al formulario.',
+    ],
+  },
+  marquee: {
+    title: 'Menciones / marquee',
+    tips: [
+      'Agregá medios, premios o clientes con los que trabajaste — se muestran en movimiento continuo.',
+      'En el editor se ven quietos para poder tocarlos; el movimiento solo corre en el sitio publicado.',
+    ],
+  },
+  series: {
+    title: 'Series / colecciones',
+    tips: [
+      'Cada tab es una serie o colección propia, con su foto, título, descripción, año y formato.',
+      'Tocá un tab para editarlo — el mismo click lo deja activo para ver el cambio al toque.',
+    ],
+  },
+  archivo: {
+    title: 'Archivo con zoom',
+    tips: [
+      'Tocá una foto para cambiarla; usá los botones ↔/↕ para que ocupe más columnas o filas en la grilla.',
+      'En el sitio publicado, tocar una foto la amplía en pantalla completa.',
     ],
   },
   'sobre-nosotros': {
@@ -594,10 +615,17 @@ export default function SitePreview({
                 imagenUrl={sec.contactoImagenUrl}
                 direccion={direccion}
                 telefono={telefono}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+                botones={sec.botones ?? {}}
+                onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
                 onUpdateContacto={(patch) => onSetSectionStyle?.(sec.id, patch)}
                 onUpdateHorarios={field('horarios')}
                 onUpdateDireccion={field('direccion')}
                 onUpdateTelefono={field('telefono')}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
               />
             )}
             {sec.type === 'precios' && (
@@ -751,6 +779,12 @@ export default function SitePreview({
                 whatsapp={whatsapp}
                 botones={sec.botones ?? {}}
                 onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                imagen={sec.imagen}
+                onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                specs={sec.specs ?? []}
+                onUpdateSpecs={(specs) => onSetSectionStyle?.(sec.id, { specs })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -838,6 +872,47 @@ export default function SitePreview({
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 eyebrow={sec.eyebrow}
                 onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+              />
+            )}
+            {sec.type === 'marquee' && (
+              <SeccionMarquee
+                mensajes={sec.mensajes ?? []}
+                onUpdate={(mensajes) => onSetSectionStyle?.(sec.id, { mensajes })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                textColor={sec.textColor}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'series' && (
+              <SeccionSeries
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'archivo' && (
+              <SeccionArchivo
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                subtitulo={sec.subtitulo}
+                onUpdateSubtitulo={(v) => onSetSectionStyle?.(sec.id, { subtitulo: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                palette={palette}
+                accent={accent}
               />
             )}
             {sec.type === 'estadisticas' && (
@@ -2529,6 +2604,85 @@ function VariantSkeleton({ kind }) {
       </div>
     );
   }
+  if (kind === 'testimoniosScroll') {
+    return (
+      <div className="flex gap-1 w-full h-full">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="border border-neutral-300 rounded-sm flex-1 flex flex-col justify-center gap-0.5 p-1.5">
+            <div className={`${bar} h-1 w-full`} />
+            <div className={`${bar} h-1 w-2/3`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (kind === 'contactoDirecto') {
+    return (
+      <div className="grid grid-cols-2 gap-1.5 w-full h-full items-center">
+        <div className="flex flex-col gap-1">
+          <div className={`${bar} h-1.5 w-full`} />
+          <div className={`${bar} h-1.5 w-4/5`} />
+          <div className="h-2 w-2/3 mt-0.5" style={{ background: '#c9a227' }} />
+        </div>
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className={`${bar} h-1 w-full`} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (kind === 'pasosSticky') {
+    return (
+      <div className="grid grid-cols-[0.7fr_1fr] gap-1.5 w-full h-full">
+        <div className={box} />
+        <div className="flex flex-col gap-1 justify-center">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <div className={`${bar} h-1.5 w-1.5`} />
+              <div className={`${bar} h-1 flex-1`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (kind === 'marqueeScroll') {
+    return (
+      <div className="flex gap-1.5 w-full h-full items-center overflow-hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={`${bar} h-1.5 w-8 shrink-0`} />
+        ))}
+      </div>
+    );
+  }
+  if (kind === 'seriesTabs') {
+    return (
+      <div className="flex flex-col gap-1 w-full h-full">
+        <div className="flex gap-0.5 justify-end">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className={`h-1.5 w-3 ${i === 0 ? 'bg-neutral-400' : 'bg-neutral-300'}`} />
+          ))}
+        </div>
+        <div className="grid grid-cols-[1.3fr_1fr] gap-1 flex-1">
+          <div className={box} />
+          <div className="flex flex-col gap-1 justify-center">
+            <div className={`${bar} h-1 w-full`} />
+            <div className={`${bar} h-1 w-2/3`} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (kind === 'archivoBento') {
+    return (
+      <div className="grid grid-cols-3 grid-rows-2 gap-1 w-full h-full">
+        <div className={`${box} col-span-2 row-span-2`} />
+        <div className={box} />
+        <div className={box} />
+      </div>
+    );
+  }
   if (kind === 'productosTarifario') {
     return (
       <div className="flex flex-col gap-1.5 w-full h-full justify-center">
@@ -2894,6 +3048,27 @@ function AnimatedTag({ tag, anim, className, style, children, ...rest }) {
       variants={TEXT_ANIM_VARIANTS[anim]}
       transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
       {...rest}
+    >
+      {children}
+    </MotionTag>
+  );
+}
+
+// Envoltorio genérico de scroll-reveal (mismo mecanismo que AnimatedTag: una
+// sola vez, con whileInView) para bloques enteros, no solo texto — usado por
+// las secciones que quedan con un fade + subida al entrar en pantalla
+// (Series, Archivo, Proceso, Sesiones). `delay` en segundos para escalonar
+// varios elementos del mismo grupo (0, 0.08, 0.16...).
+function Reveal({ as = 'div', delay = 0, className = '', style, children }) {
+  const MotionTag = motion[as] ?? motion.div;
+  return (
+    <MotionTag
+      className={className}
+      style={style}
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
     >
       {children}
     </MotionTag>
@@ -6409,6 +6584,28 @@ function SeccionTestimonios({
             </div>
           )}
         </div>
+      ) : variant === 'scroll' ? (
+        <div className="max-w-6xl mx-auto -mx-6 @lg:mx-0 px-6 @lg:px-0">
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3">
+            {testimonios.map((t) => (
+              <div key={t.id} className="shrink-0 snap-start w-[280px]">
+                <TestimonioCard
+                  t={t}
+                  editable={editable}
+                  accent={accent}
+                  palette={palette}
+                  onUpdate={(patch) => onUpdateTestimonio?.(t.id, patch)}
+                  onRemove={() => onRemoveTestimonio?.(t.id)}
+                />
+              </div>
+            ))}
+            {editable && (
+              <div className="shrink-0 w-[280px]">
+                <TestimonioForm accent={accent} onAdd={(t) => onAddTestimonio?.(t)} />
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
         <div className="max-w-4xl mx-auto grid @lg:grid-cols-3 gap-5">
           {testimonios.map((t) => (
@@ -6885,6 +7082,11 @@ function SeccionContacto({
   direccion,
   telefono,
   horarios,
+  whatsapp,
+  nombreNegocio,
+  seccionesDisponibles = [],
+  botones: botonesData = {},
+  onUpdateBotones,
   onUpdateContacto,
   onUpdateHorarios,
   onUpdateDireccion,
@@ -6964,6 +7166,81 @@ function SeccionContacto({
             )}
           </div>
           <ContactoForm {...formProps} />
+        </div>
+      </section>
+    );
+  }
+
+  // "directo" — sin formulario: título grande + botón de WhatsApp + los
+  // mismos datos globales (horarios/dirección/contacto) en una lista simple.
+  // Para negocios que prefieren que la conversación arranque directo por
+  // WhatsApp en vez de completar un form web (fotógrafos, artistas,
+  // freelancers) — misma idea que "mapa" pero sin el mapa simulado.
+  if (variant === 'directo') {
+    const rows = [
+      { label: 'Dirección', value: direccion, onChangeValue: onUpdateDireccion, maxLength: 120 },
+      { label: 'Contacto', value: telefono, onChangeValue: onUpdateTelefono, maxLength: 40 },
+      { label: 'Horarios', value: horarios, onChangeValue: onUpdateHorarios, maxLength: 60 },
+    ].filter((r) => r.value || editable);
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+        <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-center">
+          <div>
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Contame tu proyecto.'}
+              onChange={set('contactoTitulo')}
+              tag="h2"
+              block
+              styleKey="contacto.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-3xl @lg:text-5xl leading-[0.98] mb-5 text-balance"
+              maxLength={70}
+            />
+            <Editable
+              editable={editable}
+              value={subtitulo ?? 'Respondo dentro de las 24 horas.'}
+              onChange={set('contactoSubtitulo')}
+              tag="p"
+              block
+              styleKey="contacto.subtitulo"
+              style={{ color: palette.inkSoft }}
+              className="text-sm leading-relaxed mb-7 max-w-sm"
+              maxLength={160}
+            />
+            <ButtonObject
+              value={botonesData.whatsapp}
+              onChange={(patch) => onUpdateBotones?.({ ...botonesData, whatsapp: { ...(botonesData.whatsapp || {}), ...patch } })}
+              editable={editable}
+              seccionesDisponibles={seccionesDisponibles}
+              nombreNegocio={nombreNegocio}
+              defaultFuncion="whatsapp"
+              defaultLabel="Escribime por WhatsApp"
+              defaultColor={accent}
+              defaultTarget={whatsapp}
+            />
+          </div>
+          <div className="flex flex-col gap-5">
+            {rows.map((r) => (
+              <div key={r.label} className="border-b pb-4" style={{ borderColor: palette.line }}>
+                <p className="font-mono text-xs uppercase tracking-wide mb-1" style={{ color: accent }}>
+                  {r.label}
+                </p>
+                <Editable
+                  editable={editable}
+                  value={r.value ?? ''}
+                  onChange={r.onChangeValue}
+                  tag="p"
+                  block
+                  placeholder="—"
+                  styleKey={`contacto.directo.${r.label}`}
+                  style={{ color: palette.ink }}
+                  className="text-[15px]"
+                  maxLength={r.maxLength}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -7699,6 +7976,7 @@ function SeccionPasos({
   onUpdateEyebrow,
   editable,
   bgColor,
+  headingColor,
   textColor,
   accent,
   palette = {},
@@ -7708,12 +7986,207 @@ function SeccionPasos({
   whatsapp,
   seccionesDisponibles = [],
   variant = 'numerados',
+  descripcion,
+  onUpdateDescripcion,
+  imagen,
+  onUpdateImagen,
+  specs = [],
+  onUpdateSpecs,
 }) {
   const update = (id, patch) => onUpdate?.(pasos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const remove = (id) => onUpdate?.(pasos.filter((p) => p.id !== id));
   const add = () =>
     onUpdate?.([...pasos, { id: `paso-${Date.now()}`, titulo: 'Nuevo paso', desc: 'Describí este paso.' }]);
   const textoSuave = textColor || 'rgba(255,255,255,0.7)';
+
+  // "sticky" — columna izquierda fija (intro + foto) mientras se scrollea la
+  // derecha (pasos numerados en fila completa + specs técnicas al final) —
+  // para procesos con contexto propio (cómo trabajo, con qué equipo), a
+  // diferencia de "numerados"/"timeline" que son pasos solos, sin intro.
+  if (variant === 'sticky') {
+    const updateSpec = (id, patch) => onUpdateSpecs?.(specs.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    const removeSpec = (id) => onUpdateSpecs?.(specs.filter((s) => s.id !== id));
+    const addSpec = () => onUpdateSpecs?.([...specs, { id: `spec-${Date.now()}`, label: 'Dato', value: 'Valor' }]);
+    const handleImagen = async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+    };
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+        <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-10 @lg:gap-16 items-start">
+          <div className="@lg:sticky @lg:top-20">
+            <Editable
+              editable={editable}
+              value={eyebrow ?? 'Cómo trabajo'}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="pasos.eyebrow"
+              style={{ color: accent }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Cómo trabajo un proyecto'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="pasos.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl mb-4 leading-tight"
+              maxLength={90}
+            />
+            <Editable
+              editable={editable}
+              value={descripcion}
+              onChange={onUpdateDescripcion}
+              tag="p"
+              block
+              multiline
+              styleKey="pasos.descripcion"
+              placeholder="Contá brevemente tu forma de trabajar"
+              style={{ color: textColor || palette.inkSoft }}
+              className="text-sm leading-relaxed mb-6"
+              maxLength={220}
+            />
+            <label
+              className={`relative block aspect-[4/3] bg-black/5 overflow-hidden group/pasoimg ${editable ? 'cursor-pointer' : ''}`}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {imagen ? (
+                <img src={imagen} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                  Agregá una foto
+                </div>
+              )}
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 group-hover/pasoimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/pasoimg:opacity-100">
+                    <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+                </>
+              )}
+            </label>
+          </div>
+          <div>
+            <div className="flex flex-col">
+              {pasos.map((p, i) => (
+                <div key={p.id} className="relative grid gap-4 py-6 border-b" style={{ gridTemplateColumns: 'auto 1fr', borderColor: palette.line }}>
+                  <div
+                    className="font-serif font-bold text-4xl leading-none min-w-[2.5rem]"
+                    style={{ color: accent, opacity: 0.4 }}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <div>
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => remove(p.id)}
+                        aria-label="Quitar paso"
+                        className="float-right opacity-50 hover:opacity-100 transition-opacity"
+                        style={{ color: palette.ink }}
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                    <Editable
+                      editable={editable}
+                      value={p.titulo}
+                      onChange={(v) => update(p.id, { titulo: v })}
+                      tag="p"
+                      block
+                      styleKey={`paso.${p.id}.titulo`}
+                      placeholder="Título del paso"
+                      style={{ color: palette.ink }}
+                      className="font-semibold text-lg mb-1.5"
+                      maxLength={50}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.desc}
+                      onChange={(v) => update(p.id, { desc: v })}
+                      tag="p"
+                      multiline
+                      block
+                      styleKey={`paso.${p.id}.desc`}
+                      placeholder="Descripción breve"
+                      style={{ color: palette.inkSoft }}
+                      className="text-sm leading-relaxed"
+                      maxLength={160}
+                    />
+                  </div>
+                </div>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={add}
+                  className="border-2 border-dashed flex items-center justify-center gap-1.5 py-4 mt-4 text-sm font-semibold"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-4 h-4" /> Agregar paso
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 @lg:grid-cols-4 gap-5 mt-8">
+              {specs.map((s) => (
+                <div key={s.id} className="relative border-t pt-3" style={{ borderColor: accent }}>
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => removeSpec(s.id)}
+                      aria-label={`Quitar ${s.label}`}
+                      className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
+                      style={{ color: palette.ink }}
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                  <Editable
+                    editable={editable}
+                    value={s.label}
+                    onChange={(v) => updateSpec(s.id, { label: v })}
+                    tag="p"
+                    block
+                    placeholder="Dato"
+                    style={{ color: palette.inkSoft }}
+                    className="font-mono text-[0.65rem] uppercase tracking-wide mb-1"
+                    maxLength={20}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={s.value}
+                    onChange={(v) => updateSpec(s.id, { value: v })}
+                    tag="p"
+                    block
+                    placeholder="Valor"
+                    style={{ color: palette.ink }}
+                    className="text-sm font-medium"
+                    maxLength={40}
+                  />
+                </div>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addSpec}
+                  className="border-2 border-dashed flex items-center justify-center gap-1.5 py-3 text-xs font-semibold"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Agregar dato
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
@@ -9473,6 +9946,501 @@ function SeccionAnuncio({ mensaje, onUpdateMensaje, telefono, editable, bgColor,
         )}
       </div>
     </div>
+  );
+}
+
+// Franja angosta con textos cortos en movimiento continuo (medios, premios,
+// marcas con las que trabajó) — separada de "Logos de clientes" porque acá
+// es texto plano en loop, no una fila fija de imágenes. En el editor se ve
+// una fila estática (más fácil de tocar para editar); el movimiento infinito
+// solo corre en el sitio publicado.
+function SeccionMarquee({ mensajes = [], onUpdate, editable, bgColor, textColor, palette = {} }) {
+  const update = (id, patch) => onUpdate?.(mensajes.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const remove = (id) => onUpdate?.(mensajes.filter((m) => m.id !== id));
+  const add = () => onUpdate?.([...mensajes, { id: `marquee-${Date.now()}`, texto: 'Nueva mención' }]);
+  const textoSuave = textColor || 'rgba(255,255,255,0.4)';
+
+  if (editable) {
+    return (
+      <div
+        className="border-y py-3 px-6 @lg:px-10"
+        style={{ background: bgColor || palette.ink, borderColor: 'rgba(255,255,255,0.08)' }}
+      >
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-2">
+          {mensajes.map((m) => (
+            <div key={m.id} className="relative inline-flex items-center gap-1.5 border rounded-full pl-3 pr-2 py-1" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
+              <Editable
+                editable
+                value={m.texto}
+                onChange={(v) => update(m.id, { texto: v })}
+                tag="span"
+                placeholder="Mención, medio o premio"
+                style={{ color: textoSuave }}
+                className="text-sm"
+                maxLength={60}
+              />
+              <button
+                type="button"
+                onClick={() => remove(m.id)}
+                aria-label={`Quitar ${m.texto}`}
+                className="opacity-40 hover:opacity-100 transition-opacity"
+                style={{ color: textoSuave }}
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full border-2 border-dashed px-3 py-1.5"
+            style={{ borderColor: 'rgba(255,255,255,0.25)', color: textoSuave }}
+          >
+            <PlusIcon className="w-3.5 h-3.5" /> Agregar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (mensajes.length === 0) return null;
+  const loop = [...mensajes, ...mensajes];
+  return (
+    <div
+      className="border-y py-3 overflow-hidden"
+      style={{ background: bgColor || palette.ink, borderColor: 'rgba(255,255,255,0.08)' }}
+    >
+      <div className="flex w-max animate-marquee">
+        {loop.map((m, i) => (
+          <span
+            key={`${m.id}-${i}`}
+            className="text-base font-semibold px-8 whitespace-nowrap shrink-0"
+            style={{ color: textoSuave }}
+          >
+            {m.texto}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Selector de series/colecciones: una fila de tabs (una por serie de
+// trabajos) que cambia qué imagen y qué detalle (título, descripción, año,
+// formato) se ve al lado — para portfolios con varias líneas de trabajo
+// distintas que no entran todas juntas en una sola grilla. El cambio de tab
+// funciona igual editando o publicado; lo único que cambia en el editor es
+// que la imagen activa se puede tocar para reemplazarla.
+function SeccionSeries({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const [active, setActive] = useState(0);
+  const activeIndex = Math.min(active, Math.max(items.length - 1, 0));
+  const activeItem = items[activeIndex];
+
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => {
+    onUpdate?.(items.filter((it) => it.id !== id));
+    setActive(0);
+  };
+  const add = () =>
+    onUpdate?.([
+      ...items,
+      { id: `serie-${Date.now()}`, key: 'Nueva', title: 'Nueva serie', desc: '', year: '', format: '', count: '', imagen: '' },
+    ]);
+
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && activeItem && (await validateImageFile(file, 'galeria'))) {
+      update(activeItem.id, { imagen: await uploadImage(file) });
+    }
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="series.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: accent }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Series'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="series.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl max-w-[18ch] text-balance"
+              maxLength={70}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {items.map((it, i) => (
+              <div
+                key={it.id}
+                onClick={() => setActive(i)}
+                className="relative cursor-pointer font-mono text-xs uppercase tracking-wide px-3 py-1.5 border transition-colors"
+                style={
+                  i === activeIndex
+                    ? { borderColor: accent, background: accent, color: palette.bg }
+                    : { borderColor: palette.line, color: palette.inkSoft }
+                }
+              >
+                <Editable
+                  editable={editable}
+                  value={it.key}
+                  onChange={(v) => update(it.id, { key: v })}
+                  tag="span"
+                  placeholder="Nombre"
+                  maxLength={20}
+                />
+                {editable && items.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(it.id);
+                    }}
+                    aria-label={`Quitar serie ${it.key}`}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center"
+                  >
+                    <XIcon className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="inline-flex items-center gap-1 font-mono text-xs uppercase px-3 py-1.5 border-2 border-dashed"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3 h-3" /> Agregar
+              </button>
+            )}
+          </div>
+        </div>
+
+        {!activeItem ? (
+          <p className="text-sm" style={{ color: palette.inkSoft }}>
+            Agregá al menos una serie para mostrar acá.
+          </p>
+        ) : (
+          <div className="grid @lg:grid-cols-[1.35fr_1fr] gap-8 @lg:gap-10 items-stretch">
+            <label
+              className={`relative overflow-hidden aspect-[4/3] bg-black/5 ${editable ? 'cursor-pointer' : ''}`}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {items.map((it, i) => (
+                <img
+                  key={it.id}
+                  src={it.imagen || undefined}
+                  alt={it.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+                  style={{ opacity: i === activeIndex ? 1 : 0, display: it.imagen ? 'block' : 'none' }}
+                />
+              ))}
+              {!activeItem.imagen && (
+                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                  Subí una foto para esta serie
+                </div>
+              )}
+              {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />}
+            </label>
+            <div className="flex flex-col justify-center gap-3">
+              <Editable
+                editable={editable}
+                value={activeItem.count}
+                onChange={(v) => update(activeItem.id, { count: v })}
+                tag="span"
+                placeholder="Ej: 24 fotografías"
+                style={{ color: accent }}
+                className="font-mono text-xs"
+                maxLength={30}
+              />
+              <Editable
+                editable={editable}
+                value={activeItem.title}
+                onChange={(v) => update(activeItem.id, { title: v })}
+                tag="h3"
+                block
+                placeholder="Título de la serie"
+                style={{ color: headingColor || palette.ink }}
+                className="font-serif text-2xl @lg:text-3xl leading-tight"
+                maxLength={60}
+              />
+              <Editable
+                editable={editable}
+                value={activeItem.desc}
+                onChange={(v) => update(activeItem.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                placeholder="Descripción de esta serie"
+                style={{ color: textColor || palette.inkSoft }}
+                className="text-sm leading-relaxed"
+                maxLength={220}
+              />
+              <div className="h-px my-1" style={{ background: palette.line }} />
+              <div className="flex gap-6 font-mono text-xs" style={{ color: palette.inkSoft }}>
+                <div>
+                  <div className="mb-1" style={{ color: accent }}>
+                    AÑO
+                  </div>
+                  <Editable
+                    editable={editable}
+                    value={activeItem.year}
+                    onChange={(v) => update(activeItem.id, { year: v })}
+                    tag="span"
+                    placeholder="2026"
+                    maxLength={20}
+                  />
+                </div>
+                <div>
+                  <div className="mb-1" style={{ color: accent }}>
+                    FORMATO
+                  </div>
+                  <Editable
+                    editable={editable}
+                    value={activeItem.format}
+                    onChange={(v) => update(activeItem.id, { format: v })}
+                    tag="span"
+                    placeholder="Digital"
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Grilla de fotos en distintos tamaños (algunas ocupan 2 columnas o 2 filas)
+// con un texto que aparece al pasar el mouse — tocar una la abre en pantalla
+// completa (lightbox). Pensada para portfolios de fotografía/diseño con
+// muchas piezas sueltas, a diferencia de "Galería" (más genérica, sin zoom).
+function SeccionArchivo({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  subtitulo,
+  onUpdateSubtitulo,
+  editable,
+  bgColor,
+  headingColor,
+  palette = {},
+  accent,
+}) {
+  const [openIndex, setOpenIndex] = useState(null);
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
+  const add = () =>
+    onUpdate?.([
+      ...items,
+      { id: `archivo-${Date.now()}`, imagen: '', titulo: 'Nueva foto', meta: '', colSpan: 1, rowSpan: 1 },
+    ]);
+  const cycleSpan = (it, key) => update(it.id, { [key]: it[key] >= 2 ? 1 : 2 });
+
+  useEffect(() => {
+    if (editable || openIndex === null) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpenIndex(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editable, openIndex]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-wrap items-baseline justify-between gap-3 mb-8 pb-5 border-b" style={{ borderColor: palette.line }}>
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Archivo'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            styleKey="archivo.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={subtitulo ?? 'Tocá una imagen para ampliar'}
+            onChange={onUpdateSubtitulo}
+            tag="span"
+            style={{ color: palette.inkSoft }}
+            className="font-mono text-xs"
+            maxLength={60}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 @lg:grid-cols-4 auto-rows-[140px] @lg:auto-rows-[190px] gap-3">
+          {items.map((it) => (
+            <div
+              key={it.id}
+              className="relative group/archivo overflow-hidden bg-black/5"
+              style={{ gridColumn: `span ${it.colSpan || 1}`, gridRow: `span ${it.rowSpan || 1}` }}
+            >
+              {editable ? (
+                <label className="absolute inset-0 cursor-pointer" title="Cambiar foto">
+                  {it.imagen ? (
+                    <img src={it.imagen} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ color: palette.inkSoft }}>
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (file && (await validateImageFile(file, 'galeria'))) {
+                        update(it.id, { imagen: await uploadImage(file) });
+                      }
+                    }}
+                  />
+                </label>
+              ) : it.imagen ? (
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(items.indexOf(it))}
+                  aria-label={`Ampliar ${it.titulo}`}
+                  className="absolute inset-0 cursor-zoom-in"
+                >
+                  <img
+                    src={it.imagen}
+                    alt={it.titulo}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover/archivo:scale-105"
+                  />
+                </button>
+              ) : null}
+              <div
+                className={`absolute inset-0 pointer-events-none flex items-end p-3 transition-opacity ${
+                  editable ? 'opacity-100' : 'opacity-0 group-hover/archivo:opacity-100'
+                }`}
+                style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%)' }}
+              >
+                <div className="pointer-events-auto w-full">
+                  <Editable
+                    editable={editable}
+                    value={it.titulo}
+                    onChange={(v) => update(it.id, { titulo: v })}
+                    tag="p"
+                    block
+                    placeholder="Nombre de la foto"
+                    style={{ color: '#ffffff' }}
+                    className="font-serif font-semibold text-sm"
+                    maxLength={50}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={it.meta}
+                    onChange={(v) => update(it.id, { meta: v })}
+                    tag="p"
+                    block
+                    placeholder="Ej: 35mm · 2026"
+                    style={{ color: accent }}
+                    className="font-mono text-xs"
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+              {editable && (
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => cycleSpan(it, 'colSpan')}
+                    title="Ancho de esta foto en la grilla"
+                    className="w-6 h-6 bg-black/50 text-white flex items-center justify-center text-[10px] font-bold"
+                  >
+                    ↔
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cycleSpan(it, 'rowSpan')}
+                    title="Alto de esta foto en la grilla"
+                    className="w-6 h-6 bg-black/50 text-white flex items-center justify-center text-[10px] font-bold"
+                  >
+                    ↕
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(it.id)}
+                    aria-label={`Quitar ${it.titulo}`}
+                    className="w-6 h-6 bg-black/50 text-white flex items-center justify-center"
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 text-sm font-semibold"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!editable && openIndex !== null && items[openIndex] && (
+        <div
+          onClick={() => setOpenIndex(null)}
+          className="fixed inset-0 z-[95] bg-black/95 flex items-center justify-center p-4 @lg:p-12 cursor-zoom-out"
+        >
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={items[openIndex].imagen}
+              alt={items[openIndex].titulo}
+              className="w-full max-h-[76vh] object-contain"
+            />
+            <div className="flex flex-wrap items-baseline justify-between gap-3 mt-4">
+              <p className="font-serif font-semibold text-lg text-white">{items[openIndex].titulo}</p>
+              <p className="font-mono text-xs" style={{ color: accent }}>
+                {items[openIndex].meta}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

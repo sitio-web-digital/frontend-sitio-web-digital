@@ -374,6 +374,12 @@ const hexHue = (hex) => {
 // acento DEFINIDO en la plantilla (no el que el usuario haya elegido en el
 // selector de color), para que esa identidad no cambie con cada retoque.
 export const getTemplatePalette = (template) => {
+  // Algunas plantillas (ej. Estudio Lumen) tienen una identidad tan propia
+  // — fondo oscuro en vez del claro estándar del rubro — que derivarla del
+  // rubro no tiene sentido. `paletteOverride` reemplaza la escala entera,
+  // ya resuelta a mano; el resto de las plantillas no la declaran, así que
+  // siguen derivando de RUBRO_PALETTES exactamente como antes.
+  if (template?.paletteOverride) return template.paletteOverride;
   const base = getRubroPalette(template?.rubros?.[0]);
   if (!template?.accent) return base;
   const hue = hexHue(template.accent);
@@ -634,6 +640,188 @@ export const TEMPLATES = [
       { type: 'footer', variant: 'columnas' },
     ],
   },
+  // Plantilla con identidad propia (fondo oscuro, acento dorado, tipografía
+  // editorial Syne/JetBrains Mono) en vez de la escala clara derivada del
+  // rubro — por eso declara `paletteOverride` en vez de dejar que
+  // getTemplatePalette la arme desde RUBRO_PALETTES. Pensada para
+  // fotógrafos/estudios creativos, con secciones que no existían antes
+  // (Marquee, Series, Archivo) sumadas especialmente para ella.
+  {
+    id: 'estudio-lumen',
+    rubros: ['otro'],
+    nombre: 'Estudio Lumen',
+    tagline: 'Para fotógrafos, estudios creativos y portfolios de autor.',
+    tags: ['otro', 'fotografia', 'portfolio', 'arte', 'creativo'],
+    accent: '#c9a227',
+    accentSoft: tint('#c9a227', 88),
+    paletteOverride: {
+      accent: '#c9a227',
+      accentSoft: 'rgba(201,162,39,0.14)',
+      ink: '#f4f2ee',
+      inkHex: '#f4f2ee',
+      inkSoft: 'rgba(244,242,238,0.62)',
+      bg: '#0d0d0f',
+      line: 'rgba(244,242,238,0.12)',
+    },
+    heroSeed: 'estudio-lumen-hero',
+    image: photo('photographer,camera', 701),
+    imageFallback: img('estudio-lumen-hero'),
+    demo: {
+      nombreNegocio: 'Estudio Lumen',
+      rubroLabel: 'Fotografía documental & retrato — Buenos Aires',
+      sobreNosotros:
+        'Sin poses forzadas ni sesiones eternas. Catorce años documentando personas y lugares, con más de 400 sesiones entre retratos, bodas y series propias.',
+      whatsapp: '5491155448890',
+      telefono: '011 5544-8890',
+      direccion: 'Bonpland 1740, Buenos Aires',
+      horarios: 'Sesiones con cita previa, lunes a sábado',
+      instagram: '@estudiolumen',
+      galeria: [photo('photographer,camera', 701, 1400, 1600)],
+    },
+    sections: [
+      { type: 'header' },
+      {
+        type: 'hero',
+        variant: 'fondo',
+        titulo: 'Luz que cuenta historias',
+      },
+      {
+        type: 'marquee',
+        bgColor: '#0d0d0f',
+        mensajes: [
+          { id: 'marq-1', texto: 'Revista Ohlalá' },
+          { id: 'marq-2', texto: 'Premio Nacional de Fotografía' },
+          { id: 'marq-3', texto: 'Festival de la Imagen' },
+          { id: 'marq-4', texto: 'National Geographic LATAM' },
+          { id: 'marq-5', texto: 'Bienal de Arte Joven' },
+          { id: 'marq-6', texto: 'Galería Espacio Sur' },
+        ],
+      },
+      {
+        type: 'series',
+        eyebrow: 'Series en curso',
+        titulo: 'Cuerpos de trabajo',
+        items: [
+          {
+            id: 'serie-retrato',
+            key: 'Retrato',
+            title: 'Rostros del oficio',
+            count: '24 fotografías',
+            year: '2025—2026',
+            format: 'Digital medio formato',
+            desc: 'Retratos de trabajadores de oficios en su lugar de trabajo, siempre con luz disponible y sin dirección de pose.',
+            imagen: photo('portrait,worker', 702),
+          },
+          {
+            id: 'serie-urbano',
+            key: 'Urbano',
+            title: 'Ciudad a las seis',
+            count: '38 fotografías',
+            year: '2024—2026',
+            format: '35mm blanco y negro',
+            desc: 'La hora en que la ciudad cambia de turno, capturada durante dos años en distintos barrios de Buenos Aires.',
+            imagen: photo('street,city', 703),
+          },
+          {
+            id: 'serie-bodas',
+            key: 'Bodas',
+            title: 'Sin guion',
+            count: '12 producciones',
+            year: '2026',
+            format: 'Documental de evento',
+            desc: 'Cobertura documental de casamientos: nada armado, nada repetido, todo lo que pasa cuando nadie mira a la cámara.',
+            imagen: photo('wedding,documentary', 704),
+          },
+          {
+            id: 'serie-naturaleza',
+            key: 'Naturaleza',
+            title: 'Interior',
+            count: '19 fotografías',
+            year: '2023—2025',
+            format: 'Gran formato color',
+            desc: 'Paisajes del interior argentino registrados en viajes de campo, priorizando la escala y el silencio del lugar.',
+            imagen: photo('landscape,countryside', 705),
+          },
+        ],
+      },
+      {
+        type: 'archivo',
+        titulo: 'Archivo abierto',
+        subtitulo: 'Tocá una imagen para ampliar',
+        items: [
+          { id: 'arch-1', titulo: 'Taller de luthería', meta: '35mm · 2025', imagen: photo('woodworking,workshop', 706), colSpan: 2, rowSpan: 2 },
+          { id: 'arch-2', titulo: 'Ventana norte', meta: 'Digital · 2026', imagen: photo('window,light', 707), colSpan: 1, rowSpan: 1 },
+          { id: 'arch-3', titulo: 'Vereda de Palermo', meta: '35mm · 2024', imagen: photo('street,sidewalk', 708), colSpan: 1, rowSpan: 1 },
+          { id: 'arch-4', titulo: 'Retrato en estudio', meta: 'Digital · 2026', imagen: photo('studio,portrait', 709), colSpan: 1, rowSpan: 2 },
+          { id: 'arch-5', titulo: 'Hora azul', meta: 'Digital · 2025', imagen: photo('bluehour,city', 710), colSpan: 1, rowSpan: 1 },
+          { id: 'arch-6', titulo: 'Ceremonia', meta: 'Documental · 2026', imagen: photo('wedding,ceremony', 711), colSpan: 2, rowSpan: 1 },
+          { id: 'arch-7', titulo: 'Camino de sierra', meta: 'Gran formato · 2024', imagen: photo('mountain,road', 712), colSpan: 2, rowSpan: 1 },
+          { id: 'arch-8', titulo: 'Contraluz', meta: '35mm · 2025', imagen: photo('silhouette,backlight', 713), colSpan: 1, rowSpan: 1 },
+        ],
+      },
+      {
+        type: 'pasos',
+        variant: 'sticky',
+        eyebrow: 'Detrás del lente',
+        titulo: 'Cómo trabajo una sesión',
+        descripcion: 'Sin poses forzadas ni sesiones eternas. Conversamos, elegimos la luz correcta y dejamos que lo demás pase.',
+        imagen: photo('camera,gear', 714),
+        pasos: [
+          { id: 'paso-1', titulo: 'Conversamos primero', desc: 'Antes de sacar una foto hablamos: qué querés contar, dónde y para quién. Esa charla define todo lo demás.' },
+          { id: 'paso-2', titulo: 'Buscamos la luz', desc: 'Elijo locación y horario en función de la luz natural. Casi nunca uso flash: prefiero lo que ya está ahí.' },
+          { id: 'paso-3', titulo: 'La sesión', desc: 'Entre 90 minutos y media jornada. Sin poses armadas, dirijo lo mínimo necesario para que te olvides de la cámara.' },
+          { id: 'paso-4', titulo: 'Selección y entrega', desc: 'Te comparto una galería privada, elegís tus favoritas y las recibís editadas en alta resolución en 10 días.' },
+        ],
+        specs: [
+          { id: 'spec-1', label: 'Cámara', value: 'Medio formato digital' },
+          { id: 'spec-2', label: 'Analógico', value: '35mm y 6x7' },
+          { id: 'spec-3', label: 'Óptica', value: 'Fijas 35 / 50 / 85mm' },
+          { id: 'spec-4', label: 'Revelado', value: 'Laboratorio propio' },
+        ],
+      },
+      { type: 'precios', titulo: 'Sesiones' },
+      { type: 'testimonios', variant: 'scroll' },
+      { type: 'contacto', variant: 'directo' },
+      { type: 'footer', variant: 'minimal' },
+    ],
+    seeds: {
+      planes: [
+        {
+          id: 'plan-retrato',
+          nombre: 'Retrato',
+          precio: 95000,
+          periodo: 'sesión',
+          destacado: false,
+          features: ['90 minutos de sesión', 'Una locación a elección', '25 fotos editadas', 'Galería privada online'],
+          boton: {},
+        },
+        {
+          id: 'plan-produccion',
+          nombre: 'Producción',
+          precio: 210000,
+          periodo: 'jornada',
+          destacado: true,
+          features: ['Media jornada de trabajo', 'Hasta tres locaciones', '80 fotos editadas', 'Asistente de luz incluido', 'Entrega en 7 días'],
+          boton: {},
+        },
+        {
+          id: 'plan-documental',
+          nombre: 'Documental',
+          precio: 350000,
+          periodo: 'proyecto',
+          destacado: false,
+          features: ['Cobertura de varios días', 'Edición y curaduría completa', 'Libro impreso opcional', 'Derechos de uso ampliados'],
+          boton: {},
+        },
+      ],
+      testimonios: [
+        { id: 'testi-julia', nombre: 'Julia y Matías', texto: 'Nos hizo olvidar que había una cámara. Las fotos del casamiento parecen recuerdos, no poses.', rating: 5, avatar: '', verificado: false },
+        { id: 'testi-fernanda', nombre: 'Fernanda Ríos', texto: 'Trabajamos la campaña completa en dos días. Puntual, prolijo y con un ojo enorme para la luz.', rating: 5, avatar: '', verificado: false },
+        { id: 'testi-norte', nombre: 'Estudio Norte', texto: 'Los retratos de nuestro equipo cambiaron por completo la identidad de la marca.', rating: 5, avatar: '', verificado: false },
+        { id: 'testi-ruben', nombre: 'Rubén Salas', texto: 'Le confié la serie de mi taller y entendió el oficio mejor que yo mismo.', rating: 5, avatar: '', verificado: false },
+      ],
+    },
+  },
 ];
 
 // Mapeo mockeado: en un producto real esto sería un modelo de recomendación,
@@ -875,6 +1063,21 @@ export const SECCIONES_CATALOGO = [
     desc: 'Una fila de puntos clave con ícono, título y descripción (garantías, tiempos de entrega, etc).',
   },
   {
+    id: 'marquee',
+    label: 'Menciones / marquee',
+    desc: 'Una franja angosta con texto en movimiento continuo (medios, premios, clientes con los que trabajaste).',
+  },
+  {
+    id: 'series',
+    label: 'Series / colecciones',
+    desc: 'Tabs que muestran una imagen y un detalle distinto por cada serie o colección de trabajos.',
+  },
+  {
+    id: 'archivo',
+    label: 'Archivo con zoom',
+    desc: 'Grilla de fotos en distintos tamaños — tocar una la amplía en pantalla completa.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',
@@ -944,11 +1147,13 @@ export const SECTION_VARIANTS = {
     { id: 'grid', label: 'Tarjetas', skeleton: 'grid3' },
     { id: 'carousel', label: 'Carrusel', skeleton: 'carousel' },
     { id: 'destacado', label: 'Reseña destacada', skeleton: 'destacado' },
+    { id: 'scroll', label: 'Fila con scroll', skeleton: 'testimoniosScroll' },
   ],
   contacto: [
     { id: 'centrado', label: 'Formulario centrado', skeleton: 'centered' },
     { id: 'split', label: 'Imagen + formulario', skeleton: 'split' },
     { id: 'mapa', label: 'Formulario + mapa', skeleton: 'contactoMapa' },
+    { id: 'directo', label: 'Sin formulario, directo a WhatsApp', skeleton: 'contactoDirecto' },
   ],
   faq: [
     { id: 'lista', label: 'Lista centrada', skeleton: 'centered' },
@@ -980,6 +1185,7 @@ export const SECTION_VARIANTS = {
   pasos: [
     { id: 'numerados', label: 'Pasos numerados', skeleton: 'pasosNumerados' },
     { id: 'timeline', label: 'Línea de tiempo vertical', skeleton: 'pasosTimeline' },
+    { id: 'sticky', label: 'Con foto fija + datos técnicos', skeleton: 'pasosSticky' },
   ],
   reservas: [{ id: 'calendario', label: 'Calendario y horarios', skeleton: 'reservasCalendario' }],
   areas: [{ id: 'lista-detalle', label: 'Lista + detalle', skeleton: 'areasListaDetalle' }],
@@ -989,6 +1195,9 @@ export const SECTION_VARIANTS = {
     { id: 'fila', label: 'Fila con íconos', skeleton: 'beneficiosFila' },
     { id: 'grid', label: 'Tarjetas en grilla', skeleton: 'beneficiosGrid' },
   ],
+  marquee: [{ id: 'scroll', label: 'Texto en movimiento', skeleton: 'marqueeScroll' }],
+  series: [{ id: 'tabs', label: 'Tabs con imagen', skeleton: 'seriesTabs' }],
+  archivo: [{ id: 'bento', label: 'Grilla con lightbox', skeleton: 'archivoBento' }],
   estadisticas: [{ id: 'fila', label: 'Fila de números', skeleton: 'estadisticasFila' }],
   vidriera: [{ id: 'rotativa', label: 'Foto rotativa', skeleton: 'vidrieraRotativa' }],
   'antes-despues': [{ id: 'lado-a-lado', label: 'Lado a lado', skeleton: 'antesDespues' }],

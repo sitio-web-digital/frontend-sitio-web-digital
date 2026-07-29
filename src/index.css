@@ -151,6 +151,17 @@ body::after {
   animation: kenburns 9s ease-in-out infinite alternate;
 }
 
+/* Franja de texto en movimiento continuo (Sección Marquee) — el contenido se
+   duplica una vez en el DOM y este loop recorre exactamente la mitad del
+   ancho total, así el segundo tramo entra sin salto ni corte visible. */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee-scroll 28s linear infinite;
+}
+
 /* Loops chicos que se ven en el selector de animaciones de texto — muestran
    el efecto de verdad, en bucle, para elegir sabiendo cómo se ve. */
 @keyframes preview-anim-fade {
