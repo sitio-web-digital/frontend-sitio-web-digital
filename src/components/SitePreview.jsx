@@ -492,6 +492,10 @@ export default function SitePreview({
                 onUpdateFechaEvento={(v) => onSetSectionStyle?.(sec.id, { fechaEvento: v })}
                 fechaEventoLabel={sec.fechaEventoLabel}
                 onUpdateFechaEventoLabel={(v) => onSetSectionStyle?.(sec.id, { fechaEventoLabel: v })}
+                destacado={sec.destacado}
+                onUpdateDestacado={(v) => onSetSectionStyle?.(sec.id, { destacado: v })}
+                destacadoEtiqueta={sec.destacadoEtiqueta}
+                onUpdateDestacadoEtiqueta={(v) => onSetSectionStyle?.(sec.id, { destacadoEtiqueta: v })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -865,6 +869,119 @@ export default function SitePreview({
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'catalogo-libros' && (
+              <SeccionCatalogoLibros
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'recomendados' && (
+              <SeccionRecomendados
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'club-lectura' && (
+              <SeccionClubLectura
+                imagen={sec.imagen}
+                onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                datos={sec.datos ?? []}
+                onUpdateDatos={(datos) => onSetSectionStyle?.(sec.id, { datos })}
+                etiquetaUnido={sec.etiquetaUnido}
+                etiquetaSinUnir={sec.etiquetaSinUnir}
+                notaUnido={sec.notaUnido}
+                notaSinUnir={sec.notaSinUnir}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'firmas-eventos' && (
+              <SeccionFirmasEventos
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                nota={sec.nota}
+                onUpdateNota={(v) => onSetSectionStyle?.(sec.id, { nota: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'pedidos-especiales' && (
+              <SeccionPedidosEspeciales
+                pasos={sec.pasos ?? []}
+                onUpdatePasos={(pasos) => onSetSectionStyle?.(sec.id, { pasos })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                mensajeConfirmado={sec.mensajeConfirmado}
+                onUpdateMensajeConfirmado={(v) => onSetSectionStyle?.(sec.id, { mensajeConfirmado: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'visitanos-boletin' && (
+              <SeccionVisitanosBoletin
+                filas={sec.filas ?? []}
+                onUpdateFilas={(filas) => onSetSectionStyle?.(sec.id, { filas })}
+                eyebrowContacto={sec.eyebrowContacto}
+                onUpdateEyebrowContacto={(v) => onSetSectionStyle?.(sec.id, { eyebrowContacto: v })}
+                eyebrowBoletin={sec.eyebrowBoletin}
+                onUpdateEyebrowBoletin={(v) => onSetSectionStyle?.(sec.id, { eyebrowBoletin: v })}
+                descripcionBoletin={sec.descripcionBoletin}
+                onUpdateDescripcionBoletin={(v) => onSetSectionStyle?.(sec.id, { descripcionBoletin: v })}
+                mensajeSuscripto={sec.mensajeSuscripto}
+                onUpdateMensajeSuscripto={(v) => onSetSectionStyle?.(sec.id, { mensajeSuscripto: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
                 accent={accent}
                 palette={palette}
               />
@@ -4548,6 +4665,10 @@ function SeccionHero({
   onUpdateFechaEvento,
   fechaEventoLabel,
   onUpdateFechaEventoLabel,
+  destacado,
+  onUpdateDestacado,
+  destacadoEtiqueta,
+  onUpdateDestacadoEtiqueta,
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
   const inkHex = palette.inkHex || '#171717';
@@ -4749,6 +4870,126 @@ function SeccionHero({
             etiquetaSuperior={ofertasEtiquetaSuperior}
             velocidad={ofertasVelocidad}
           />
+        </div>
+      </section>
+    );
+  }
+
+  // Tres columnas: texto+CTAs, una foto fija, y una tarjeta flotante con UN
+  // producto destacado (foto, título, autor, precio, stock) — a diferencia
+  // de "ofertas" (que rota sola entre varias), acá es un solo ítem fijo que
+  // el dueño elige a mano, pensado para catálogos (librerías, tiendas).
+  if (variant === 'destacado') {
+    const d = destacado || {};
+    const handleHeroDestacadoImg = async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (file && (await validateImageFile(file, 'hero'))) onUpdateDestacado?.({ ...d, imagen: await uploadImage(file) });
+    };
+    const set = (key) => (v) => onUpdateDestacado?.({ ...d, [key]: v });
+    return (
+      <section className="relative px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1.05fr_0.75fr_0.7fr] gap-8 @lg:gap-10 items-end">
+          <div>
+            {eyebrow()}
+            {heading('text-4xl @lg:text-6xl')}
+            {paragraph()}
+            {botones()}
+          </div>
+          <div className="relative aspect-[3/4] bg-black/5 overflow-hidden group/hero">
+            <label className={`absolute inset-0 ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
+              {heroImagen || galeria?.[0] ? (
+                <img src={heroImagen || galeria[0]} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                  Agregá fotos en tu galería
+                </div>
+              )}
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 group-hover/hero:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/hero:opacity-100">
+                    <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+                </>
+              )}
+            </label>
+          </div>
+          <div className="border p-5" style={{ borderColor: palette.line, background: palette.bg }}>
+            <Editable
+              editable={editable}
+              value={destacadoEtiqueta}
+              onChange={onUpdateDestacadoEtiqueta}
+              tag="div"
+              block
+              styleKey="hero.destacadoEtiqueta"
+              placeholder="Etiqueta (ej: Lo de esta semana)"
+              style={{ color: accent }}
+              className="font-mono text-[11px] uppercase tracking-wide mb-3.5"
+              maxLength={40}
+            />
+            <label className={`group/dimg relative block aspect-[2/3] bg-black/5 overflow-hidden mb-3.5 ${editable ? 'cursor-pointer' : ''}`}>
+              {d.imagen ? (
+                <img src={d.imagen} alt={d.titulo || ''} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-center px-2" style={{ color: palette.inkSoft }}>
+                  Foto del producto
+                </div>
+              )}
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 group-hover/dimg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/dimg:opacity-100">
+                    <PencilIcon className="w-4 h-4 text-white" />
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleHeroDestacadoImg} />
+                </>
+              )}
+            </label>
+            <Editable
+              editable={editable}
+              value={d.titulo}
+              onChange={set('titulo')}
+              tag="div"
+              block
+              placeholder="Título"
+              style={{ color: palette.ink }}
+              className="font-serif text-lg leading-tight mb-1"
+              maxLength={60}
+            />
+            <Editable
+              editable={editable}
+              value={d.autor}
+              onChange={set('autor')}
+              tag="div"
+              block
+              placeholder="Autor"
+              style={{ color: palette.inkSoft }}
+              className="text-sm mb-2.5"
+              maxLength={50}
+            />
+            <div className="flex items-center justify-between gap-3 pt-2.5 border-t" style={{ borderColor: palette.line }}>
+              <Editable
+                editable={editable}
+                value={d.precio}
+                onChange={set('precio')}
+                tag="span"
+                placeholder="$0"
+                style={{ color: palette.ink }}
+                className="font-mono font-bold text-sm"
+                maxLength={20}
+              />
+              <Editable
+                editable={editable}
+                value={d.disponibilidad}
+                onChange={set('disponibilidad')}
+                tag="span"
+                placeholder="En stock"
+                style={{ color: '#3f6b6b' }}
+                className="font-mono text-xs"
+                maxLength={20}
+              />
+            </div>
+          </div>
         </div>
       </section>
     );
@@ -6985,6 +7226,246 @@ function SeccionProductos({
   );
 }
 
+// Catálogo con buscador + filtro por rubro/género + grilla de fichas, cada una
+// con su badge de stock — a diferencia de "Productos" (que no busca ni
+// filtra), acá el visitante puede buscar por título/autor/género en vivo. Las
+// pestañas de género se arman solas a partir de los géneros que ya tienen los
+// libros cargados (no hace falta una lista aparte para mantener sincronizada).
+function SeccionCatalogoLibros({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [query, setQuery] = useState('');
+  const [genre, setGenre] = useState('Todos');
+
+  const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const genres = ['Todos', ...Array.from(new Set(items.map((b) => b.genero).filter(Boolean)))];
+  const q = norm(query);
+  const results = items.filter((b) => {
+    const byGenre = genre === 'Todos' || b.genero === genre;
+    const byQuery = q === '' || norm(b.titulo).includes(q) || norm(b.autor).includes(q) || norm(b.genero).includes(q);
+    return byGenre && byQuery;
+  });
+
+  const update = (id, patch) => onUpdate?.(items.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({ id: `libro-${Date.now()}`, titulo: 'Nuevo libro', autor: 'Autor', genero: 'Sin género', precio: '$0', stock: 'En stock', stockColor: '#3f6b6b', img: '' });
+
+  const handleImg = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'productos'))) update(id, { img: await uploadImage(file) });
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="flex flex-wrap items-end justify-between gap-5 mb-7" as="div">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="catalogolibros.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: accent }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Buscá tu próxima lectura'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="catalogolibros.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl"
+              maxLength={70}
+            />
+          </div>
+          <div className="flex items-stretch border min-w-[min(100%,320px)]" style={{ borderColor: palette.line, background: palette.bg }}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Título, autor o tema..."
+              className="flex-1 min-w-0 bg-transparent border-none outline-none px-3.5 py-2.5 text-sm"
+              style={{ color: palette.ink }}
+            />
+            <div
+              className="flex items-center px-3.5 font-mono text-xs border-l"
+              style={{ color: palette.inkSoft, borderColor: palette.line }}
+            >
+              {results.length} de {items.length}
+            </div>
+          </div>
+        </Reveal>
+
+        <div className="flex flex-wrap gap-2 mb-8">
+          {genres.map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGenre(g)}
+              className="border text-sm px-3.5 py-2 transition-colors"
+              style={
+                genre === g
+                  ? { borderColor: palette.ink, background: palette.ink, color: palette.bg }
+                  : { borderColor: palette.line, color: palette.ink, background: 'transparent' }
+              }
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+
+        {results.length > 0 ? (
+          <div className="grid grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-5 gap-5">
+            {results.map((b, i) => (
+              <Reveal key={b.id} delay={Math.min(i * 0.06, 0.3)} className="relative" style={{ background: palette.bg, border: `1px solid ${palette.line}` }}>
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => remove(b.id)}
+                    aria-label={`Quitar ${b.titulo}`}
+                    className="absolute top-2 right-2 z-10 opacity-50 hover:opacity-100 bg-black/40 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+                <label className={`group/bimg relative block aspect-[2/3] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}>
+                  {b.img ? (
+                    <img src={b.img} alt={b.titulo} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-center px-2" style={{ color: palette.inkSoft }}>
+                      Foto
+                    </div>
+                  )}
+                  {editable && (
+                    <>
+                      <span className="absolute inset-0 bg-black/0 group-hover/bimg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/bimg:opacity-100">
+                        <PencilIcon className="w-4 h-4 text-white" />
+                      </span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImg(b.id)} />
+                    </>
+                  )}
+                </label>
+                <div className="p-3.5">
+                  <Editable
+                    editable={editable}
+                    value={b.genero}
+                    onChange={(v) => update(b.id, { genero: v })}
+                    tag="div"
+                    placeholder="Género"
+                    style={{ color: '#3f6b6b' }}
+                    className="font-mono text-[10px] uppercase tracking-wide mb-1.5"
+                    maxLength={30}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={b.titulo}
+                    onChange={(v) => update(b.id, { titulo: v })}
+                    tag="div"
+                    block
+                    placeholder="Título"
+                    style={{ color: palette.ink }}
+                    className="font-serif text-[15px] leading-snug mb-0.5"
+                    maxLength={60}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={b.autor}
+                    onChange={(v) => update(b.id, { autor: v })}
+                    tag="div"
+                    placeholder="Autor"
+                    style={{ color: palette.inkSoft }}
+                    className="text-xs mb-2.5"
+                    maxLength={50}
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <Editable
+                      editable={editable}
+                      value={b.precio}
+                      onChange={(v) => update(b.id, { precio: v })}
+                      tag="span"
+                      placeholder="$0"
+                      style={{ color: palette.ink }}
+                      className="font-mono font-bold text-sm"
+                      maxLength={20}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={b.stock}
+                      onChange={(v) => update(b.id, { stock: v })}
+                      tag="span"
+                      placeholder="En stock"
+                      style={{ color: b.stockColor || '#3f6b6b' }}
+                      className="font-mono text-[11px]"
+                      maxLength={20}
+                    />
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold min-h-[220px]"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-4 h-4" /> Agregar
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="border border-dashed text-center px-7 py-9" style={{ borderColor: palette.line, background: palette.bg }}>
+            <div className="font-serif italic text-xl mb-2.5" style={{ color: palette.ink }}>
+              No lo tenemos en góndola
+            </div>
+            <p className="text-sm leading-relaxed mb-5 max-w-md mx-auto" style={{ color: palette.inkSoft }}>
+              Pero podemos pedirlo a la editorial. Dejanos el título en pedidos especiales y te avisamos cuando llega.
+            </p>
+            <a
+              href="#pedidos"
+              className="inline-block font-semibold text-sm px-5 py-3"
+              style={{ background: accent, color: '#fff' }}
+            >
+              Encargar este libro
+            </a>
+            {editable && (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={add}
+                  className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-3 h-3" /> Agregar libro
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // Una reseña: nombre, foto, estrellas y comentario editables ahí mismo, con el
 // badge de "verificada" cuando vino de la conexión con Google/Facebook.
 // Iniciales en badge cuadrado (nunca foto de avatar) — coherente con el resto
@@ -7553,6 +8034,182 @@ function FAQList({ faqs, accent, palette = {}, editable, onAddFAQ, onRemoveFAQ, 
   );
 }
 
+// Recomendaciones del staff: ficha con foto chica del libro + nota escrita
+// por quien lo leyó + badge con sus iniciales — a diferencia de "Equipo"
+// (que muestra a las personas), acá el protagonista es el libro y la persona
+// es solo la firma de la nota.
+function SeccionRecomendados({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({ id: `pick-${Date.now()}`, titulo: 'Título del libro', autor: 'Autor', nota: 'Por qué lo recomendamos.', staff: 'Nombre, rol', img: '' });
+
+  const handleImg = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'equipo'))) update(id, { img: await uploadImage(file) });
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="max-w-xl mx-auto text-center mb-10">
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="recomendados.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Lo que estamos leyendo'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="recomendados.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-3"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Bajada (opcional)"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed"
+            maxLength={160}
+          />
+        </Reveal>
+        <div className="grid @sm:grid-cols-2 @lg:grid-cols-3 gap-7">
+          {items.map((it, i) => (
+            <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative grid gap-5" style={{ gridTemplateColumns: 'auto 1fr' }}>
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(it.id)}
+                  aria-label={`Quitar ${it.titulo}`}
+                  className="absolute top-0 right-0 opacity-40 hover:opacity-100"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <label className={`group/pimg relative block w-24 aspect-[2/3] bg-black/5 overflow-hidden shrink-0 ${editable ? 'cursor-pointer' : ''}`}>
+                {it.img ? (
+                  <img src={it.img} alt={it.titulo} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[10px] text-center px-1" style={{ color: palette.inkSoft }}>
+                    Foto
+                  </div>
+                )}
+                {editable && (
+                  <>
+                    <span className="absolute inset-0 bg-black/0 group-hover/pimg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/pimg:opacity-100">
+                      <PencilIcon className="w-3.5 h-3.5 text-white" />
+                    </span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImg(it.id)} />
+                  </>
+                )}
+              </label>
+              <div className="pr-5">
+                <Editable
+                  editable={editable}
+                  value={it.titulo}
+                  onChange={(v) => update(it.id, { titulo: v })}
+                  tag="div"
+                  block
+                  placeholder="Título"
+                  style={{ color: palette.ink }}
+                  className="font-serif text-[17px] leading-snug mb-0.5"
+                  maxLength={60}
+                />
+                <Editable
+                  editable={editable}
+                  value={it.autor}
+                  onChange={(v) => update(it.id, { autor: v })}
+                  tag="div"
+                  placeholder="Autor"
+                  style={{ color: palette.inkSoft }}
+                  className="text-xs mb-3"
+                  maxLength={50}
+                />
+                <div className="p-3 mb-2.5" style={{ background: bgColor ? 'rgba(0,0,0,0.03)' : palette.line + '40', borderLeft: `2px solid ${accent}` }}>
+                  <Editable
+                    editable={editable}
+                    value={it.nota}
+                    onChange={(v) => update(it.id, { nota: v })}
+                    tag="p"
+                    block
+                    multiline
+                    placeholder="Nota de quien lo leyó"
+                    style={{ color: palette.ink }}
+                    className="font-mono text-xs leading-relaxed"
+                    maxLength={280}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-5.5 h-5.5 shrink-0 flex items-center justify-center font-mono text-[10px] font-bold"
+                    style={{ background: '#3f6b6b', color: '#fff' }}
+                  >
+                    {initials(it.staff)}
+                  </span>
+                  <Editable
+                    editable={editable}
+                    value={it.staff}
+                    onChange={(v) => update(it.id, { staff: v })}
+                    tag="span"
+                    placeholder="Nombre, rol"
+                    style={{ color: palette.inkSoft }}
+                    className="text-xs"
+                    maxLength={50}
+                  />
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="mt-6 inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3 h-3" /> Agregar recomendación
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function SeccionFAQ({
   faqs = [],
   accent,
@@ -7860,6 +8517,176 @@ function ContactoForm({
   );
 }
 
+// Sección oscura de club/comunidad: foto + texto + una fila de datos clave
+// (próximo encuentro, dónde, cuánto) + un botón de "anotarme" que alterna
+// entre dos estados (como el "¿Venís?" de RSVP, pero de un solo toque, sin
+// formulario) — ephemeral en la sesión del visitante, no hay backend de
+// inscripciones real.
+function SeccionClubLectura({
+  imagen,
+  onUpdateImagen,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  datos = [],
+  onUpdateDatos,
+  etiquetaUnido,
+  etiquetaSinUnir,
+  notaUnido,
+  notaSinUnir,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  palette = {},
+}) {
+  const [joined, setJoined] = useState(false);
+
+  const handleImg = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+  };
+
+  const updateDato = (id, patch) => onUpdateDatos?.(datos.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+  const removeDato = (id) => onUpdateDatos?.(datos.filter((d) => d.id !== id));
+  const addDato = () => onUpdateDatos?.([...datos, { id: `dato-${Date.now()}`, label: 'Dato', valor: 'Valor' }]);
+
+  const suave = textColor || 'rgba(244,239,228,0.7)';
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink, color: textColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.9fr_1.1fr] gap-8 @lg:gap-12 items-center">
+        <Reveal as="label" className={`group/cimg relative block aspect-[4/3] bg-black/20 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}>
+          {imagen ? (
+            <img src={imagen} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: suave }}>
+              Agregá una foto
+            </div>
+          )}
+          {editable && (
+            <>
+              <span className="absolute inset-0 bg-black/0 group-hover/cimg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/cimg:opacity-100">
+                <PencilIcon className="w-4 h-4 text-white" />
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImg} />
+            </>
+          )}
+        </Reveal>
+        <Reveal delay={0.12}>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="clublectura.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: '#e0a37f' }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={60}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Club de lectura'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="clublectura.titulo"
+            style={{ color: headingColor || textColor || palette.bg }}
+            className="font-serif text-2xl @lg:text-3xl mb-3"
+            maxLength={90}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción del club"
+            style={{ color: suave }}
+            className="text-sm leading-relaxed mb-6 max-w-md"
+            maxLength={280}
+          />
+          <div
+            className="grid gap-4 mb-6 py-4"
+            style={{ gridTemplateColumns: `repeat(${Math.max(datos.length, 1)}, minmax(120px, 1fr))`, borderTop: '1px solid rgba(244,239,228,0.18)', borderBottom: '1px solid rgba(244,239,228,0.18)' }}
+          >
+            {datos.map((d) => (
+              <div key={d.id} className="relative">
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => removeDato(d.id)}
+                    aria-label="Quitar"
+                    className="absolute -top-1 -right-1 opacity-50 hover:opacity-100"
+                    style={{ color: textColor || palette.bg }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+                <Editable
+                  editable={editable}
+                  value={d.label}
+                  onChange={(v) => updateDato(d.id, { label: v })}
+                  tag="div"
+                  placeholder="Dato"
+                  style={{ color: 'rgba(244,239,228,0.5)' }}
+                  className="font-mono text-[10px] uppercase tracking-wide mb-1"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={d.valor}
+                  onChange={(v) => updateDato(d.id, { valor: v })}
+                  tag="div"
+                  block
+                  placeholder="Valor"
+                  style={{ color: textColor || palette.bg }}
+                  className="text-sm font-medium"
+                  maxLength={60}
+                />
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addDato}
+                className="text-xs font-semibold underline decoration-dotted self-start"
+                style={{ color: suave }}
+              >
+                + Agregar dato
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setJoined((v) => !v)}
+              className="font-semibold text-sm px-6 py-3 border transition-colors"
+              style={
+                joined
+                  ? { background: '#e0a37f', color: palette.ink, borderColor: '#e0a37f' }
+                  : { background: 'transparent', color: textColor || palette.bg, borderColor: '#e0a37f' }
+              }
+            >
+              {joined ? (etiquetaUnido || '✓ Estás anotado') : (etiquetaSinUnir || 'Anotarme al encuentro')}
+            </button>
+            <span className="font-mono text-xs" style={{ color: suave }}>
+              {joined ? (notaUnido || 'Te esperamos') : (notaSinUnir || 'Quedan lugares')}
+            </span>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 // Compara dos productos lado a lado eligiéndolos de dos selects — pensada
 // para catálogos de electrónica/tecnología donde el cliente duda entre dos
 // modelos puntuales. Cada modelo trae sus specs como pares clave/valor;
@@ -8095,6 +8922,152 @@ function SeccionComparador({
               </button>
             </div>
           </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Agenda de firmas/presentaciones/talleres: día y mes grandes + título +
+// detalle + horario — a diferencia de Cronograma (que ordena los momentos de
+// UN evento propio con línea de tiempo), acá cada fila es un evento
+// INDEPENDIENTE con su propia fecha en el calendario del negocio.
+function SeccionFirmasEventos({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  nota,
+  onUpdateNota,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onRemove?.(id);
+  const add = () => onAdd?.({ id: `evt-${Date.now()}`, dia: '01', mes: 'Ene', titulo: 'Nuevo evento', detalle: '', hora: '19:00' });
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-4xl mx-auto">
+        <Reveal
+          className="mb-8 border-b pb-5 flex flex-wrap items-baseline justify-between gap-4"
+          style={{ borderColor: palette.line }}
+        >
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Firmas y presentaciones'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="firmaseventos.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={nota}
+            onChange={onUpdateNota}
+            tag="span"
+            placeholder="Entrada libre · Se sugiere reservar"
+            style={{ color: palette.inkSoft }}
+            className="font-mono text-xs"
+            maxLength={60}
+          />
+        </Reveal>
+        <div>
+          {items.map((it, i) => (
+            <Reveal
+              key={it.id}
+              delay={Math.min(i * 0.08, 0.4)}
+              className="relative grid gap-5 items-center py-5 border-b"
+              style={{ gridTemplateColumns: 'auto 1fr auto', borderColor: palette.line }}
+            >
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(it.id)}
+                  aria-label="Quitar"
+                  className="absolute top-2 right-0 opacity-40 hover:opacity-100"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <div className="text-center min-w-[3.6rem]">
+                <Editable
+                  editable={editable}
+                  value={it.dia}
+                  onChange={(v) => update(it.id, { dia: v })}
+                  tag="div"
+                  placeholder="01"
+                  style={{ color: palette.ink }}
+                  className="font-serif text-3xl leading-none"
+                  maxLength={4}
+                />
+                <Editable
+                  editable={editable}
+                  value={it.mes}
+                  onChange={(v) => update(it.id, { mes: v })}
+                  tag="div"
+                  placeholder="Mes"
+                  style={{ color: accent }}
+                  className="font-mono text-[10px] uppercase tracking-wide mt-1"
+                  maxLength={10}
+                />
+              </div>
+              <div className="pr-5">
+                <Editable
+                  editable={editable}
+                  value={it.titulo}
+                  onChange={(v) => update(it.id, { titulo: v })}
+                  tag="div"
+                  block
+                  placeholder="Título del evento"
+                  style={{ color: palette.ink }}
+                  className="font-semibold text-base mb-1"
+                  maxLength={80}
+                />
+                <Editable
+                  editable={editable}
+                  value={it.detalle}
+                  onChange={(v) => update(it.id, { detalle: v })}
+                  tag="div"
+                  block
+                  multiline
+                  placeholder="Detalle breve"
+                  style={{ color: palette.inkSoft }}
+                  className="text-sm"
+                  maxLength={140}
+                />
+              </div>
+              <Editable
+                editable={editable}
+                value={it.hora}
+                onChange={(v) => update(it.id, { hora: v })}
+                tag="div"
+                placeholder="19:00"
+                style={{ color: '#3f6b6b' }}
+                className="font-mono text-sm text-right"
+                maxLength={10}
+              />
+            </Reveal>
+          ))}
+        </div>
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="mt-5 inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3 h-3" /> Agregar evento
+          </button>
         )}
       </div>
     </section>
@@ -8362,6 +9335,212 @@ function SeccionCanje({
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// Encargo especial: pasos numerados a la izquierda (cómo funciona) + un
+// formulario simple (título/autor/whatsapp) a la derecha con pantalla de
+// confirmado — mismo patrón ephemeral-solo-en-sesión que RSVP/Playlist, para
+// negocios que "consiguen" lo que no tienen en el momento.
+function SeccionPedidosEspeciales({
+  pasos = [],
+  onUpdatePasos,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  mensajeConfirmado,
+  onUpdateMensajeConfirmado,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [tituloLibro, setTituloLibro] = useState('');
+  const [autor, setAutor] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [sent, setSent] = useState(false);
+  const [sentTitulo, setSentTitulo] = useState('');
+
+  const updatePaso = (id, patch) => onUpdatePasos?.(pasos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const removePaso = (id) => onUpdatePasos?.(pasos.filter((p) => p.id !== id));
+  const addPaso = () => onUpdatePasos?.([...pasos, { id: `paso-${Date.now()}`, texto: 'Nuevo paso' }]);
+
+  const valid = tituloLibro.trim().length > 1 && telefono.trim().length > 5;
+  const reset = () => {
+    setSent(false);
+    setTituloLibro('');
+    setAutor('');
+    setTelefono('');
+  };
+  const send = () => {
+    if (!valid) return;
+    setSentTitulo(tituloLibro.trim());
+    setSent(true);
+  };
+
+  return (
+    <section id="pedidos" className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-start">
+        <Reveal>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="pedidosespeciales.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Si no lo tenemos, lo conseguimos'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="pedidosespeciales.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-4"
+            maxLength={80}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción breve"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6 max-w-md"
+            maxLength={220}
+          />
+          <div className="flex flex-col gap-3">
+            {pasos.map((p, i) => (
+              <div key={p.id} className="relative grid gap-3 items-baseline" style={{ gridTemplateColumns: 'auto 1fr' }}>
+                <span className="font-mono text-xs font-bold" style={{ color: accent }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <Editable
+                  editable={editable}
+                  value={p.texto}
+                  onChange={(v) => updatePaso(p.id, { texto: v })}
+                  tag="span"
+                  block
+                  placeholder="Paso"
+                  style={{ color: palette.ink }}
+                  className="text-sm leading-relaxed pr-5"
+                  maxLength={140}
+                />
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => removePaso(p.id)}
+                    aria-label="Quitar"
+                    className="absolute top-0 right-0 opacity-40 hover:opacity-100"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addPaso}
+                className="text-xs font-semibold underline decoration-dotted self-start"
+                style={{ color: palette.inkSoft }}
+              >
+                + Agregar paso
+              </button>
+            )}
+          </div>
+        </Reveal>
+        <Reveal delay={0.12} className="border p-6 @lg:p-8" style={{ borderColor: palette.line, background: palette.bg }}>
+          {sent ? (
+            <div className="text-center">
+              <div
+                className="w-12 h-12 mx-auto mb-4 border flex items-center justify-center font-serif text-lg"
+                style={{ borderColor: '#3f6b6b', color: '#3f6b6b' }}
+              >
+                ✓
+              </div>
+              <div className="font-serif text-xl mb-2.5" style={{ color: palette.ink }}>
+                Pedido anotado
+              </div>
+              <p className="text-sm leading-relaxed mb-5" style={{ color: palette.inkSoft }}>
+                {(mensajeConfirmado || 'Anotamos "{titulo}". Te escribimos por WhatsApp en menos de 24 hs con precio y fecha estimada de llegada.').replace('{titulo}', sentTitulo)}
+              </p>
+              <button type="button" onClick={reset} className="text-xs uppercase tracking-wide border-b" style={{ color: accent, borderColor: palette.line }}>
+                Encargar otro libro
+              </button>
+              {editable && (
+                <div className="mt-6 pt-5 border-t text-left" style={{ borderColor: palette.line }}>
+                  <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+                    Mensaje de confirmación (usá {'{titulo}'})
+                  </label>
+                  <textarea
+                    value={mensajeConfirmado || ''}
+                    onChange={(e) => onUpdateMensajeConfirmado?.(e.target.value)}
+                    rows={2}
+                    className="w-full border px-2.5 py-2 text-xs"
+                    style={{ borderColor: palette.line, color: palette.ink }}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="block font-mono text-[11px] uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                Título del libro
+              </label>
+              <input
+                value={tituloLibro}
+                onChange={(e) => setTituloLibro(e.target.value)}
+                placeholder="Ej: Los siete locos"
+                className="w-full box-border border px-3.5 py-2.5 text-sm outline-none mb-5"
+                style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+              />
+              <label className="block font-mono text-[11px] uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                Autor o editorial (opcional)
+              </label>
+              <input
+                value={autor}
+                onChange={(e) => setAutor(e.target.value)}
+                placeholder="Ej: Roberto Arlt"
+                className="w-full box-border border px-3.5 py-2.5 text-sm outline-none mb-5"
+                style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+              />
+              <label className="block font-mono text-[11px] uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                Tu WhatsApp
+              </label>
+              <input
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="Ej: 11 5555-1234"
+                className="w-full box-border border px-3.5 py-2.5 text-sm outline-none mb-6"
+                style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+              />
+              <button
+                type="button"
+                onClick={send}
+                className="w-full text-center text-sm font-semibold py-3 transition-colors"
+                style={{ background: valid ? accent : palette.line, color: '#fff' }}
+              >
+                Enviar pedido
+              </button>
+            </div>
+          )}
+        </Reveal>
       </div>
     </section>
   );
@@ -14350,6 +15529,179 @@ function SeccionMarcas({ marcas = [], editable = false, bgColor, headingColor, p
           )}
         </div>
       )}
+    </section>
+  );
+}
+
+// Tres columnas: datos de contacto (lista editable de filas label/valor),
+// suscripción al boletín (mail + botón, con estado de "ya te anotaste" —
+// ephemeral, sin backend real) y un mapa simulado — a diferencia de
+// "Contacto" (que es 2 columnas datos+mapa), acá suma la columna del
+// boletín en el medio, tal como en el original.
+function SeccionVisitanosBoletin({
+  filas = [],
+  onUpdateFilas,
+  eyebrowContacto,
+  onUpdateEyebrowContacto,
+  eyebrowBoletin,
+  onUpdateEyebrowBoletin,
+  descripcionBoletin,
+  onUpdateDescripcionBoletin,
+  mensajeSuscripto,
+  onUpdateMensajeSuscripto,
+  editable,
+  bgColor,
+  accent,
+  palette = {},
+}) {
+  const [email, setEmail] = useState('');
+  const [done, setDone] = useState(false);
+
+  const updateFila = (id, patch) => onUpdateFilas?.(filas.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  const removeFila = (id) => onUpdateFilas?.(filas.filter((f) => f.id !== id));
+  const addFila = () => onUpdateFilas?.([...filas, { id: `fila-${Date.now()}`, label: 'Dato', valor: 'Valor' }]);
+
+  const suscribir = () => {
+    if (email.trim().includes('@')) setDone(true);
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+      <div className="max-w-5xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-10 @lg:gap-12">
+        <Reveal>
+          <Editable
+            editable={editable}
+            value={eyebrowContacto}
+            onChange={onUpdateEyebrowContacto}
+            tag="div"
+            block
+            styleKey="visitanosboletin.eyebrowContacto"
+            placeholder="Visitanos"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.14em] mb-4"
+            maxLength={40}
+          />
+          <div className="flex flex-col gap-4.5">
+            {filas.map((f) => (
+              <div key={f.id} className="relative">
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => removeFila(f.id)}
+                    aria-label="Quitar"
+                    className="absolute -top-1 -right-1 opacity-40 hover:opacity-100"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+                <Editable
+                  editable={editable}
+                  value={f.label}
+                  onChange={(v) => updateFila(f.id, { label: v })}
+                  tag="div"
+                  placeholder="Dato"
+                  style={{ color: palette.inkSoft }}
+                  className="font-mono text-[10px] uppercase tracking-wide mb-1"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={f.valor}
+                  onChange={(v) => updateFila(f.id, { valor: v })}
+                  tag="div"
+                  block
+                  placeholder="Valor"
+                  style={{ color: palette.ink }}
+                  className="text-[15px]"
+                  maxLength={80}
+                />
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addFila}
+                className="text-xs font-semibold underline decoration-dotted self-start"
+                style={{ color: palette.inkSoft }}
+              >
+                + Agregar dato
+              </button>
+            )}
+          </div>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <Editable
+            editable={editable}
+            value={eyebrowBoletin}
+            onChange={onUpdateEyebrowBoletin}
+            tag="div"
+            block
+            styleKey="visitanosboletin.eyebrowBoletin"
+            placeholder="Boletín de novedades"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.14em] mb-4"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={descripcionBoletin}
+            onChange={onUpdateDescripcionBoletin}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción breve del boletín"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-4.5"
+            maxLength={160}
+          />
+          {done ? (
+            <div className="font-mono text-sm" style={{ color: '#3f6b6b' }}>
+              ✓ {mensajeSuscripto || 'Anotado. Te escribimos el primer lunes del mes.'}
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                className="flex-1 min-w-0 border px-3.5 py-2.5 text-sm outline-none"
+                style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+              />
+              <button
+                type="button"
+                onClick={suscribir}
+                className="shrink-0 px-4 text-sm whitespace-nowrap"
+                style={{ background: palette.ink, color: palette.bg }}
+              >
+                Suscribirme
+              </button>
+            </div>
+          )}
+          {editable && (
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: palette.line }}>
+              <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+                Mensaje al suscribirse
+              </label>
+              <input
+                value={mensajeSuscripto || ''}
+                onChange={(e) => onUpdateMensajeSuscripto?.(e.target.value)}
+                className="w-full border px-2.5 py-2 text-xs"
+                style={{ borderColor: palette.line, color: palette.ink }}
+              />
+            </div>
+          )}
+        </Reveal>
+        <Reveal
+          delay={0.2}
+          className="min-h-[180px] flex items-center justify-center border"
+          style={{ background: palette.line + '40', borderColor: palette.line }}
+        >
+          <span className="font-mono text-xs uppercase" style={{ color: palette.inkSoft }}>
+            Mapa (simulado)
+          </span>
+        </Reveal>
+      </div>
     </section>
   );
 }

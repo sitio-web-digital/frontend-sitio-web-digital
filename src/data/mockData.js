@@ -957,6 +957,36 @@ export const SECCIONES_CATALOGO = [
     desc: 'Los invitados dejan un mensaje en el momento, sobre una lista de mensajes ya firmados.',
   },
   {
+    id: 'catalogo-libros',
+    label: 'Catálogo con buscador',
+    desc: 'Buscador en vivo + pestañas de género/rubro + grilla de fichas con stock, y un estado de "sin resultados" con llamado a la acción.',
+  },
+  {
+    id: 'recomendados',
+    label: 'Recomendados del staff',
+    desc: 'Fichas con foto chica, una nota escrita por quien lo recomienda y su firma con iniciales.',
+  },
+  {
+    id: 'club-lectura',
+    label: 'Club / comunidad',
+    desc: 'Sección oscura con foto, datos clave (próximo encuentro, dónde, cuánto) y un botón para anotarse.',
+  },
+  {
+    id: 'firmas-eventos',
+    label: 'Agenda de eventos',
+    desc: 'Lista de eventos propios (firmas, presentaciones, talleres) con día, mes y horario destacados.',
+  },
+  {
+    id: 'pedidos-especiales',
+    label: 'Encargo especial',
+    desc: 'Pasos de cómo funciona + formulario simple (título/autor/WhatsApp) con pantalla de confirmado.',
+  },
+  {
+    id: 'visitanos-boletin',
+    label: 'Visitanos + boletín',
+    desc: 'Tres columnas: datos de contacto, suscripción a un boletín y un mapa simulado.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',
@@ -1018,6 +1048,7 @@ export const SECTION_VARIANTS = {
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera' },
+    { id: 'destacado', label: 'Foto + producto destacado', skeleton: 'heroVidriera' },
     { id: 'duo', label: 'Dos fotos', skeleton: 'heroDuo' },
     { id: 'centro', label: 'Todo centrado, sin foto', skeleton: 'heroCentro' },
   ],

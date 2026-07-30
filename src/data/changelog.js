@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.16.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Librería Los Andes": comercio con catálogo, tipografía Newsreader/Courier Prime/Figtree y colores tierra/terracota.' },
+      { type: 'nuevo', text: 'Nueva distribución del Hero "Foto + producto destacado": foto fija y una tarjeta flotante con un producto elegido a mano (foto, título, autor, precio y stock).' },
+      { type: 'nuevo', text: 'Nueva sección "Catálogo con buscador": buscador en vivo + pestañas de género/rubro + grilla con stock, con un estado de "sin resultados" y llamado a la acción.' },
+      { type: 'nuevo', text: 'Nueva sección "Recomendados del staff": fichas con foto chica, una nota de quien lo recomienda y su firma con iniciales.' },
+      { type: 'nuevo', text: 'Nueva sección "Club / comunidad": sección oscura con foto, datos clave y un botón para anotarse.' },
+      { type: 'nuevo', text: 'Nueva sección "Agenda de eventos": lista de eventos propios (firmas, presentaciones, talleres) con día, mes y horario destacados.' },
+      { type: 'nuevo', text: 'Nueva sección "Encargo especial": pasos de cómo funciona + formulario simple con pantalla de confirmado.' },
+      { type: 'nuevo', text: 'Nueva sección "Visitanos + boletín": datos de contacto, suscripción a un boletín y un mapa simulado en tres columnas.' },
+    ],
+  },
+  {
     version: '1.15.2',
     date: '2026-07-30',
     changes: [
