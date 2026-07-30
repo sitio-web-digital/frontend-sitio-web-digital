@@ -986,6 +986,100 @@ export default function SitePreview({
                 palette={palette}
               />
             )}
+            {sec.type === 'ciclo-trabajo' && (
+              <SeccionCicloTrabajo
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'catalogo-insumos' && (
+              <SeccionCatalogoInsumos
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'cotizador' && (
+              <SeccionCotizador
+                opciones={sec.opciones ?? []}
+                onUpdate={(opciones) => onSetSectionStyle?.(sec.id, { opciones })}
+                onAdd={(opt) => onSetSectionStyle?.(sec.id, { opciones: [...(sec.opciones ?? []), opt] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { opciones: (sec.opciones ?? []).filter((o) => o.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                cantidadLabel={sec.cantidadLabel}
+                onUpdateCantidadLabel={(v) => onSetSectionStyle?.(sec.id, { cantidadLabel: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'ensayos' && (
+              <SeccionEnsayos
+                columnas={sec.columnas ?? []}
+                onUpdateColumnas={(columnas) => onSetSectionStyle?.(sec.id, { columnas })}
+                filas={sec.filas ?? []}
+                onUpdate={(filas) => onSetSectionStyle?.(sec.id, { filas })}
+                onAdd={(fila) => onSetSectionStyle?.(sec.id, { filas: [...(sec.filas ?? []), fila] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { filas: (sec.filas ?? []).filter((f) => f.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                nota={sec.nota}
+                onUpdateNota={(v) => onSetSectionStyle?.(sec.id, { nota: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'zonas-tecnicas' && (
+              <SeccionZonasTecnicas
+                zonas={sec.zonas ?? []}
+                onUpdate={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
+                onAdd={(zona) => onSetSectionStyle?.(sec.id, { zonas: [...(sec.zonas ?? []), zona] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { zonas: (sec.zonas ?? []).filter((z) => z.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                imagen={sec.imagen}
+                onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                palette={palette}
+              />
+            )}
             {sec.type === 'contacto' && (
               <SeccionContacto
                 accent={accent}
@@ -7484,6 +7578,11 @@ function TestimonioCard({ t, editable, onUpdate, onRemove, accent, palette = {} 
           <XIcon className="w-4 h-4" />
         </button>
       )}
+      {t.metric && (
+        <div className="font-serif font-bold text-2xl leading-none mb-3" style={{ color: accent }}>
+          {t.metric}
+        </div>
+      )}
       <div className="flex items-center gap-3 mb-4">
         <div
           className="w-8 h-8 shrink-0 flex items-center justify-center font-mono text-xs font-bold"
@@ -7684,6 +7783,260 @@ function ConectarResenasModal({ onConnect, onClose }) {
         )}
       </div>
     </div>
+  );
+}
+
+// Catálogo técnico filtrable por tipo/rubro: ficha con encabezado
+// tipo+stock, nombre+fórmula, una sub-lista de specs clave/valor, y un
+// pie con precio+unidad — a diferencia de "Catálogo con buscador" (que
+// tiene foto y buscador de texto), acá no hay fotos y en cambio cada
+// ficha muestra sus datos técnicos.
+function SeccionCatalogoInsumos({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  palette = {},
+}) {
+  const [tipo, setTipo] = useState('Todos');
+
+  const tipos = ['Todos', ...Array.from(new Set(items.map((p) => p.tipo).filter(Boolean)))];
+  const results = tipo === 'Todos' ? items : items.filter((p) => p.tipo === tipo);
+
+  const update = (id, patch) => onUpdate?.(items.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({
+      id: `insumo-${Date.now()}`,
+      tipo: 'Sin tipo',
+      nombre: 'Nuevo insumo',
+      formula: '',
+      precio: '$0',
+      unidad: 'por unidad',
+      stock: 'Disponible',
+      stockColor: '#3f6b2b',
+      specs: [{ k: 'Dato', v: 'Valor' }],
+    });
+
+  const updateSpec = (id, idx, patch) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    update(id, { specs: it.specs.map((s, i) => (i === idx ? { ...s, ...patch } : s)) });
+  };
+  const removeSpec = (id, idx) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    update(id, { specs: it.specs.filter((_, i) => i !== idx) });
+  };
+  const addSpec = (id) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    update(id, { specs: [...(it.specs || []), { k: 'Dato', v: 'Valor' }] });
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="flex flex-wrap items-end justify-between gap-5 mb-7">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="catalogoinsumos.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: '#3f6b2b' }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Insumos con respaldo'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="catalogoinsumos.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl"
+              maxLength={70}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {tipos.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTipo(t)}
+                className="border text-sm px-3.5 py-2 transition-colors"
+                style={
+                  tipo === t
+                    ? { borderColor: palette.ink, background: palette.ink, color: palette.bg }
+                    : { borderColor: palette.line, color: palette.ink, background: 'transparent' }
+                }
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </Reveal>
+
+        <div className="grid @sm:grid-cols-2 @lg:grid-cols-4 gap-5">
+          {results.map((p, i) => (
+            <Reveal
+              key={p.id}
+              delay={Math.min(i * 0.06, 0.3)}
+              className="relative flex flex-col"
+              style={{ background: palette.bg, border: `1px solid ${palette.line}` }}
+            >
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(p.id)}
+                  aria-label={`Quitar ${p.nombre}`}
+                  className="absolute top-2 right-2 z-10 opacity-50 hover:opacity-100 bg-black/40 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                >
+                  <XIcon className="w-3 h-3" />
+                </button>
+              )}
+              <div className="flex items-center justify-between gap-2 px-4 py-3 border-b" style={{ borderColor: palette.line }}>
+                <Editable
+                  editable={editable}
+                  value={p.tipo}
+                  onChange={(v) => update(p.id, { tipo: v })}
+                  tag="span"
+                  placeholder="Tipo"
+                  style={{ color: palette.inkSoft }}
+                  className="font-mono text-[10px] uppercase tracking-wide"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.stock}
+                  onChange={(v) => update(p.id, { stock: v })}
+                  tag="span"
+                  placeholder="Disponible"
+                  style={{ color: p.stockColor || '#3f6b2b' }}
+                  className="font-mono text-[10px]"
+                  maxLength={20}
+                />
+              </div>
+              <div className="px-4 py-4 flex-1">
+                <Editable
+                  editable={editable}
+                  value={p.nombre}
+                  onChange={(v) => update(p.id, { nombre: v })}
+                  tag="div"
+                  block
+                  placeholder="Nombre"
+                  style={{ color: palette.ink }}
+                  className="font-semibold text-[15px] mb-1"
+                  maxLength={50}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.formula}
+                  onChange={(v) => update(p.id, { formula: v })}
+                  tag="div"
+                  block
+                  placeholder="Fórmula o descripción"
+                  style={{ color: palette.inkSoft }}
+                  className="text-xs mb-3"
+                  maxLength={60}
+                />
+                <div className="flex flex-col gap-1.5 pt-3" style={{ borderTop: `1px dashed ${palette.line}` }}>
+                  {(p.specs || []).map((sp, idx) => (
+                    <div key={idx} className="relative flex justify-between gap-2 pr-4">
+                      <Editable
+                        editable={editable}
+                        value={sp.k}
+                        onChange={(v) => updateSpec(p.id, idx, { k: v })}
+                        tag="span"
+                        placeholder="Dato"
+                        style={{ color: palette.inkSoft }}
+                        className="font-mono text-[11px]"
+                        maxLength={20}
+                      />
+                      <Editable
+                        editable={editable}
+                        value={sp.v}
+                        onChange={(v) => updateSpec(p.id, idx, { v })}
+                        tag="span"
+                        placeholder="Valor"
+                        style={{ color: palette.ink }}
+                        className="font-mono text-[11px] text-right"
+                        maxLength={30}
+                      />
+                      {editable && (
+                        <button
+                          type="button"
+                          onClick={() => removeSpec(p.id, idx)}
+                          aria-label="Quitar dato"
+                          className="absolute right-0 opacity-40 hover:opacity-100"
+                          style={{ color: palette.ink }}
+                        >
+                          <XIcon className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => addSpec(p.id)}
+                      className="text-[11px] font-semibold underline decoration-dotted self-start"
+                      style={{ color: palette.inkSoft }}
+                    >
+                      + Agregar dato
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 px-4 py-3" style={{ background: palette.line + '30', borderTop: `1px solid ${palette.line}` }}>
+                <Editable
+                  editable={editable}
+                  value={p.precio}
+                  onChange={(v) => update(p.id, { precio: v })}
+                  tag="span"
+                  placeholder="$0"
+                  style={{ color: palette.ink }}
+                  className="font-semibold text-sm"
+                  maxLength={20}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.unidad}
+                  onChange={(v) => update(p.id, { unidad: v })}
+                  tag="span"
+                  placeholder="por unidad"
+                  style={{ color: '#3f6b2b' }}
+                  className="font-mono text-[11px]"
+                  maxLength={20}
+                />
+              </div>
+            </Reveal>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold min-h-[220px]"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -9074,6 +9427,230 @@ function SeccionFirmasEventos({
   );
 }
 
+// Cotizador rápido: el visitante elige una opción (cultivo, servicio, lo que
+// sea) y escribe una cantidad (hectáreas, metros, lo que corresponda), y ve
+// al instante una cotización con varias filas de detalle + un total — a
+// diferencia de "Plan canje" (que combina DOS selects fijos con una fórmula
+// única), acá es UNA opción + una cantidad libre, con una fórmula propia por
+// opción (dosis/precio/extra), pensado para insumos por hectárea.
+function SeccionCotizador({
+  opciones = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  cantidadLabel,
+  onUpdateCantidadLabel,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [optIdx, setOptIdx] = useState(0);
+  const [cantidad, setCantidad] = useState('250');
+
+  const opt = opciones[Math.min(optIdx, Math.max(opciones.length - 1, 0))];
+  const qty = Math.max(0, parseFloat(String(cantidad).replace(',', '.')) || 0);
+  const costoUnitario = opt ? (opt.dosis || 0) * (opt.precioUnitario || 0) + (opt.extra || 0) : 0;
+  const total = costoUnitario * qty;
+
+  const update = (id, patch) => onUpdate?.(opciones.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({ id: `opt-${Date.now()}`, label: 'Nueva opción', dosis: 1, dosisUnidad: 'kg/ha', producto: 'Producto sugerido', precioUnitario: 0, precioUnidad: 'kg', extra: 0 });
+
+  const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-start">
+        <Reveal>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="cotizador.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: '#3f6b2b' }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Calculá tu planteo en 30 segundos'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="cotizador.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-4"
+            maxLength={90}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción breve"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6 max-w-md"
+            maxLength={220}
+          />
+          <div className="flex flex-col gap-5">
+            <div>
+              {editable ? (
+                <div className="flex flex-wrap gap-2 mb-1">
+                  {opciones.map((o) => (
+                    <div key={o.id} className="relative border p-2.5 flex flex-col gap-1 min-w-[140px]" style={{ borderColor: palette.line }}>
+                      {editable && (
+                        <button
+                          type="button"
+                          onClick={() => remove(o.id)}
+                          aria-label={`Quitar ${o.label}`}
+                          className="absolute top-1 right-1 opacity-50 hover:opacity-100"
+                          style={{ color: palette.ink }}
+                        >
+                          <XIcon className="w-3 h-3" />
+                        </button>
+                      )}
+                      <Editable
+                        editable
+                        value={o.label}
+                        onChange={(v) => update(o.id, { label: v })}
+                        tag="span"
+                        className="text-xs font-semibold pr-3"
+                        style={{ color: palette.ink }}
+                        maxLength={20}
+                      />
+                      <div className="flex gap-1">
+                        <input
+                          type="number"
+                          value={o.dosis ?? 0}
+                          onChange={(e) => update(o.id, { dosis: Number(e.target.value) || 0 })}
+                          placeholder="Dosis"
+                          className="w-full border px-1.5 py-1 text-xs"
+                          style={{ borderColor: palette.line, color: palette.ink }}
+                        />
+                        <input
+                          type="number"
+                          value={o.precioUnitario ?? 0}
+                          onChange={(e) => update(o.id, { precioUnitario: Number(e.target.value) || 0 })}
+                          placeholder="Precio"
+                          className="w-full border px-1.5 py-1 text-xs"
+                          style={{ borderColor: palette.line, color: palette.ink }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={add}
+                    className="border-2 border-dashed flex items-center justify-center px-3 text-xs font-semibold min-w-[90px]"
+                    style={{ borderColor: palette.line, color: palette.inkSoft }}
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <label className="block font-mono text-xs uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                    {opciones[0]?.categoria || 'Opción'}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {opciones.map((o, i) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => setOptIdx(i)}
+                        className="border text-sm px-4 py-2.5 font-semibold transition-colors"
+                        style={
+                          i === optIdx
+                            ? { borderColor: '#3f6b2b', background: '#e8efe0', color: '#3f6b2b' }
+                            : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                        }
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <div>
+              <Editable
+                editable={editable}
+                value={cantidadLabel}
+                onChange={onUpdateCantidadLabel}
+                tag="label"
+                block
+                placeholder="Superficie a tratar (hectáreas)"
+                style={{ color: palette.inkSoft }}
+                className="font-mono text-xs uppercase tracking-wide mb-2"
+                maxLength={60}
+              />
+              <input
+                value={cantidad}
+                onChange={(e) => setCantidad(e.target.value.replace(/[^0-9.,]/g, ''))}
+                placeholder="Ej: 250"
+                className="w-full box-border border px-4 py-3 text-base font-mono outline-none"
+                style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+              />
+            </div>
+          </div>
+        </Reveal>
+        <Reveal delay={0.12} className="p-6 @lg:p-8" style={{ background: palette.inkHex || '#171717', color: '#f6f6f1' }}>
+          <div className="font-mono text-[11px] uppercase tracking-wide mb-5" style={{ color: '#e0b968' }}>
+            Estimación — {opt?.label || '—'}
+          </div>
+          <div className="flex flex-col gap-3 mb-6">
+            {[
+              { label: 'Planteo sugerido', value: opt?.producto || '—' },
+              { label: 'Dosis recomendada', value: opt ? `${(opt.dosis || 0).toLocaleString('es-AR')} ${opt.dosisUnidad || ''}` : '—' },
+              { label: 'Superficie', value: `${qty.toLocaleString('es-AR')} ${opciones[0]?.cantidadUnidad || 'ha'}` },
+              { label: 'Volumen total', value: opt ? `${((opt.dosis || 0) * qty).toLocaleString('es-AR', { maximumFractionDigits: 1 })} ${(opt.dosisUnidad || '').replace('/ha', '')}` : '—' },
+            ].map((r) => (
+              <div key={r.label} className="flex justify-between gap-3 pb-3 border-b" style={{ borderColor: 'rgba(246,246,241,0.14)' }}>
+                <span className="text-sm" style={{ color: 'rgba(246,246,241,0.65)' }}>
+                  {r.label}
+                </span>
+                <span className="font-mono text-sm text-right">{r.value}</span>
+              </div>
+            ))}
+          </div>
+          <div className="p-5 mb-5" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="font-mono text-[10px] uppercase tracking-wide mb-2" style={{ color: 'rgba(246,246,241,0.55)' }}>
+              Costo estimado total
+            </div>
+            <div className="font-serif font-bold text-3xl leading-none" style={{ color: '#a3c77e' }}>
+              {money(total)}
+            </div>
+            <div className="font-mono text-xs mt-2" style={{ color: 'rgba(246,246,241,0.6)' }}>
+              {money(costoUnitario)} por {opciones[0]?.cantidadUnidad || 'ha'} · precio de {opt?.precioUnidad || 'unidad'}: {money(opt?.precioUnitario || 0)}
+            </div>
+          </div>
+          <a
+            href="#/whatsapp"
+            className="block text-center font-semibold text-sm py-3.5"
+            style={{ background: accent, color: palette.inkHex || '#171717' }}
+          >
+            Pedir cotización formal
+          </a>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 // Calculadora de plan canje: el visitante elige un modelo propio y su estado
 // de conservación, y ve al instante cuánto se le tomaría a cuenta de una
 // compra nueva (valorBase del modelo × el factor del estado, redondeado al
@@ -9546,6 +10123,146 @@ function SeccionPedidosEspeciales({
   );
 }
 
+// Tabla de resultados con scroll horizontal en pantallas chicas — filas de
+// datos comparables (campaña/tratamiento/rendimiento/testigo/diferencia),
+// pensada para mostrar ensayos, mediciones o cualquier tabla de resultados
+// reales, a diferencia de "Comparador" (que enfrenta solo DOS productos
+// elegidos con selects, no una lista abierta de filas).
+function SeccionEnsayos({
+  columnas = [],
+  onUpdateColumnas,
+  filas = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  nota,
+  onUpdateNota,
+  editable,
+  bgColor,
+  headingColor,
+  palette = {},
+}) {
+  const updateCol = (idx, value) => onUpdateColumnas?.(columnas.map((c, i) => (i === idx ? value : c)));
+  const updateCell = (id, idx, value) => {
+    const row = filas.find((r) => r.id === id);
+    if (!row) return;
+    onUpdate?.(filas.map((r) => (r.id === id ? { ...r, cells: r.cells.map((c, i) => (i === idx ? value : c)) } : r)));
+  };
+  const removeRow = (id) => onRemove?.(id);
+  const addRow = () => onAdd?.({ id: `fila-${Date.now()}`, cells: columnas.map(() => '—') });
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="ensayos.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: '#3f6b2b' }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Resultados de la última campaña'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="ensayos.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl"
+              maxLength={80}
+            />
+          </div>
+          <Editable
+            editable={editable}
+            value={nota}
+            onChange={onUpdateNota}
+            tag="span"
+            block
+            placeholder="Nota breve (opcional)"
+            style={{ color: palette.inkSoft }}
+            className="font-mono text-xs max-w-xs"
+            maxLength={140}
+          />
+        </Reveal>
+        <Reveal delay={0.1} className="overflow-x-auto">
+          <div className="min-w-[640px] border" style={{ borderColor: palette.line, background: palette.bg }}>
+            <div
+              className="grid"
+              style={{ gridTemplateColumns: `repeat(${Math.max(columnas.length, 1)}, 1fr)`, background: palette.ink, color: palette.bg }}
+            >
+              {columnas.map((c, idx) => (
+                <Editable
+                  key={idx}
+                  editable={editable}
+                  value={c}
+                  onChange={(v) => updateCol(idx, v)}
+                  tag="div"
+                  placeholder="Columna"
+                  className="font-mono text-[11px] uppercase tracking-wide px-4 py-3"
+                  maxLength={30}
+                />
+              ))}
+            </div>
+            {filas.map((row) => (
+              <div
+                key={row.id}
+                className="relative grid items-center border-t"
+                style={{ gridTemplateColumns: `repeat(${Math.max(columnas.length, 1)}, 1fr)`, borderColor: palette.line }}
+              >
+                {row.cells.map((cell, idx) => (
+                  <Editable
+                    key={idx}
+                    editable={editable}
+                    value={cell}
+                    onChange={(v) => updateCell(row.id, idx, v)}
+                    tag="div"
+                    className="text-sm px-4 py-3"
+                    style={{ color: idx === row.cells.length - 1 ? '#3f6b2b' : palette.ink }}
+                    maxLength={40}
+                  />
+                ))}
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => removeRow(row.id)}
+                    aria-label="Quitar fila"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Reveal>
+        {editable && (
+          <button
+            type="button"
+            onClick={addRow}
+            className="mt-4 inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3 h-3" /> Agregar fila
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // Selector de sucursales: lista clickeable a la izquierda (nombre + ciudad +
 // abierto/cerrado), panel con mapa simulado + datos de la sucursal activa a
 // la derecha — mismo patrón de switcher que Series/Estilos, pero con datos
@@ -9721,6 +10438,244 @@ function SeccionSucursales({
             </div>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+// Selector de zonas con botones (no lista con abierto/cerrado como
+// "Sucursales") + panel de la zona activa: iniciales del técnico + nombre +
+// especialidad + una lista libre de datos ("facts"), más una foto real de
+// la zona debajo (no un mapa simulado) — pensado para negocios con un
+// referente humano por zona (técnico, asesor, repartidor).
+function SeccionZonasTecnicas({
+  zonas = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  imagen,
+  onUpdateImagen,
+  editable,
+  bgColor,
+  headingColor,
+  palette = {},
+}) {
+  const [active, setActive] = useState(0);
+  const activeIndex = Math.min(active, Math.max(zonas.length - 1, 0));
+  const zona = zonas[activeIndex];
+
+  const update = (id, patch) => onUpdate?.(zonas.map((z) => (z.id === id ? { ...z, ...patch } : z)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({ id: `zona-${Date.now()}`, label: 'Nueva zona', tech: 'Nombre y apellido', specialty: 'Especialidad', facts: [{ k: 'Dato', v: 'Valor' }] });
+
+  const updateFact = (id, idx, patch) => {
+    const z = zonas.find((x) => x.id === id);
+    if (!z) return;
+    update(id, { facts: z.facts.map((f, i) => (i === idx ? { ...f, ...patch } : f)) });
+  };
+  const removeFact = (id, idx) => {
+    const z = zonas.find((x) => x.id === id);
+    if (!z) return;
+    update(id, { facts: z.facts.filter((_, i) => i !== idx) });
+  };
+  const addFact = (id) => {
+    const z = zonas.find((x) => x.id === id);
+    if (!z) return;
+    update(id, { facts: [...(z.facts || []), { k: 'Dato', v: 'Valor' }] });
+  };
+
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.85fr_1.15fr] gap-8 @lg:gap-12 items-start">
+        <Reveal>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="zonastecnicas.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: '#3f6b2b' }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Un técnico por zona'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="zonastecnicas.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-4"
+            maxLength={80}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción breve"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6 max-w-md"
+            maxLength={200}
+          />
+          <div className="flex flex-wrap gap-2">
+            {zonas.map((z, i) => (
+              <button
+                key={z.id}
+                type="button"
+                onClick={() => setActive(i)}
+                className="border text-sm px-3.5 py-2 transition-colors"
+                style={
+                  i === activeIndex
+                    ? { borderColor: '#3f6b2b', background: '#e8efe0', color: '#3f6b2b' }
+                    : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                }
+              >
+                {z.label}
+              </button>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="border-2 border-dashed flex items-center justify-center px-3 text-sm"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </Reveal>
+        <Reveal delay={0.12} className="flex flex-col gap-5">
+          {zona && (
+            <div className="relative border p-6 grid grid-cols-[auto_1fr] gap-5 items-start" style={{ borderColor: palette.line, background: palette.bg }}>
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(zona.id)}
+                  aria-label={`Quitar ${zona.label}`}
+                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <div
+                className="w-14 h-14 flex items-center justify-center font-serif font-semibold text-lg shrink-0"
+                style={{ background: '#3f6b2b', color: '#fff' }}
+              >
+                {initials(zona.tech.split(' ').slice(-2).join(' '))}
+              </div>
+              <div>
+                <Editable
+                  editable={editable}
+                  value={zona.tech}
+                  onChange={(v) => update(zona.id, { tech: v })}
+                  tag="div"
+                  block
+                  placeholder="Nombre del técnico"
+                  style={{ color: palette.ink }}
+                  className="font-semibold text-lg mb-0.5"
+                  maxLength={50}
+                />
+                <Editable
+                  editable={editable}
+                  value={zona.specialty}
+                  onChange={(v) => update(zona.id, { specialty: v })}
+                  tag="div"
+                  block
+                  placeholder="Especialidad"
+                  style={{ color: '#3f6b2b' }}
+                  className="font-mono text-xs mb-4"
+                  maxLength={70}
+                />
+                <div className="grid grid-cols-1 @sm:grid-cols-3 gap-4">
+                  {(zona.facts || []).map((f, idx) => (
+                    <div key={idx} className="relative">
+                      <Editable
+                        editable={editable}
+                        value={f.k}
+                        onChange={(v) => updateFact(zona.id, idx, { k: v })}
+                        tag="div"
+                        placeholder="Dato"
+                        style={{ color: palette.inkSoft }}
+                        className="font-mono text-[10px] uppercase tracking-wide mb-1"
+                        maxLength={20}
+                      />
+                      <Editable
+                        editable={editable}
+                        value={f.v}
+                        onChange={(v) => updateFact(zona.id, idx, { v })}
+                        tag="div"
+                        block
+                        placeholder="Valor"
+                        style={{ color: palette.ink }}
+                        className="text-sm"
+                        maxLength={60}
+                      />
+                      {editable && (
+                        <button
+                          type="button"
+                          onClick={() => removeFact(zona.id, idx)}
+                          aria-label="Quitar dato"
+                          className="absolute -top-1 -right-1 opacity-40 hover:opacity-100"
+                          style={{ color: palette.ink }}
+                        >
+                          <XIcon className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => addFact(zona.id)}
+                      className="text-xs font-semibold underline decoration-dotted self-start"
+                      style={{ color: palette.inkSoft }}
+                    >
+                      + Agregar dato
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          <label className={`group/zimg relative block aspect-[16/7] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}>
+            {imagen ? (
+              <img src={imagen} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                Agregá una foto
+              </div>
+            )}
+            {editable && (
+              <>
+                <span className="absolute inset-0 bg-black/0 group-hover/zimg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/zimg:opacity-100">
+                  <PencilIcon className="w-4 h-4 text-white" />
+                </span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+              </>
+            )}
+          </label>
+        </Reveal>
       </div>
     </section>
   );
@@ -12398,6 +13353,199 @@ function SeccionCTA({
             );
           })}
         </div>
+      </div>
+    </section>
+  );
+}
+
+// Grilla de columnas conectadas por borde (número + rango de fechas, título,
+// descripción y una sub-lista de puntos) — a diferencia de "Pasos" (que no
+// tiene sub-lista) o "Historia" (que no tiene sub-lista ni rango de fechas),
+// pensada para describir las etapas de un ciclo de trabajo con tareas
+// concretas en cada una.
+function SeccionCicloTrabajo({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({ id: `etapa-${Date.now()}`, n: String(items.length + 1).padStart(2, '0'), rango: 'Mes — Mes', titulo: 'Nueva etapa', desc: '', items: ['Tarea'] });
+
+  const updateSubitem = (id, idx, value) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    const nextItems = it.items.map((v, i) => (i === idx ? value : v));
+    update(id, { items: nextItems });
+  };
+  const removeSubitem = (id, idx) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    update(id, { items: it.items.filter((_, i) => i !== idx) });
+  };
+  const addSubitem = (id) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    update(id, { items: [...(it.items || []), 'Tarea'] });
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="mb-9">
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="ciclotrabajo.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: '#3f6b2b' }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Te acompañamos en todo el proceso'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="ciclotrabajo.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl"
+            maxLength={80}
+          />
+        </Reveal>
+        <div
+          className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4"
+          style={{ borderTop: `2px solid ${palette.ink}` }}
+        >
+          {items.map((it, i) => (
+            <Reveal
+              key={it.id}
+              delay={Math.min(i * 0.08, 0.4)}
+              className="relative border-r border-b @lg:border-b-0 px-5 py-6"
+              style={{ borderColor: palette.line }}
+            >
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(it.id)}
+                  aria-label="Quitar"
+                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <div className="flex items-baseline justify-between gap-3 mb-4">
+                <Editable
+                  editable={editable}
+                  value={it.n}
+                  onChange={(v) => update(it.id, { n: v })}
+                  tag="span"
+                  placeholder="01"
+                  style={{ color: accent }}
+                  className="font-serif font-bold text-3xl leading-none"
+                  maxLength={4}
+                />
+                <Editable
+                  editable={editable}
+                  value={it.rango}
+                  onChange={(v) => update(it.id, { rango: v })}
+                  tag="span"
+                  placeholder="Mes — Mes"
+                  style={{ color: palette.inkSoft }}
+                  className="font-mono text-[11px] uppercase tracking-wide"
+                  maxLength={20}
+                />
+              </div>
+              <Editable
+                editable={editable}
+                value={it.titulo}
+                onChange={(v) => update(it.id, { titulo: v })}
+                tag="div"
+                block
+                placeholder="Título"
+                style={{ color: palette.ink }}
+                className="font-semibold text-base mb-2"
+                maxLength={40}
+              />
+              <Editable
+                editable={editable}
+                value={it.desc}
+                onChange={(v) => update(it.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                placeholder="Descripción breve"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed mb-4"
+                maxLength={140}
+              />
+              <div className="flex flex-col gap-1.5">
+                {(it.items || []).map((v, idx) => (
+                  <div key={idx} className="relative flex items-center gap-1.5">
+                    <Editable
+                      editable={editable}
+                      value={v}
+                      onChange={(val) => updateSubitem(it.id, idx, val)}
+                      tag="span"
+                      block
+                      prefix="— "
+                      style={{ color: '#3f6b2b' }}
+                      className="font-mono text-xs pr-4"
+                      maxLength={40}
+                    />
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => removeSubitem(it.id, idx)}
+                        aria-label="Quitar tarea"
+                        className="absolute right-0 opacity-40 hover:opacity-100"
+                        style={{ color: palette.ink }}
+                      >
+                        <XIcon className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => addSubitem(it.id)}
+                    className="text-xs font-semibold underline decoration-dotted self-start mt-1"
+                    style={{ color: palette.inkSoft }}
+                  >
+                    + Agregar tarea
+                  </button>
+                )}
+              </div>
+            </Reveal>
+          ))}
+        </div>
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="mt-5 inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3 h-3" /> Agregar etapa
+          </button>
+        )}
       </div>
     </section>
   );

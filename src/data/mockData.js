@@ -987,6 +987,31 @@ export const SECCIONES_CATALOGO = [
     desc: 'Tres columnas: datos de contacto, suscripción a un boletín y un mapa simulado.',
   },
   {
+    id: 'ciclo-trabajo',
+    label: 'Ciclo de trabajo',
+    desc: 'Grilla de etapas con número, rango de fechas, título, descripción y una sub-lista de tareas concretas.',
+  },
+  {
+    id: 'catalogo-insumos',
+    label: 'Catálogo técnico',
+    desc: 'Fichas filtrables por tipo con nombre, fórmula, datos técnicos y precio por unidad — sin fotos.',
+  },
+  {
+    id: 'cotizador',
+    label: 'Cotizador rápido',
+    desc: 'El visitante elige una opción y una cantidad, y ve al instante una cotización estimada con el detalle.',
+  },
+  {
+    id: 'ensayos',
+    label: 'Tabla de resultados',
+    desc: 'Tabla con columnas y filas propias, para mostrar ensayos, mediciones o cualquier comparación de datos.',
+  },
+  {
+    id: 'zonas-tecnicas',
+    label: 'Un referente por zona',
+    desc: 'Selector de zonas con el técnico o referente de cada una, sus datos clave y una foto real.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',

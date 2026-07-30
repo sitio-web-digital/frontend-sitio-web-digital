@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.17.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "AgroSur": asesoramiento agronómico e insumos de campo, con tipografía Oswald/DM Mono/Source Sans 3 y paleta verde/dorado.' },
+      { type: 'nuevo', text: 'Nueva sección "Ciclo de trabajo": grilla de etapas con número, rango de fechas, título, descripción y una lista de tareas concretas.' },
+      { type: 'nuevo', text: 'Nueva sección "Catálogo técnico": fichas filtrables por tipo con nombre, fórmula, datos técnicos y precio por unidad, sin fotos.' },
+      { type: 'nuevo', text: 'Nueva sección "Cotizador rápido": el visitante elige una opción y una cantidad, y ve al instante una cotización estimada con el detalle.' },
+      { type: 'nuevo', text: 'Nueva sección "Tabla de resultados": columnas y filas propias, para mostrar ensayos, mediciones o cualquier comparación de datos.' },
+      { type: 'nuevo', text: 'Nueva sección "Un referente por zona": selector de zonas con el técnico de cada una, sus datos clave y una foto real.' },
+      { type: 'mejora', text: 'Testimonios: cada reseña puede mostrar un número destacado arriba (ej: "+14%", "31 años") además del comentario.' },
+    ],
+  },
+  {
     version: '1.16.0',
     date: '2026-07-30',
     changes: [
