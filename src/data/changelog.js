@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.20.4',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: '"¡Página publicada!": el botón "Ver mi página" llevaba a la vista previa interna en vez de al subdominio real — ahora abre la página publicada de verdad en una pestaña nueva, igual que el botón "Ver" de Dashboard.' },
+    ],
+  },
+  {
     version: '1.20.3',
     date: '2026-07-30',
     changes: [

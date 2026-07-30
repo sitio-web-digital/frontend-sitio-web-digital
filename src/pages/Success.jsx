@@ -56,7 +56,7 @@ export default function Success() {
           <div className="p-6 grid sm:grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => navigate('/preview')}
+              onClick={() => window.open(`https://${subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}
               className="px-4 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
             >
               Ver mi página
