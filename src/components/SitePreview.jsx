@@ -709,6 +709,7 @@ export default function SitePreview({
             )}
             {sec.type === 'cronograma' && (
               <SeccionCronograma
+                variant={sec.variant}
                 items={sec.items ?? []}
                 onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
                 titulo={sec.titulo}
@@ -717,9 +718,12 @@ export default function SitePreview({
                 onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
                 descripcion={sec.descripcion}
                 onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                imagen={sec.imagen}
+                onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
+                textColor={sec.textColor}
                 accent={accent}
                 palette={palette}
               />
@@ -773,6 +777,8 @@ export default function SitePreview({
                 onUpdateMensajeConfirmado={(v) => onSetSectionStyle?.(sec.id, { mensajeConfirmado: v })}
                 mensajeDeclinado={sec.mensajeDeclinado}
                 onUpdateMensajeDeclinado={(v) => onSetSectionStyle?.(sec.id, { mensajeDeclinado: v })}
+                companionMode={sec.companionMode}
+                extraPregunta={sec.extraPregunta}
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
@@ -801,6 +807,55 @@ export default function SitePreview({
               <SeccionRegalos
                 items={sec.items ?? []}
                 onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'historia' && (
+              <SeccionHistoria
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'hospedaje' && (
+              <SeccionHospedaje
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'libro-mensajes' && (
+              <SeccionLibroDeMensajes
+                mensajes={sec.mensajes ?? []}
+                onUpdate={(mensajes) => onSetSectionStyle?.(sec.id, { mensajes })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 eyebrow={sec.eyebrow}
@@ -8496,6 +8551,7 @@ function SeccionSucursales({
 // pensada para el orden de una fiesta o evento con horarios fijos, a
 // diferencia de "Pasos" (que numera pasos de un proceso, sin hora).
 function SeccionCronograma({
+  variant = 'linea',
   items = [],
   onUpdate,
   titulo,
@@ -8504,15 +8560,169 @@ function SeccionCronograma({
   onUpdateEyebrow,
   descripcion,
   onUpdateDescripcion,
+  imagen,
+  onUpdateImagen,
   editable,
   bgColor,
   headingColor,
+  textColor,
   accent,
   palette = {},
 }) {
   const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
   const add = () => onUpdate?.([...items, { id: `cron-${Date.now()}`, time: '00:00', title: 'Nuevo momento', desc: '' }]);
+
+  const rows = (withDots) => (
+    <>
+      {items.map((it, i) => (
+        <div
+          key={it.id}
+          className="relative grid gap-5"
+          style={withDots ? { gridTemplateColumns: 'auto auto 1fr' } : { gridTemplateColumns: 'auto 1fr' }}
+        >
+          <Editable
+            editable={editable}
+            value={it.time}
+            onChange={(v) => update(it.id, { time: v })}
+            tag="span"
+            placeholder="00:00"
+            style={{ color: accent }}
+            className={`font-serif text-lg min-w-[3.4rem] ${withDots ? 'text-right pt-0.5' : ''}`}
+            maxLength={10}
+          />
+          {withDots && (
+            <div className="flex flex-col items-center self-stretch">
+              <span className="w-2.5 h-2.5 rounded-full border mt-1.5" style={{ background: i === 0 ? accent : palette.bg, borderColor: accent }} />
+              {i < items.length - 1 && <span className="flex-1 w-px min-h-10" style={{ background: palette.line }} />}
+            </div>
+          )}
+          <div className={`relative ${withDots ? 'pb-8' : 'pb-6 border-b'}`} style={withDots ? undefined : { borderColor: palette.line }}>
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(it.id)}
+                aria-label="Quitar"
+                className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
+                style={{ color: palette.ink }}
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <Editable
+              editable={editable}
+              value={it.title}
+              onChange={(v) => update(it.id, { title: v })}
+              tag="p"
+              block
+              placeholder="Título del momento"
+              style={{ color: palette.ink }}
+              className="font-medium text-[15px] mb-1 pr-4"
+              maxLength={60}
+            />
+            <Editable
+              editable={editable}
+              value={it.desc}
+              onChange={(v) => update(it.id, { desc: v })}
+              tag="p"
+              block
+              multiline
+              placeholder="Descripción breve"
+              style={{ color: palette.inkSoft }}
+              className="text-sm leading-relaxed max-w-[28rem]"
+              maxLength={160}
+            />
+          </div>
+        </div>
+      ))}
+      {editable && (
+        <button
+          type="button"
+          onClick={add}
+          className={`inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2 border-2 border-dashed ${withDots ? 'ml-[4.7rem]' : 'mt-2'}`}
+          style={{ borderColor: palette.line, color: palette.inkSoft }}
+        >
+          <PlusIcon className="w-3 h-3" /> Agregar momento
+        </button>
+      )}
+    </>
+  );
+
+  // "sticky" — columna izquierda fija (eyebrow + título + bajada + foto)
+  // mientras se scrollea la derecha (filas simples hora/título/desc, sin
+  // punto ni línea conectora) — pensada para el día del evento en sí, con
+  // contexto propio a un lado, a diferencia de "linea" (timeline sola).
+  if (variant === 'sticky') {
+    const handleImagen = async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+    };
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-4xl mx-auto grid @lg:grid-cols-[0.9fr_1.1fr] gap-10 @lg:gap-14 items-start">
+          <div className="@lg:sticky @lg:top-20">
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="cronograma.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: accent }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Cómo va a ser'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="cronograma.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl mb-4"
+              maxLength={70}
+            />
+            <Editable
+              editable={editable}
+              value={descripcion}
+              onChange={onUpdateDescripcion}
+              tag="p"
+              block
+              multiline
+              placeholder="Bajada (opcional)"
+              style={{ color: textColor || palette.inkSoft }}
+              className="text-sm leading-relaxed mb-6"
+              maxLength={160}
+            />
+            <label
+              className={`relative block aspect-[4/3] bg-black/5 overflow-hidden group/cronoimg ${editable ? 'cursor-pointer' : ''}`}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {imagen ? (
+                <img src={imagen} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                  Agregá una foto
+                </div>
+              )}
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 group-hover/cronoimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/cronoimg:opacity-100">
+                    <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+                </>
+              )}
+            </label>
+          </div>
+          <div>{rows(false)}</div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -8553,72 +8763,7 @@ function SeccionCronograma({
           maxLength={140}
         />
       </div>
-      <div className="max-w-xl mx-auto">
-        {items.map((it, i) => (
-          <div key={it.id} className="relative grid gap-5" style={{ gridTemplateColumns: 'auto auto 1fr' }}>
-            <Editable
-              editable={editable}
-              value={it.time}
-              onChange={(v) => update(it.id, { time: v })}
-              tag="span"
-              placeholder="00:00"
-              style={{ color: accent }}
-              className="font-serif text-lg text-right pt-0.5 min-w-[3.4rem]"
-              maxLength={10}
-            />
-            <div className="flex flex-col items-center self-stretch">
-              <span className="w-2.5 h-2.5 rounded-full border mt-1.5" style={{ background: i === 0 ? accent : palette.bg, borderColor: accent }} />
-              {i < items.length - 1 && <span className="flex-1 w-px min-h-10" style={{ background: palette.line }} />}
-            </div>
-            <div className="pb-8 relative">
-              {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(it.id)}
-                  aria-label="Quitar"
-                  className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <Editable
-                editable={editable}
-                value={it.title}
-                onChange={(v) => update(it.id, { title: v })}
-                tag="p"
-                block
-                placeholder="Título del momento"
-                style={{ color: palette.ink }}
-                className="font-medium text-[15px] mb-1 pr-4"
-                maxLength={60}
-              />
-              <Editable
-                editable={editable}
-                value={it.desc}
-                onChange={(v) => update(it.id, { desc: v })}
-                tag="p"
-                block
-                multiline
-                placeholder="Descripción breve"
-                style={{ color: palette.inkSoft }}
-                className="text-sm leading-relaxed max-w-[26rem]"
-                maxLength={160}
-              />
-            </div>
-          </div>
-        ))}
-        {editable && (
-          <button
-            type="button"
-            onClick={add}
-            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2 border-2 border-dashed ml-[4.7rem]"
-            style={{ borderColor: palette.line, color: palette.inkSoft }}
-          >
-            <PlusIcon className="w-3 h-3" /> Agregar momento
-          </button>
-        )}
-      </div>
+      <div className="max-w-xl mx-auto">{rows(true)}</div>
     </section>
   );
 }
@@ -8983,6 +9128,8 @@ function SeccionRSVP({
   onUpdateMensajeConfirmado,
   mensajeDeclinado,
   onUpdateMensajeDeclinado,
+  companionMode = false,
+  extraPregunta,
   editable,
   bgColor,
   headingColor,
@@ -8992,7 +9139,10 @@ function SeccionRSVP({
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [guests, setGuests] = useState(1);
+  const [companion, setCompanion] = useState(null);
+  const [companionName, setCompanionName] = useState('');
   const [menu, setMenu] = useState(menuOptions[0]?.id ?? '');
+  const [extra, setExtra] = useState(null);
   const [note, setNote] = useState('');
   const [done, setDone] = useState(null);
 
@@ -9002,15 +9152,33 @@ function SeccionRSVP({
 
   const menuName = menuOptions.find((m) => m.id === menu)?.nombre || 'Sin elegir';
   const guestLabel = guests === 1 ? 'Solo yo' : `${guests} personas`;
-  const stepValid = [name.trim().length > 1, !!menu, true][step];
+  const companionLabel = companion === false ? 'Voy solo/a' : companion === true ? companionName.trim() || 'Con acompañante' : 'Sin definir';
+  const extraLabel = extra === null ? 'Sin definir' : extra ? extraPregunta?.opciones?.[0] || 'Sí' : extraPregunta?.opciones?.[1] || 'No';
+  const step0Valid = companionMode
+    ? name.trim().length > 1 && companion !== null && (companion === false || companionName.trim().length > 1)
+    : name.trim().length > 1;
+  const step2Valid = extraPregunta ? extra !== null : true;
+  const stepValid = [step0Valid, !!menu, step2Valid][step];
   const nextLabels = ['Continuar', 'Continuar', 'Enviar confirmación'];
+
+  const tokens = {
+    nombre: name.trim() || 'Tu lugar',
+    invitados: guestLabel.toLowerCase(),
+    acompanante: companionLabel.toLowerCase(),
+    menu: menuName.toLowerCase(),
+    extra: extraLabel.toLowerCase(),
+  };
+  const fillTokens = (text) => text.replace(/\{(\w+)\}/g, (m, key) => tokens[key] ?? m);
 
   const reset = () => {
     setDone(null);
     setStep(0);
     setName('');
     setGuests(1);
+    setCompanion(null);
+    setCompanionName('');
     setMenu(menuOptions[0]?.id ?? '');
+    setExtra(null);
     setNote('');
   };
 
@@ -9068,10 +9236,7 @@ function SeccionRSVP({
             </p>
             <p className="text-sm leading-relaxed mb-5" style={{ color: palette.inkSoft }}>
               {done === 'yes'
-                ? (mensajeConfirmado || 'Tu lugar está confirmado. Te vamos a escribir unos días antes con los últimos detalles.')
-                    .replace('{nombre}', name.trim() || 'Tu lugar')
-                    .replace('{invitados}', guestLabel.toLowerCase())
-                    .replace('{menu}', menuName.toLowerCase())
+                ? fillTokens(mensajeConfirmado || 'Tu lugar está confirmado. Te vamos a escribir unos días antes con los últimos detalles.')
                 : mensajeDeclinado || 'Nos vas a hacer falta, pero gracias por avisar. ¡Nos vemos pronto!'}
             </p>
             <button type="button" onClick={reset} className="text-xs uppercase tracking-wide border-b" style={{ color: accent, borderColor: palette.line }}>
@@ -9080,7 +9245,8 @@ function SeccionRSVP({
             {editable && (
               <div className="mt-6 pt-5 border-t text-left" style={{ borderColor: palette.line }}>
                 <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
-                  Mensaje si confirma (usá {'{nombre}'}, {'{invitados}'}, {'{menu}'})
+                  Mensaje si confirma (usá {'{nombre}'}, {companionMode ? '{acompanante}' : '{invitados}'}, {'{menu}'}
+                  {extraPregunta ? ', {extra}' : ''})
                 </label>
                 <textarea
                   value={mensajeConfirmado || ''}
@@ -9122,26 +9288,65 @@ function SeccionRSVP({
                   className="w-full box-border border px-3.5 py-2.5 text-sm outline-none mb-6"
                   style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
                 />
-                <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
-                  ¿Venís sola/o o con acompañantes?
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[1, 2, 3, 4].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setGuests(n)}
-                      className="border px-4 py-2.5 text-sm transition-colors"
-                      style={
-                        guests === n
-                          ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)', color: accent }
-                          : { borderColor: palette.line, color: palette.ink, background: palette.bg }
-                      }
-                    >
-                      {n === 1 ? 'Solo yo' : `${n} personas`}
-                    </button>
-                  ))}
-                </div>
+                {companionMode ? (
+                  <>
+                    <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                      ¿Venís con acompañante?
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {[
+                        { val: false, label: 'Voy solo/a' },
+                        { val: true, label: 'Con acompañante' },
+                      ].map((o) => (
+                        <button
+                          key={String(o.val)}
+                          type="button"
+                          onClick={() => setCompanion(o.val)}
+                          className="border px-4 py-2.5 text-sm transition-colors"
+                          style={
+                            companion === o.val
+                              ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)', color: accent }
+                              : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                          }
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                    {companion === true && (
+                      <input
+                        value={companionName}
+                        onChange={(e) => setCompanionName(e.target.value)}
+                        placeholder="Nombre de tu acompañante"
+                        className="w-full box-border border px-3.5 py-2.5 text-sm outline-none"
+                        style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                      ¿Venís sola/o o con acompañantes?
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[1, 2, 3, 4].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setGuests(n)}
+                          className="border px-4 py-2.5 text-sm transition-colors"
+                          style={
+                            guests === n
+                              ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)', color: accent }
+                              : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                          }
+                        >
+                          {n === 1 ? 'Solo yo' : `${n} personas`}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -9210,6 +9415,33 @@ function SeccionRSVP({
 
             {step === 2 && (
               <div>
+                {extraPregunta && (
+                  <>
+                    <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                      {extraPregunta.label}
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {[
+                        { val: true, label: extraPregunta.opciones?.[0] || 'Sí' },
+                        { val: false, label: extraPregunta.opciones?.[1] || 'No' },
+                      ].map((o) => (
+                        <button
+                          key={String(o.val)}
+                          type="button"
+                          onClick={() => setExtra(o.val)}
+                          className="border px-4 py-2.5 text-sm transition-colors"
+                          style={
+                            extra === o.val
+                              ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)', color: accent }
+                              : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                          }
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
                   ¿Alguna alergia o algo que deba saber?
                 </label>
@@ -9227,8 +9459,9 @@ function SeccionRSVP({
                   </div>
                   {[
                     { label: 'Invitado', value: name.trim() || '—' },
-                    { label: 'Asistentes', value: guestLabel },
+                    companionMode ? { label: 'Acompañante', value: companionLabel } : { label: 'Asistentes', value: guestLabel },
                     { label: 'Menú', value: menuName },
+                    ...(extraPregunta ? [{ label: extraPregunta.label, value: extraLabel }] : []),
                   ].map((r) => (
                     <div key={r.label} className="flex justify-between gap-3 text-sm py-1">
                       <span style={{ color: palette.inkSoft }}>{r.label}</span>
@@ -9575,6 +9808,443 @@ function SeccionRegalos({
             <PlusIcon className="w-4 h-4" /> Agregar
           </button>
         )}
+      </div>
+    </section>
+  );
+}
+
+// Grilla conectada de hitos (año + título + descripción) — a diferencia de
+// "Cronograma" (horarios de un día puntual, en línea de tiempo), acá cada
+// tarjeta comparte borde con la de al lado, pensada para contar una
+// historia de varios años en pocas palabras.
+function SeccionHistoria({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
+  const add = () => onUpdate?.([...items, { id: `hist-${Date.now()}`, year: '2026', title: 'Nuevo momento', desc: '' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-xl mx-auto text-center mb-10">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="historia.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Nuestra historia'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="historia.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl"
+          maxLength={70}
+        />
+      </div>
+      <div
+        className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-3"
+        style={{ borderTop: `1px solid ${palette.line}`, borderLeft: `1px solid ${palette.line}` }}
+      >
+        {items.map((it) => (
+          <div
+            key={it.id}
+            className="relative p-6"
+            style={{ borderRight: `1px solid ${palette.line}`, borderBottom: `1px solid ${palette.line}` }}
+          >
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(it.id)}
+                aria-label="Quitar"
+                className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
+                style={{ color: palette.ink }}
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <Editable
+              editable={editable}
+              value={it.year}
+              onChange={(v) => update(it.id, { year: v })}
+              tag="p"
+              placeholder="Año"
+              style={{ color: accent }}
+              className="font-serif text-2xl mb-2.5"
+              maxLength={20}
+            />
+            <Editable
+              editable={editable}
+              value={it.title}
+              onChange={(v) => update(it.id, { title: v })}
+              tag="p"
+              block
+              placeholder="Título"
+              style={{ color: palette.ink }}
+              className="font-semibold text-sm mb-1.5 pr-4"
+              maxLength={50}
+            />
+            <Editable
+              editable={editable}
+              value={it.desc}
+              onChange={(v) => update(it.id, { desc: v })}
+              tag="p"
+              block
+              multiline
+              placeholder="Descripción breve"
+              style={{ color: palette.inkSoft }}
+              className="text-sm leading-relaxed"
+              maxLength={140}
+            />
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="border-r border-b flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-4 h-4" /> Agregar
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Tarjetas de hospedaje (nombre, distancia, descripción, precio + código de
+// descuento) — para invitados que vienen de afuera del evento, distinta de
+// "Lugares del evento" (que son los lugares DEL evento en sí, con hora y
+// mapa, no alojamiento con tarifa).
+function SeccionHospedaje({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
+  const add = () =>
+    onUpdate?.([...items, { id: `hotel-${Date.now()}`, nombre: 'Nuevo hotel', distancia: '', desc: '', precio: '', codigo: '' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-xl mx-auto text-center mb-9">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="hospedaje.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Si venís de afuera'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="hospedaje.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl mb-3"
+          maxLength={70}
+        />
+        <Editable
+          editable={editable}
+          value={descripcion}
+          onChange={onUpdateDescripcion}
+          tag="p"
+          block
+          multiline
+          placeholder="Bajada (opcional)"
+          style={{ color: palette.inkSoft }}
+          className="text-sm"
+          maxLength={140}
+        />
+      </div>
+      <div className="max-w-5xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-5">
+        {items.map((it) => (
+          <div key={it.id} className="relative border px-6 py-6" style={{ borderColor: palette.line, background: palette.bg }}>
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(it.id)}
+                aria-label="Quitar"
+                className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
+                style={{ color: palette.ink }}
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <Editable
+              editable={editable}
+              value={it.nombre}
+              onChange={(v) => update(it.id, { nombre: v })}
+              tag="p"
+              block
+              placeholder="Nombre del hotel"
+              style={{ color: palette.ink }}
+              className="font-serif text-xl mb-1 pr-4"
+              maxLength={50}
+            />
+            <Editable
+              editable={editable}
+              value={it.distancia}
+              onChange={(v) => update(it.id, { distancia: v })}
+              tag="p"
+              block
+              placeholder="Ej: A 4 km del predio"
+              style={{ color: palette.inkSoft }}
+              className="text-xs mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={it.desc}
+              onChange={(v) => update(it.id, { desc: v })}
+              tag="p"
+              block
+              multiline
+              placeholder="Descripción breve"
+              style={{ color: palette.inkSoft }}
+              className="text-sm leading-relaxed mb-4"
+              maxLength={140}
+            />
+            <div className="flex items-center justify-between gap-3 pt-3 border-t" style={{ borderColor: palette.line }}>
+              <Editable
+                editable={editable}
+                value={it.precio}
+                onChange={(v) => update(it.id, { precio: v })}
+                tag="span"
+                placeholder="Desde $0"
+                style={{ color: palette.ink }}
+                className="text-sm font-semibold"
+                maxLength={30}
+              />
+              <Editable
+                editable={editable}
+                value={it.codigo}
+                onChange={(v) => update(it.id, { codigo: v })}
+                tag="span"
+                placeholder="Código"
+                style={{ color: accent }}
+                className="text-xs"
+                maxLength={30}
+              />
+            </div>
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-4 h-4" /> Agregar
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Libro de mensajes: el visitante deja un mensaje en el momento (queda solo
+// en su sesión, mismo criterio que Playlist/RSVP no tienen backend propio)
+// mientras el dueño edita los mensajes semilla que todos ven al entrar. A
+// diferencia de Playlist (input de una línea + lista numerada), acá el
+// mensaje es un texto largo con firma, mostrado como cita.
+function SeccionLibroDeMensajes({
+  mensajes = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [input, setInput] = useState('');
+  const [extra, setExtra] = useState([]);
+
+  const update = (id, patch) => onUpdate?.(mensajes.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const remove = (id) => onUpdate?.(mensajes.filter((m) => m.id !== id));
+  const add = () => onUpdate?.([...mensajes, { id: `msg-${Date.now()}`, texto: 'Nuevo mensaje', por: 'Alguien' }]);
+
+  const addMensaje = () => {
+    const v = input.trim();
+    if (!v) return;
+    setExtra((prev) => [{ texto: v, por: 'Un invitado' }, ...prev]);
+    setInput('');
+  };
+
+  const allMensajes = [...extra, ...mensajes];
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.95fr_1.05fr] gap-10 @lg:gap-14 items-start">
+        <div>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="libromensajes.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Dejanos unas palabras'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="libromensajes.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-3"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Bajada (opcional)"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6 max-w-sm"
+            maxLength={140}
+          />
+          {!editable && (
+            <>
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                rows={3}
+                placeholder="Escribí tu mensaje..."
+                className="w-full box-border border px-3.5 py-2.5 text-sm outline-none resize-y mb-3"
+                style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+              />
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={addMensaje}
+                  className="px-4 py-2.5 text-xs uppercase tracking-wide font-semibold"
+                  style={{ background: accent, color: '#fff' }}
+                >
+                  Firmar el libro
+                </button>
+                <span className="text-sm" style={{ color: palette.inkSoft }}>
+                  {allMensajes.length} mensajes firmados
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="flex flex-col gap-4 @lg:max-h-[420px] @lg:overflow-y-auto scrollbar-hide">
+          {mensajes.map((m) => (
+            <div key={m.id} className="relative border px-5 py-5" style={{ borderColor: palette.line, background: palette.bg }}>
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(m.id)}
+                  aria-label="Quitar"
+                  className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <Editable
+                editable={editable}
+                value={m.texto}
+                onChange={(v) => update(m.id, { texto: v })}
+                tag="p"
+                block
+                multiline
+                prefix={editable ? '' : '"'}
+                suffix={editable ? '' : '"'}
+                placeholder="Mensaje"
+                style={{ color: palette.ink }}
+                className="font-serif italic text-base leading-relaxed mb-3 pr-4"
+                maxLength={220}
+              />
+              <Editable
+                editable={editable}
+                value={m.por}
+                onChange={(v) => update(m.id, { por: v })}
+                tag="span"
+                placeholder="Firma"
+                style={{ color: palette.inkSoft }}
+                className="text-xs"
+                maxLength={40}
+                prefix="— "
+              />
+            </div>
+          ))}
+          {extra.map((m, i) => (
+            <div key={`extra-${i}`} className="border px-5 py-5" style={{ borderColor: palette.line, background: palette.bg }}>
+              <p className="font-serif italic text-base leading-relaxed mb-3" style={{ color: palette.ink }}>
+                "{m.texto}"
+              </p>
+              <span className="text-xs" style={{ color: palette.inkSoft }}>
+                — {m.por}
+              </span>
+            </div>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed self-start"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-3 h-3" /> Agregar mensaje
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );

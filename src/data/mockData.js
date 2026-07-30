@@ -942,6 +942,21 @@ export const SECCIONES_CATALOGO = [
     desc: 'Tarjetas simples con un símbolo, título, descripción y un dato final (ej: alias, urna).',
   },
   {
+    id: 'historia',
+    label: 'Nuestra historia',
+    desc: 'Grilla de hitos con año, título y descripción — para contar una historia de varios años en pocas palabras.',
+  },
+  {
+    id: 'hospedaje',
+    label: 'Hospedaje',
+    desc: 'Tarjetas de hoteles con distancia, descripción, precio y código de descuento para invitados de afuera.',
+  },
+  {
+    id: 'libro-mensajes',
+    label: 'Libro de mensajes',
+    desc: 'Los invitados dejan un mensaje en el momento, sobre una lista de mensajes ya firmados.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',
@@ -987,6 +1002,10 @@ export const SECCIONES_UNICAS = ['header', 'footer'];
 // Variantes de disposición interna por tipo de sección — al agregar una sección con
 // más de una variante, el editor muestra estos esqueletos para elegir antes de agregarla.
 export const SECTION_VARIANTS = {
+  cronograma: [
+    { id: 'linea', label: 'Línea de tiempo', skeleton: 'grid3' },
+    { id: 'sticky', label: 'Con foto fija al costado', skeleton: 'pasosSticky' },
+  ],
   header: [
     { id: 'clasico', label: 'Logo + menú', skeleton: 'navLeft' },
     { id: 'centrado', label: 'Centrado', skeleton: 'navCenter' },

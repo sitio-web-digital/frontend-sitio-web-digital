@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.14.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Boda Camila y Nicolás": invitación de casamiento con tipografía Marcellus/EB Garamond/Mulish, reutilizando las secciones de evento ya creadas (cuenta regresiva, lugares, dress code, RSVP, regalos, galería, footer de evento).' },
+      { type: 'nuevo', text: 'Nueva sección "Nuestra historia": grilla conectada de hitos con año, título y descripción — para contar una historia de varios años en pocas palabras.' },
+      { type: 'nuevo', text: 'Cronograma: nueva distribución "Con foto fija al costado" (columna fija con foto y bajada, filas de horario simples al lado), además de la línea de tiempo de siempre.' },
+      { type: 'nuevo', text: 'Confirmación de asistencia (RSVP): ahora puede pedir "acompañante sí/no + nombre" en vez de una cantidad de invitados, y sumar una pregunta extra de sí/no antes de enviar (ej: si necesita traslado).' },
+      { type: 'nuevo', text: 'Nueva sección "Hospedaje": tarjetas de hoteles con distancia, descripción, precio y código de descuento, para invitados que vienen de afuera.' },
+      { type: 'nuevo', text: 'Nueva sección "Libro de mensajes": los invitados dejan un mensaje en el momento, sobre una lista de mensajes ya firmados.' },
+      { type: 'fix', text: 'Preguntas frecuentes: se corrigió dónde busca sus preguntas semilla una plantilla nueva (antes podían no aparecer las cargadas y mostrarse unas genéricas en su lugar).' },
+    ],
+  },
+  {
     version: '1.13.0',
     date: '2026-07-30',
     changes: [
