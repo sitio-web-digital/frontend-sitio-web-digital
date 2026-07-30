@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.15.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: 'Secciones de evento (cronograma, lugares, dress code, RSVP, playlist, mesa de regalos, historia, hospedaje, libro de mensajes) ahora aparecen con un efecto de desvanecimiento al hacer scroll, igual que en las plantillas originales de "Mis XV Valentina" y "Boda Camila y Nicolás".' },
+    ],
+  },
+  {
     version: '1.14.0',
     date: '2026-07-30',
     changes: [

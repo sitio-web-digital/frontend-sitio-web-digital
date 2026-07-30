@@ -8576,8 +8576,9 @@ function SeccionCronograma({
   const rows = (withDots) => (
     <>
       {items.map((it, i) => (
-        <div
+        <Reveal
           key={it.id}
+          delay={Math.min(i * 0.08, 0.4)}
           className="relative grid gap-5"
           style={withDots ? { gridTemplateColumns: 'auto auto 1fr' } : { gridTemplateColumns: 'auto 1fr' }}
         >
@@ -8633,7 +8634,7 @@ function SeccionCronograma({
               maxLength={160}
             />
           </div>
-        </div>
+        </Reveal>
       ))}
       {editable && (
         <button
@@ -8661,7 +8662,7 @@ function SeccionCronograma({
     return (
       <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
         <div className="max-w-4xl mx-auto grid @lg:grid-cols-[0.9fr_1.1fr] gap-10 @lg:gap-14 items-start">
-          <div className="@lg:sticky @lg:top-20">
+          <Reveal className="@lg:sticky @lg:top-20">
             <Editable
               editable={editable}
               value={eyebrow}
@@ -8717,7 +8718,7 @@ function SeccionCronograma({
                 </>
               )}
             </label>
-          </div>
+          </Reveal>
           <div>{rows(false)}</div>
         </div>
       </section>
@@ -8726,7 +8727,7 @@ function SeccionCronograma({
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-      <div className="max-w-xl mx-auto text-center mb-10">
+      <Reveal className="max-w-xl mx-auto text-center mb-10">
         <Editable
           editable={editable}
           value={eyebrow}
@@ -8762,7 +8763,7 @@ function SeccionCronograma({
           className="text-sm"
           maxLength={140}
         />
-      </div>
+      </Reveal>
       <div className="max-w-xl mx-auto">{rows(true)}</div>
     </section>
   );
@@ -8792,7 +8793,7 @@ function SeccionLugares({
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-      <div className="max-w-xl mx-auto text-center mb-9">
+      <Reveal className="max-w-xl mx-auto text-center mb-9">
         <Editable
           editable={editable}
           value={eyebrow}
@@ -8816,10 +8817,10 @@ function SeccionLugares({
           className="font-serif text-2xl @lg:text-3xl"
           maxLength={70}
         />
-      </div>
+      </Reveal>
       <div className="max-w-4xl mx-auto grid @lg:grid-cols-2 gap-6">
-        {items.map((it) => (
-          <div key={it.id} className="relative border" style={{ borderColor: palette.line, background: palette.bg }}>
+        {items.map((it, i) => (
+          <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative border" style={{ borderColor: palette.line, background: palette.bg }}>
             {editable && (
               <button
                 type="button"
@@ -8912,7 +8913,7 @@ function SeccionLugares({
                 )}
               </div>
             </div>
-          </div>
+          </Reveal>
         ))}
         {editable && (
           <button
@@ -8961,7 +8962,7 @@ function SeccionDressCode({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
       <div className="max-w-5xl mx-auto grid @lg:grid-cols-[1.05fr_0.95fr] gap-10 @lg:gap-14 items-center">
-        <div>
+        <Reveal>
           <Editable
             editable={editable}
             value={eyebrow}
@@ -9049,8 +9050,8 @@ function SeccionDressCode({
               </button>
             )}
           </div>
-        </div>
-        <div>
+        </Reveal>
+        <Reveal delay={0.12}>
           <div className="font-mono text-[11px] uppercase tracking-wide mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Paleta sugerida
           </div>
@@ -9102,7 +9103,7 @@ function SeccionDressCode({
               </button>
             )}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -9184,7 +9185,7 @@ function SeccionRSVP({
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-      <div className="max-w-xl mx-auto text-center mb-9">
+      <Reveal className="max-w-xl mx-auto text-center mb-9">
         <Editable
           editable={editable}
           value={eyebrow}
@@ -9220,9 +9221,9 @@ function SeccionRSVP({
           className="text-sm"
           maxLength={160}
         />
-      </div>
+      </Reveal>
 
-      <div className="max-w-md mx-auto border p-7 @lg:p-9" style={{ borderColor: palette.line, background: palette.bg }}>
+      <Reveal delay={0.12} className="max-w-md mx-auto border p-7 @lg:p-9" style={{ borderColor: palette.line, background: palette.bg }}>
         {done !== null ? (
           <div className="text-center">
             <div
@@ -9508,7 +9509,7 @@ function SeccionRSVP({
             </button>
           </div>
         )}
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -9551,7 +9552,7 @@ function SeccionPlaylist({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.95fr_1.05fr] gap-10 @lg:gap-14 items-start">
-        <div>
+        <Reveal>
           <Editable
             editable={editable}
             value={eyebrow}
@@ -9612,8 +9613,8 @@ function SeccionPlaylist({
               </div>
             </>
           )}
-        </div>
-        <div>
+        </Reveal>
+        <Reveal delay={0.12}>
           <div className="font-mono text-[11px] uppercase tracking-wide mb-4" style={{ color: palette.inkSoft }}>
             Ya pidieron
           </div>
@@ -9671,7 +9672,7 @@ function SeccionPlaylist({
               </button>
             )}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -9702,7 +9703,7 @@ function SeccionRegalos({
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-      <div className="max-w-xl mx-auto text-center mb-9">
+      <Reveal className="max-w-xl mx-auto text-center mb-9">
         <Editable
           editable={editable}
           value={eyebrow}
@@ -9738,10 +9739,10 @@ function SeccionRegalos({
           className="text-sm"
           maxLength={160}
         />
-      </div>
+      </Reveal>
       <div className="max-w-4xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
-        {items.map((it) => (
-          <div key={it.id} className="relative border text-center px-6 py-8" style={{ borderColor: palette.line, background: palette.bg }}>
+        {items.map((it, i) => (
+          <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative border text-center px-6 py-8" style={{ borderColor: palette.line, background: palette.bg }}>
             {editable && (
               <button
                 type="button"
@@ -9796,7 +9797,7 @@ function SeccionRegalos({
               className="text-sm font-medium"
               maxLength={60}
             />
-          </div>
+          </Reveal>
         ))}
         {editable && (
           <button
@@ -9836,7 +9837,7 @@ function SeccionHistoria({
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-      <div className="max-w-xl mx-auto text-center mb-10">
+      <Reveal className="max-w-xl mx-auto text-center mb-10">
         <Editable
           editable={editable}
           value={eyebrow}
@@ -9860,14 +9861,15 @@ function SeccionHistoria({
           className="font-serif text-2xl @lg:text-3xl"
           maxLength={70}
         />
-      </div>
+      </Reveal>
       <div
         className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-3"
         style={{ borderTop: `1px solid ${palette.line}`, borderLeft: `1px solid ${palette.line}` }}
       >
-        {items.map((it) => (
-          <div
+        {items.map((it, i) => (
+          <Reveal
             key={it.id}
+            delay={Math.min(i * 0.08, 0.4)}
             className="relative p-6"
             style={{ borderRight: `1px solid ${palette.line}`, borderBottom: `1px solid ${palette.line}` }}
           >
@@ -9915,7 +9917,7 @@ function SeccionHistoria({
               className="text-sm leading-relaxed"
               maxLength={140}
             />
-          </div>
+          </Reveal>
         ))}
         {editable && (
           <button
@@ -9958,7 +9960,7 @@ function SeccionHospedaje({
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-      <div className="max-w-xl mx-auto text-center mb-9">
+      <Reveal className="max-w-xl mx-auto text-center mb-9">
         <Editable
           editable={editable}
           value={eyebrow}
@@ -9994,10 +9996,10 @@ function SeccionHospedaje({
           className="text-sm"
           maxLength={140}
         />
-      </div>
+      </Reveal>
       <div className="max-w-5xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-5">
-        {items.map((it) => (
-          <div key={it.id} className="relative border px-6 py-6" style={{ borderColor: palette.line, background: palette.bg }}>
+        {items.map((it, i) => (
+          <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative border px-6 py-6" style={{ borderColor: palette.line, background: palette.bg }}>
             {editable && (
               <button
                 type="button"
@@ -10065,7 +10067,7 @@ function SeccionHospedaje({
                 maxLength={30}
               />
             </div>
-          </div>
+          </Reveal>
         ))}
         {editable && (
           <button
@@ -10121,7 +10123,7 @@ function SeccionLibroDeMensajes({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.95fr_1.05fr] gap-10 @lg:gap-14 items-start">
-        <div>
+        <Reveal>
           <Editable
             editable={editable}
             value={eyebrow}
@@ -10182,8 +10184,8 @@ function SeccionLibroDeMensajes({
               </div>
             </>
           )}
-        </div>
-        <div className="flex flex-col gap-4 @lg:max-h-[420px] @lg:overflow-y-auto scrollbar-hide">
+        </Reveal>
+        <Reveal delay={0.12} className="flex flex-col gap-4 @lg:max-h-[420px] @lg:overflow-y-auto scrollbar-hide">
           {mensajes.map((m) => (
             <div key={m.id} className="relative border px-5 py-5" style={{ borderColor: palette.line, background: palette.bg }}>
               {editable && (
@@ -10244,7 +10246,7 @@ function SeccionLibroDeMensajes({
               <PlusIcon className="w-3 h-3" /> Agregar mensaje
             </button>
           )}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
