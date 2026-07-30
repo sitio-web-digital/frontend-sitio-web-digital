@@ -89,10 +89,10 @@ export default function Checkout() {
             Con la suscripción activa, tu página queda publicada en tu propio subdominio.
           </p>
 
-          <div className="rounded-2xl border border-white/10 bg-navy-850 p-6 mb-6">
+          <div className="border border-white/10 bg-navy-850 p-6 mb-6">
             <div className="flex items-center gap-4">
               <div
-                className="w-12 h-12 rounded-xl shrink-0"
+                className="w-12 h-12 shrink-0"
                 style={{ background: `linear-gradient(135deg, ${theme?.accent ?? template.accent}, #14131a)` }}
               />
               <div className="min-w-0">
@@ -103,7 +103,7 @@ export default function Checkout() {
           </div>
 
           {!subdomain && (
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 mb-6 flex items-start gap-3">
+            <div className="border border-amber-500/30 bg-amber-500/10 p-5 mb-6 flex items-start gap-3">
               <span className="text-lg leading-none mt-0.5">⚠️</span>
               <div>
                 <p className="text-sm font-semibold text-amber-300">
@@ -123,7 +123,7 @@ export default function Checkout() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-white/10 bg-navy-850 p-6">
+          <div className="border border-white/10 bg-navy-850 p-6">
             <p className="text-sm font-semibold text-ink-400 uppercase tracking-wide mb-4">
               Incluye
             </p>
@@ -144,13 +144,13 @@ export default function Checkout() {
               <AuthGate login={login} register={register} />
             </div>
           ) : isFree ? (
-            <div className="rounded-2xl bg-white text-neutral-900 overflow-hidden shadow-2xl sticky top-8">
-              <div className="bg-emerald-500 px-6 py-4 flex items-center justify-between gap-2">
+            <div className="border border-white/10 bg-navy-850 shadow-2xl sticky top-8">
+              <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg leading-none">🎁</span>
                   <span className="text-white font-semibold text-sm">Página gratis</span>
                 </div>
-                <span className="text-white/80 text-xs">
+                <span className="text-ink-400 text-xs">
                   {user.email} ·{' '}
                   <button onClick={logout} className="underline hover:text-white transition-colors">
                     Salir
@@ -159,21 +159,21 @@ export default function Checkout() {
               </div>
 
               <div className="p-6">
-                <p className="text-sm font-semibold text-emerald-600 mb-1">Tenés una página gratis</p>
-                <p className="text-sm text-neutral-500 mb-6">
+                <p className="text-sm font-semibold text-emerald-400 mb-1">Tenés una página gratis</p>
+                <p className="text-sm text-ink-400 mb-6">
                   Esta cuenta puede publicar sin pagar — te la habilitó un admin.
                 </p>
 
-                {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+                {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
                 <button
                   onClick={publicarGratis}
                   disabled={status === 'processing' || !subdomain}
                   data-track="checkout_publicar_gratis"
                   title={!subdomain ? 'Elegí tu subdominio en Configuración antes de publicar.' : undefined}
-                  className={`w-full rounded-xl font-semibold py-3.5 flex items-center justify-center gap-2 transition-colors ${
+                  className={`w-full font-bold py-3 flex items-center justify-center gap-2 transition-colors text-sm ${
                     !subdomain
-                      ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                      ? 'bg-white/5 text-ink-500 cursor-not-allowed'
                       : 'bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-80'
                   }`}
                 >
@@ -190,13 +190,13 @@ export default function Checkout() {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl bg-white text-neutral-900 overflow-hidden shadow-2xl sticky top-8">
-              <div className="bg-[#009ee3] px-6 py-4 flex items-center justify-between gap-2">
+            <div className="border border-white/10 bg-navy-850 shadow-2xl sticky top-8">
+              <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <MercadoPagoMark />
                   <span className="text-white font-semibold text-sm">Suscripción con Mercado Pago</span>
                 </div>
-                <span className="text-white/80 text-xs">
+                <span className="text-ink-400 text-xs">
                   {user.email} ·{' '}
                   <button onClick={logout} className="underline hover:text-white transition-colors">
                     Salir
@@ -205,25 +205,25 @@ export default function Checkout() {
               </div>
 
               <div className="p-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1">
                   {PLAN.nombre}
                 </p>
-                <p className="text-4xl font-bold mb-1">
+                <p className="font-display text-4xl font-bold mb-1 text-white">
                   ${PLAN.precio.toLocaleString('es-AR')}
-                  <span className="text-base font-medium text-neutral-500"> {PLAN.moneda}/{PLAN.ciclo}</span>
+                  <span className="text-base font-medium text-ink-400"> {PLAN.moneda}/{PLAN.ciclo}</span>
                 </p>
-                <p className="text-sm text-neutral-500 mb-6">Suscripción mensual, cancelás cuando quieras.</p>
+                <p className="text-sm text-ink-400 mb-6">Suscripción mensual, cancelás cuando quieras.</p>
 
-                {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+                {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
                 <button
                   onClick={pagar}
                   disabled={status === 'processing' || !subdomain}
                   data-track="checkout_pagar"
                   title={!subdomain ? 'Elegí tu subdominio en Configuración antes de publicar.' : undefined}
-                  className={`w-full rounded-xl font-semibold py-3.5 flex items-center justify-center gap-2 transition-colors ${
+                  className={`w-full font-bold py-3 flex items-center justify-center gap-2 transition-colors text-sm ${
                     !subdomain
-                      ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                      ? 'bg-white/5 text-ink-500 cursor-not-allowed'
                       : 'bg-[#009ee3] hover:bg-[#0090cc] text-white disabled:opacity-80'
                   }`}
                 >
@@ -237,7 +237,7 @@ export default function Checkout() {
                     `Pagar $${PLAN.precio.toLocaleString('es-AR')}`
                   )}
                 </button>
-                <p className="text-[11px] text-neutral-400 text-center mt-4 leading-relaxed">
+                <p className="text-[11px] text-ink-500 text-center mt-4 leading-relaxed">
                   Vas a terminar de pagar en Mercado Pago, de forma segura — no pedimos ni
                   guardamos ningún dato de tu tarjeta acá.
                 </p>

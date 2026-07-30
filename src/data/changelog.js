@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.20.2',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: 'Checkout y "¡Página publicada!": las tarjetas de pago (blancas, esquinas redondeadas) y los botones no seguían el estilo oscuro y de esquinas rectas del resto de la app. Ahora usan la misma paleta navy/dorado y componentes que Dashboard y el editor.' },
+    ],
+  },
+  {
     version: '1.20.1',
     date: '2026-07-30',
     changes: [
