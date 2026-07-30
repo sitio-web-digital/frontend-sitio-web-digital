@@ -485,6 +485,9 @@ export default function SitePreview({
                 descripcion={sec.descripcion}
                 onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
                 imagenFiltro={sec.imagenFiltro}
+                stats={sec.stats ?? []}
+                ofertasEtiquetaSuperior={sec.ofertasEtiquetaSuperior}
+                ofertasVelocidad={sec.ofertasVelocidad}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -529,6 +532,10 @@ export default function SitePreview({
                 onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
                 bajada={sec.bajada}
                 onUpdateBajada={(v) => onSetSectionStyle?.(sec.id, { bajada: v })}
+                mediosPago={sec.mediosPago ?? []}
+                onUpdateMediosPago={(mediosPago) => onSetSectionStyle?.(sec.id, { mediosPago })}
+                contactoLineas={sec.contactoLineas ?? []}
+                onUpdateContactoLineas={(contactoLineas) => onSetSectionStyle?.(sec.id, { contactoLineas })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -560,6 +567,8 @@ export default function SitePreview({
                 onAddToCart={cart.addItem}
                 disclaimer={sec.disclaimer}
                 onUpdateDisclaimer={(v) => onSetSectionStyle?.(sec.id, { disclaimer: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
               />
             )}
             {sec.type === 'galeria' && (
@@ -624,6 +633,68 @@ export default function SitePreview({
                 }
                 mediaVariant={sec.mediaVariant}
                 onChangeMediaVariant={(v) => onSetSectionStyle?.(sec.id, { mediaVariant: v })}
+              />
+            )}
+            {sec.type === 'comparador' && (
+              <SeccionComparador
+                modelos={sec.modelos ?? []}
+                onUpdate={(modelos) => onSetSectionStyle?.(sec.id, { modelos })}
+                campos={sec.campos ?? []}
+                onUpdateCampos={(campos) => onSetSectionStyle?.(sec.id, { campos })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'canje' && (
+              <SeccionCanje
+                modelos={sec.modelos ?? []}
+                onUpdate={(modelos) => onSetSectionStyle?.(sec.id, { modelos })}
+                condiciones={sec.condiciones ?? []}
+                onUpdateCondiciones={(condiciones) => onSetSectionStyle?.(sec.id, { condiciones })}
+                perks={sec.perks ?? []}
+                onUpdatePerks={(perks) => onSetSectionStyle?.(sec.id, { perks })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+                botones={sec.botones ?? {}}
+                onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+              />
+            )}
+            {sec.type === 'sucursales' && (
+              <SeccionSucursales
+                sucursales={sec.sucursales ?? []}
+                onUpdate={(sucursales) => onSetSectionStyle?.(sec.id, { sucursales })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
               />
             )}
             {sec.type === 'contacto' && (
@@ -920,6 +991,7 @@ export default function SitePreview({
                 palette={palette}
                 separador={sec.separador}
                 velocidad={sec.velocidad}
+                fuente={sec.fuente}
               />
             )}
             {sec.type === 'series' && (
@@ -4000,15 +4072,15 @@ const HERO_BUTTON_SLOTS = [
 // como una vidriera de local. En modo edición no rota — se ve y se completa
 // una oferta por vez, eligiéndola con los puntitos de abajo, para no estar
 // completando un campo que se mueve solo.
-function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = {}, bgColor }) {
+function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = {}, bgColor, etiquetaSuperior, velocidad = 2600 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [editIndex, setEditIndex] = useState(0);
 
   useEffect(() => {
     if (editable || ofertas.length <= 1) return undefined;
-    const t = setInterval(() => setActiveIndex((i) => (i + 1) % ofertas.length), 2600);
+    const t = setInterval(() => setActiveIndex((i) => (i + 1) % ofertas.length), velocidad);
     return () => clearInterval(t);
-  }, [editable, ofertas.length]);
+  }, [editable, ofertas.length, velocidad]);
 
   useEffect(() => {
     setEditIndex((i) => Math.min(i, Math.max(0, ofertas.length - 1)));
@@ -4041,46 +4113,70 @@ function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = 
 
   if (!editable) {
     if (ofertas.length === 0) return null;
+    const active = ofertas[activeIndex];
     return (
       <div className="relative aspect-[4/5] overflow-hidden" style={{ background: bgColor || palette.bg }}>
-        {ofertas.map((o, i) => (
+        {active?.glow && (
           <div
+            className="absolute inset-0 transition-[background] duration-1000"
+            style={{ background: `radial-gradient(circle at 50% 44%, ${active.glow} 0%, rgba(255,255,255,0) 64%)` }}
+          />
+        )}
+        {ofertas.map((o, i) => (
+          <img
             key={o.id}
-            className="absolute inset-0 transition-opacity duration-700 ease-in-out"
-            style={{ opacity: i === activeIndex ? 1 : 0 }}
+            src={o.img || undefined}
+            alt={o.nombre || ''}
+            className="absolute left-1/2 top-1/2 h-[70%] w-auto -translate-x-1/2 -translate-y-1/2 object-contain transition-all duration-700 ease-in-out"
+            style={{
+              opacity: i === activeIndex ? 1 : 0,
+              transform: `translate(-50%, -50%) scale(${i === activeIndex ? 1 : 0.92})`,
+              display: o.img ? 'block' : 'none',
+              filter: 'drop-shadow(0 22px 30px rgba(16,20,24,0.25))',
+            }}
+          />
+        ))}
+        {active?.badge && (
+          <span
+            className="absolute top-3 right-3 px-2.5 py-1.5 text-sm font-bold text-white"
+            style={{ background: accent }}
           >
-            {o.img && <img src={o.img} alt={o.nombre || ''} className="w-full h-full object-contain p-6" />}
-            {o.badge && (
-              <span
-                className="absolute top-3 left-3 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
-                style={{ background: accent }}
-              >
-                {o.badge}
-              </span>
-            )}
-            {(o.nombre || o.precio) && (
-              <div className="absolute bottom-3 right-3 text-right">
-                {o.nombre && (
-                  <div className="font-serif text-lg" style={{ color: palette.ink }}>
-                    {o.nombre}
-                  </div>
-                )}
-                {o.precio && (
-                  <div className="font-mono font-bold" style={{ color: accent }}>
-                    {o.precio}
-                  </div>
-                )}
+            {active.badge}
+          </span>
+        )}
+        {(active?.nombre || active?.precio) && (
+          <div className="absolute bottom-3 left-3 bg-white px-4 py-3 shadow-lg" style={{ background: palette.bg === '#ffffff' ? '#fff' : palette.bg }}>
+            {etiquetaSuperior && (
+              <div className="font-mono text-[10px] uppercase tracking-wide mb-1" style={{ color: palette.inkSoft }}>
+                {etiquetaSuperior}
               </div>
             )}
+            {active.nombre && (
+              <div className="font-serif font-bold text-sm mb-0.5" style={{ color: palette.ink }}>
+                {active.nombre}
+              </div>
+            )}
+            <div className="flex items-baseline gap-2">
+              {active.precio && (
+                <span className="font-mono font-semibold text-sm" style={{ color: accent }}>
+                  {active.precio}
+                </span>
+              )}
+              {active.precioAnterior && (
+                <span className="font-mono text-xs line-through" style={{ color: palette.inkSoft }}>
+                  {active.precioAnterior}
+                </span>
+              )}
+            </div>
           </div>
-        ))}
+        )}
         {ofertas.length > 1 && (
-          <div className="absolute bottom-3 left-3 flex gap-1.5">
+          <div className="absolute bottom-3 right-3 flex gap-1">
             {ofertas.map((_, i) => (
               <span
                 key={i}
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ background: i === activeIndex ? accent : 'rgba(255,255,255,0.6)' }}
+                className="h-[5px] transition-all"
+                style={{ width: i === activeIndex ? 20 : 5, background: i === activeIndex ? palette.ink : palette.line }}
               />
             ))}
           </div>
@@ -4142,6 +4238,16 @@ function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = 
                 block
                 className="font-mono font-bold"
                 style={{ color: accent }}
+              />
+              <Editable
+                editable
+                value={current.precioAnterior}
+                onChange={(v) => update(current.id, { precioAnterior: v })}
+                placeholder="Precio anterior (opcional)"
+                maxLength={12}
+                block
+                className="font-mono text-xs line-through"
+                style={{ color: palette.inkSoft }}
               />
             </div>
             <button
@@ -4213,6 +4319,9 @@ function SeccionHero({
   onUpdateDescripcion,
   seccionesDisponibles = [],
   imagenFiltro,
+  stats = [],
+  ofertasEtiquetaSuperior,
+  ofertasVelocidad,
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
   const inkHex = palette.inkHex || '#171717';
@@ -4389,6 +4498,20 @@ function SeccionHero({
             {heading()}
             {paragraph()}
             {botones()}
+            {stats.length > 0 && (
+              <div className="grid grid-cols-3 gap-4 border-t pt-5 mt-7" style={{ borderColor: palette.line }}>
+                {stats.map((s, i) => (
+                  <div key={i}>
+                    <div className="font-serif font-bold text-lg leading-tight" style={{ color: headingColor || palette.ink }}>
+                      {s.value}
+                    </div>
+                    <div className="text-xs" style={{ color: palette.inkSoft }}>
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <HeroOfertasPanel
             ofertas={heroOfertas}
@@ -4397,6 +4520,8 @@ function SeccionHero({
             accent={accent}
             palette={palette}
             bgColor={bgColor}
+            etiquetaSuperior={ofertasEtiquetaSuperior}
+            velocidad={ofertasVelocidad}
           />
         </div>
       </section>
@@ -4738,6 +4863,7 @@ function SeccionFooter({
   nombreNegocio,
   whatsapp,
   instagram,
+  accent,
   bgColor,
   textColor,
   editable,
@@ -4747,6 +4873,10 @@ function SeccionFooter({
   bajada,
   onUpdateBajada,
   seccionesDisponibles = [],
+  mediosPago = [],
+  onUpdateMediosPago,
+  contactoLineas = [],
+  onUpdateContactoLineas,
 }) {
   const footerTargetDefaults = {
     primary: whatsapp,
@@ -4793,6 +4923,119 @@ function SeccionFooter({
       Sitio creado con SitioWeb Digital
     </span>
   );
+
+  // "tienda" — 3 columnas (marca, medios de pago, contacto) sobre franja
+  // oscura, pensada para negocios de venta de productos con varios medios de
+  // pago para mostrar — a diferencia de "columnas" (una sola fila).
+  if (variant === 'tienda') {
+    const addMedioPago = () => {
+      const v = window.prompt('Medio de pago (ej: Visa)');
+      if (v?.trim()) onUpdateMediosPago?.([...mediosPago, v.trim()]);
+    };
+    const addContactoLinea = () => {
+      const v = window.prompt('Línea de contacto (ej: 011 4444-5555)');
+      if (v?.trim()) onUpdateContactoLineas?.([...contactoLineas, v.trim()]);
+    };
+    return (
+      <footer className="px-6 @lg:px-10 pt-8 @lg:pt-11 pb-6 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+        <div className="max-w-6xl mx-auto grid @lg:grid-cols-3 gap-8 pb-7 border-b" style={{ borderColor: palette.line }}>
+          <div>
+            {wordmark}
+            <Editable
+              editable={editable}
+              value={bajada}
+              onChange={onUpdateBajada}
+              tag="p"
+              multiline
+              styleKey="footer.bajada"
+              placeholder="Bajada corta (opcional)"
+              style={{ color: textColor || palette.inkSoft }}
+              className="text-sm mt-3 max-w-xs"
+              maxLength={140}
+            />
+          </div>
+          <div>
+            <div className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: accent || palette.inkSoft }}>
+              Medios de pago
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {mediosPago.map((pm, i) => (
+                <span
+                  key={i}
+                  className="relative group/pago text-xs border px-2.5 py-1"
+                  style={{ borderColor: palette.line, color: textColor || palette.inkSoft }}
+                >
+                  {pm}
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateMediosPago?.(mediosPago.filter((_, mi) => mi !== i))}
+                      aria-label={`Quitar ${pm}`}
+                      className="ml-1 opacity-50 hover:opacity-100"
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addMedioPago}
+                  className="text-xs border-2 border-dashed px-2.5 py-1"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  + Agregar
+                </button>
+              )}
+            </div>
+          </div>
+          <div>
+            <div className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: accent || palette.inkSoft }}>
+              Contacto
+            </div>
+            <div className="flex flex-col gap-1.5 text-sm" style={{ color: textColor || palette.inkSoft }}>
+              {contactoLineas.map((linea, i) => (
+                <div key={i} className="relative group/linea flex items-center gap-2">
+                  <Editable
+                    editable={editable}
+                    value={linea}
+                    onChange={(v) => onUpdateContactoLineas?.(contactoLineas.map((l, li) => (li === i ? v : l)))}
+                    tag="span"
+                    placeholder="Línea de contacto"
+                    maxLength={60}
+                  />
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateContactoLineas?.(contactoLineas.filter((_, li) => li !== i))}
+                      aria-label="Quitar línea"
+                      className="opacity-40 hover:opacity-100"
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addContactoLinea}
+                  className="text-xs underline decoration-dotted opacity-60 hover:opacity-100 self-start mt-1"
+                >
+                  + Agregar línea
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 pt-5">
+          {links}
+          {credito}
+        </div>
+      </footer>
+    );
+  }
 
   if (variant === 'columnas') {
     return (
@@ -5341,6 +5584,8 @@ function SeccionProductos({
   onAddToCart,
   disclaimer,
   onUpdateDisclaimer,
+  eyebrow,
+  onUpdateEyebrow,
 }) {
   const [nombre, setNombre] = useState('');
   const [precio, setPrecio] = useState('');
@@ -5366,16 +5611,30 @@ function SeccionProductos({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto flex items-baseline justify-between gap-3 mb-8 pb-5 border-b" style={{ borderColor: palette.line }}>
-        <Editable
-          editable={editable}
-          value={titulo ?? 'Productos y servicios'}
-          onChange={onUpdateTitulo}
-          tag="h2"
-          styleKey="productos.titulo"
-          style={{ color: headingColor || palette.ink }}
-          className="font-serif italic text-2xl @lg:text-3xl"
-          maxLength={70}
-        />
+        <div>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="productos.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Productos y servicios'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            styleKey="productos.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif italic text-2xl @lg:text-3xl"
+            maxLength={70}
+          />
+        </div>
         <span className="font-mono text-xs" style={{ color: palette.inkSoft }}>
           {productos.length} destacado{productos.length === 1 ? '' : 's'}
         </span>
@@ -5871,6 +6130,14 @@ function SeccionProductos({
                   ) : (
                     <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
                   )}
+                  {p.etiqueta && (
+                    <span
+                      className="absolute top-2 left-2 font-mono text-[10px] uppercase tracking-wide px-2 py-1 text-white"
+                      style={{ background: p.etiquetaColor || accent }}
+                    >
+                      {p.etiqueta}
+                    </span>
+                  )}
                   {p.disponible !== undefined && (
                     <span
                       className="absolute top-2 right-2 font-mono text-[10px] uppercase tracking-wide px-2 py-1"
@@ -5899,15 +6166,27 @@ function SeccionProductos({
                   )}
                 </label>
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onUpdateProducto?.(p.id, { disponible: p.disponible === undefined ? true : p.disponible ? false : undefined })
-                    }
-                    className="text-[10px] underline decoration-dotted opacity-60 hover:opacity-100 transition-opacity mb-1 self-start"
-                  >
-                    {p.disponible === undefined ? 'Agregar estado' : p.disponible ? 'Disponible → Reservado' : 'Quitar estado'}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+                    <Editable
+                      editable={editable}
+                      value={p.etiqueta}
+                      onChange={(v) => onUpdateProducto?.(p.id, { etiqueta: v })}
+                      tag="span"
+                      placeholder="Etiqueta (ej: Nuevo, Oferta)"
+                      style={{ color: p.etiquetaColor || accent }}
+                      className="text-[10px] font-mono uppercase"
+                      maxLength={20}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateProducto?.(p.id, { disponible: p.disponible === undefined ? true : p.disponible ? false : undefined })
+                      }
+                      className="text-[10px] underline decoration-dotted opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                      {p.disponible === undefined ? 'Agregar estado' : p.disponible ? 'Disponible → Reservado' : 'Quitar estado'}
+                    </button>
+                  </div>
                 )}
                 {editable && (
                   <Editable
@@ -7168,6 +7447,693 @@ function ContactoForm({
         btnColor={btnColor}
       />
     </form>
+  );
+}
+
+// Compara dos productos lado a lado eligiéndolos de dos selects — pensada
+// para catálogos de electrónica/tecnología donde el cliente duda entre dos
+// modelos puntuales. Cada modelo trae sus specs como pares clave/valor;
+// "campos" define qué claves se muestran y en qué orden. La fila de precio
+// resalta el modelo más barato usando el precioNum numérico de cada modelo
+// (el texto mostrado sigue siendo el de specs.precio, ya formateado).
+function SeccionComparador({
+  modelos = [],
+  onUpdate,
+  campos = [],
+  onUpdateCampos,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [idxA, setIdxA] = useState(0);
+  const [idxB, setIdxB] = useState(Math.min(1, modelos.length - 1));
+
+  const updateModelo = (id, patch) => onUpdate?.(modelos.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const updateSpec = (id, key, value) =>
+    updateModelo(id, { specs: { ...(modelos.find((m) => m.id === id)?.specs || {}), [key]: value } });
+  const removeModelo = (id) => onUpdate?.(modelos.filter((m) => m.id !== id));
+  const addModelo = () =>
+    onUpdate?.([...modelos, { id: `modelo-${Date.now()}`, nombre: 'Nuevo modelo', precioNum: 0, specs: {} }]);
+
+  const addCampo = () => {
+    const label = window.prompt('Nombre de la especificación (ej: Batería)');
+    if (!label?.trim()) return;
+    const key = `campo-${Date.now()}`;
+    onUpdateCampos?.([...campos, { key, label: label.trim() }]);
+  };
+  const removeCampo = (key) => onUpdateCampos?.(campos.filter((c) => c.key !== key));
+
+  const a = modelos[Math.min(idxA, modelos.length - 1)];
+  const b = modelos[Math.min(idxB, modelos.length - 1)];
+
+  const Select = ({ value, onChange }) => (
+    <select
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-full border px-3 py-2.5 text-sm font-semibold outline-none bg-white"
+      style={{ borderColor: palette.line, color: palette.ink }}
+    >
+      {modelos.map((m, i) => (
+        <option key={m.id} value={i}>
+          {m.nombre}
+        </option>
+      ))}
+    </select>
+  );
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="comparador.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Comparar productos'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="comparador.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-2"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Bajada (opcional)"
+            style={{ color: palette.inkSoft }}
+            className="text-sm max-w-lg"
+            maxLength={160}
+          />
+        </div>
+
+        {modelos.length < 2 ? (
+          <p className="text-sm" style={{ color: palette.inkSoft }}>
+            Agregá al menos dos modelos para poder compararlos.
+          </p>
+        ) : (
+          <div className="border overflow-x-auto" style={{ borderColor: palette.line }}>
+            <div className="grid grid-cols-[1.1fr_1fr_1fr] min-w-[560px]">
+              <div className="p-3 @lg:p-4 font-mono text-[11px] uppercase tracking-wide flex items-center" style={{ background: palette.bg, color: palette.inkSoft, borderBottom: `1px solid ${palette.line}` }}>
+                Especificación
+              </div>
+              <div className="p-2.5 @lg:p-3" style={{ background: palette.bg, borderBottom: `1px solid ${palette.line}`, borderLeft: `1px solid ${palette.line}` }}>
+                <Select value={idxA} onChange={setIdxA} />
+              </div>
+              <div className="p-2.5 @lg:p-3" style={{ background: palette.bg, borderBottom: `1px solid ${palette.line}`, borderLeft: `1px solid ${palette.line}` }}>
+                <Select value={idxB} onChange={setIdxB} />
+              </div>
+              {campos.map((c, i) => {
+                const av = a?.specs?.[c.key] ?? '';
+                const bv = b?.specs?.[c.key] ?? '';
+                let winnerA = false;
+                let winnerB = false;
+                if (c.key === 'precio' && a && b) {
+                  if ((a.precioNum ?? 0) < (b.precioNum ?? 0)) winnerA = true;
+                  else if ((b.precioNum ?? 0) < (a.precioNum ?? 0)) winnerB = true;
+                }
+                return (
+                  <div className="contents" key={c.key}>
+                    <div
+                      className="relative p-3 @lg:p-4 text-sm font-medium flex items-center"
+                      style={{ color: palette.inkSoft, background: i % 2 === 0 ? palette.bg : 'transparent', borderBottom: `1px solid ${palette.line}` }}
+                    >
+                      {editable ? (
+                        <Editable
+                          editable
+                          value={c.label}
+                          onChange={(v) => onUpdateCampos?.(campos.map((cc) => (cc.key === c.key ? { ...cc, label: v } : cc)))}
+                          tag="span"
+                          maxLength={30}
+                        />
+                      ) : (
+                        c.label
+                      )}
+                      {editable && (
+                        <button
+                          type="button"
+                          onClick={() => removeCampo(c.key)}
+                          aria-label={`Quitar ${c.label}`}
+                          className="absolute top-1/2 right-2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                        >
+                          <XIcon className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    {[
+                      { m: a, v: av, win: winnerA },
+                      { m: b, v: bv, win: winnerB },
+                    ].map(({ m, v, win }, colI) => (
+                      <div
+                        key={colI}
+                        className="p-3 @lg:p-4 text-sm"
+                        style={{
+                          borderBottom: `1px solid ${palette.line}`,
+                          borderLeft: `1px solid ${palette.line}`,
+                          background: i % 2 === 0 ? palette.bg : 'transparent',
+                          fontWeight: win ? 700 : 500,
+                          color: win ? accent : palette.ink,
+                        }}
+                      >
+                        {editable ? (
+                          <Editable editable value={v} onChange={(nv) => m && updateSpec(m.id, c.key, nv)} tag="span" maxLength={40} />
+                        ) : (
+                          v
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {editable && (
+          <div className="mt-6 space-y-5">
+            <button
+              type="button"
+              onClick={addCampo}
+              className="text-xs font-semibold underline decoration-dotted"
+              style={{ color: palette.inkSoft }}
+            >
+              + Agregar especificación
+            </button>
+            <div className="flex flex-wrap gap-2">
+              {modelos.map((m) => (
+                <div key={m.id} className="relative border p-3 flex flex-col gap-1.5 min-w-[160px]" style={{ borderColor: palette.line }}>
+                  <button
+                    type="button"
+                    onClick={() => removeModelo(m.id)}
+                    aria-label={`Quitar ${m.nombre}`}
+                    className="absolute top-1.5 right-1.5 opacity-40 hover:opacity-100"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                  <Editable
+                    editable
+                    value={m.nombre}
+                    onChange={(v) => updateModelo(m.id, { nombre: v })}
+                    tag="span"
+                    className="font-semibold text-sm pr-4"
+                    style={{ color: palette.ink }}
+                    maxLength={40}
+                  />
+                  <label className="text-[10px] font-mono uppercase" style={{ color: palette.inkSoft }}>
+                    Precio (número, para saber cuál es más barato)
+                    <input
+                      type="number"
+                      value={m.precioNum ?? 0}
+                      onChange={(e) => updateModelo(m.id, { precioNum: Number(e.target.value) || 0 })}
+                      className="block w-full border px-2 py-1 mt-1 text-xs"
+                      style={{ borderColor: palette.line, color: palette.ink }}
+                    />
+                  </label>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addModelo}
+                className="border-2 border-dashed flex items-center justify-center gap-1.5 px-4 text-sm font-semibold min-w-[140px]"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-4 h-4" /> Agregar modelo
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Calculadora de plan canje: el visitante elige un modelo propio y su estado
+// de conservación, y ve al instante cuánto se le tomaría a cuenta de una
+// compra nueva (valorBase del modelo × el factor del estado, redondeado al
+// millar). El cálculo es solo orientativo, se aclara que se confirma en el
+// local — no hay ninguna tasación real conectada del otro lado.
+function SeccionCanje({
+  modelos = [],
+  onUpdate,
+  condiciones = [],
+  onUpdateCondiciones,
+  perks = [],
+  onUpdatePerks,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+  botones: botonesData = {},
+  onUpdateBotones,
+  seccionesDisponibles = [],
+}) {
+  const [modeloIdx, setModeloIdx] = useState(0);
+  const [condIdx, setCondIdx] = useState(0);
+
+  const modelo = modelos[Math.min(modeloIdx, Math.max(modelos.length - 1, 0))];
+  const condicion = condiciones[Math.min(condIdx, Math.max(condiciones.length - 1, 0))];
+  const valor = modelo && condicion ? Math.round(((modelo.valorBase || 0) * (condicion.factor ?? 1)) / 1000) * 1000 : 0;
+
+  const updateModelo = (id, patch) => onUpdate?.(modelos.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const addModelo = () => onUpdate?.([...modelos, { id: `canje-modelo-${Date.now()}`, nombre: 'Modelo', valorBase: 0 }]);
+  const removeModelo = (id) => onUpdate?.(modelos.filter((m) => m.id !== id));
+
+  const updateCond = (id, patch) => onUpdateCondiciones?.(condiciones.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const addCond = () =>
+    onUpdateCondiciones?.([...condiciones, { id: `cond-${Date.now()}`, label: 'Estado', hint: '', factor: 1 }]);
+  const removeCond = (id) => onUpdateCondiciones?.(condiciones.filter((c) => c.id !== id));
+
+  const updatePerk = (i, v) => onUpdatePerks?.(perks.map((p, pi) => (pi === i ? v : p)));
+  const addPerk = () => onUpdatePerks?.([...perks, 'Nuevo beneficio']);
+  const removePerk = (i) => onUpdatePerks?.(perks.filter((_, pi) => pi !== i));
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-start">
+        <div>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="canje.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Plan canje'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="canje.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-4"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción del plan canje"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6"
+            maxLength={220}
+          />
+          <div className="flex flex-col gap-2.5">
+            {perks.map((p, i) => (
+              <div key={i} className="relative flex gap-2.5 items-start text-sm" style={{ color: palette.inkSoft }}>
+                <span className="font-bold shrink-0" style={{ color: accent }}>
+                  ✓
+                </span>
+                <Editable
+                  editable={editable}
+                  value={p}
+                  onChange={(v) => updatePerk(i, v)}
+                  tag="span"
+                  block
+                  multiline
+                  maxLength={100}
+                />
+                {editable && (
+                  <button type="button" onClick={() => removePerk(i)} aria-label="Quitar" className="opacity-40 hover:opacity-100 shrink-0">
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addPerk}
+                className="text-xs font-semibold underline decoration-dotted self-start"
+                style={{ color: palette.inkSoft }}
+              >
+                + Agregar beneficio
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6 @lg:p-8" style={{ background: palette.inkHex || '#171717' }}>
+          <p className="font-serif text-lg mb-5" style={{ color: '#ffffff' }}>
+            Cotizá tu usado
+          </p>
+          <label className="block font-mono text-[10px] uppercase tracking-wide mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Tu equipo actual
+          </label>
+          {editable ? (
+            <div className="flex flex-wrap gap-2 mb-5">
+              {modelos.map((m) => (
+                <div key={m.id} className="relative border p-2.5 flex flex-col gap-1 min-w-[130px]" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
+                  <button
+                    type="button"
+                    onClick={() => removeModelo(m.id)}
+                    aria-label={`Quitar ${m.nombre}`}
+                    className="absolute top-1 right-1 opacity-50 hover:opacity-100"
+                    style={{ color: '#fff' }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                  <Editable
+                    editable
+                    value={m.nombre}
+                    onChange={(v) => updateModelo(m.id, { nombre: v })}
+                    tag="span"
+                    className="text-xs font-semibold pr-3"
+                    style={{ color: '#fff' }}
+                    maxLength={30}
+                  />
+                  <input
+                    type="number"
+                    value={m.valorBase ?? 0}
+                    onChange={(e) => updateModelo(m.id, { valorBase: Number(e.target.value) || 0 })}
+                    placeholder="Valor base"
+                    className="w-full border px-1.5 py-1 text-xs bg-transparent"
+                    style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addModelo}
+                className="border-2 border-dashed flex items-center justify-center px-3 text-xs font-semibold min-w-[100px]"
+                style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.7)' }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <select
+              value={modeloIdx}
+              onChange={(e) => setModeloIdx(Number(e.target.value))}
+              className="w-full box-border border px-3 py-2.5 text-sm mb-5 outline-none"
+              style={{ background: '#1b2126', borderColor: 'rgba(255,255,255,0.18)', color: '#f3f5f6' }}
+            >
+              {modelos.map((m, i) => (
+                <option key={m.id} value={i}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <label className="block font-mono text-[10px] uppercase tracking-wide mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Estado
+          </label>
+          <div className={`grid gap-2 mb-7 ${editable ? '' : 'grid-cols-3'}`}>
+            {condiciones.map((c, i) => (
+              <div
+                key={c.id}
+                onClick={() => !editable && setCondIdx(i)}
+                className={`relative text-center p-2.5 border transition-all ${editable ? 'flex items-center gap-2' : ''} ${!editable ? 'cursor-pointer' : ''}`}
+                style={
+                  i === condIdx
+                    ? { borderColor: '#00d4c8', background: 'rgba(0,212,200,0.12)', color: '#00d4c8' }
+                    : { borderColor: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)' }
+                }
+              >
+                {editable ? (
+                  <>
+                    <Editable editable value={c.label} onChange={(v) => updateCond(c.id, { label: v })} tag="span" className="text-sm font-semibold" maxLength={20} />
+                    <Editable editable value={c.hint} onChange={(v) => updateCond(c.id, { hint: v })} tag="span" placeholder="Pista" className="text-xs opacity-70" maxLength={30} />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={c.factor ?? 1}
+                      onChange={(e) => updateCond(c.id, { factor: Number(e.target.value) })}
+                      title="Factor (1 = 100% del valor base)"
+                      className="w-16 border px-1 py-0.5 text-xs bg-transparent ml-auto"
+                      style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                    />
+                    <button type="button" onClick={() => removeCond(c.id)} aria-label="Quitar" className="opacity-50 hover:opacity-100">
+                      <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-semibold text-sm">{c.label}</div>
+                    <div className="font-mono text-[10px] opacity-70 mt-0.5">{c.hint}</div>
+                  </>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addCond}
+                className="text-xs font-semibold underline decoration-dotted self-start"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                + Agregar estado
+              </button>
+            )}
+          </div>
+
+          <div className="border-t pt-5" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
+            <div className="font-mono text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Te tomamos hasta
+            </div>
+            <div className="font-serif font-bold text-3xl @lg:text-4xl" style={{ color: '#00d4c8' }}>
+              ${valor.toLocaleString('es-AR')}
+            </div>
+            <div className="mt-5">
+              <ButtonObject
+                value={botonesData.primary}
+                onChange={(patch) => onUpdateBotones?.({ ...botonesData, primary: { ...(botonesData.primary || {}), ...patch } })}
+                editable={editable}
+                seccionesDisponibles={seccionesDisponibles}
+                nombreNegocio={nombreNegocio}
+                defaultFuncion="whatsapp"
+                defaultLabel="Coordinar el canje →"
+                defaultColor="#00918c"
+                defaultTarget={whatsapp}
+                waMessage={modelo ? `Hola! Quiero coordinar el plan canje de mi ${modelo.nombre}.` : undefined}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Selector de sucursales: lista clickeable a la izquierda (nombre + ciudad +
+// abierto/cerrado), panel con mapa simulado + datos de la sucursal activa a
+// la derecha — mismo patrón de switcher que Series/Estilos, pero con datos
+// de local físico (dirección/horario/teléfono) en vez de foto+descripción.
+function SeccionSucursales({
+  sucursales = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [active, setActive] = useState(0);
+  const activeIndex = Math.min(active, Math.max(sucursales.length - 1, 0));
+  const current = sucursales[activeIndex];
+
+  const update = (id, patch) => onUpdate?.(sucursales.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  const remove = (id) => onUpdate?.(sucursales.filter((s) => s.id !== id));
+  const add = () =>
+    onUpdate?.([
+      ...sucursales,
+      { id: `sucursal-${Date.now()}`, nombre: 'Nueva sucursal', ciudad: '', abierto: true, direccion: '', horarios: '', telefono: '' },
+    ]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="sucursales.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Nuestras sucursales'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="sucursales.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl"
+            maxLength={70}
+          />
+        </div>
+
+        {sucursales.length === 0 && !editable ? (
+          <p className="text-sm" style={{ color: palette.inkSoft }}>
+            Todavía no cargaste sucursales.
+          </p>
+        ) : (
+          <div className="grid @lg:grid-cols-[0.85fr_1.15fr] gap-8 @lg:gap-10 items-start">
+            <div className="flex flex-col border-t" style={{ borderColor: palette.line }}>
+              {sucursales.map((s, i) => (
+                <div
+                  key={s.id}
+                  onClick={() => setActive(i)}
+                  onMouseEnter={() => setActive(i)}
+                  className="relative cursor-pointer px-3 py-4 border-b border-l-[3px] transition-colors"
+                  style={{
+                    borderBottomColor: palette.line,
+                    borderLeftColor: i === activeIndex ? accent : 'transparent',
+                    background: i === activeIndex ? (palette.accentSoft || 'rgba(0,0,0,0.04)') : 'transparent',
+                  }}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <Editable
+                      editable={editable}
+                      value={s.nombre}
+                      onChange={(v) => update(s.id, { nombre: v })}
+                      tag="span"
+                      placeholder="Nombre de la sucursal"
+                      style={{ color: i === activeIndex ? accent : palette.ink }}
+                      className="font-serif font-semibold"
+                      maxLength={40}
+                    />
+                    {editable ? (
+                      <button
+                        type="button"
+                        onClick={() => update(s.id, { abierto: !s.abierto })}
+                        className="font-mono text-[10px] uppercase shrink-0 underline decoration-dotted"
+                        style={{ color: s.abierto ? accent : palette.inkSoft }}
+                      >
+                        {s.abierto ? 'Abierto' : 'Cerrado'}
+                      </button>
+                    ) : (
+                      <span
+                        className="font-mono text-[10px] uppercase shrink-0"
+                        style={{ color: s.abierto ? accent : palette.inkSoft }}
+                      >
+                        {s.abierto ? 'Abierto ahora' : 'Cerrado'}
+                      </span>
+                    )}
+                  </div>
+                  <Editable
+                    editable={editable}
+                    value={s.ciudad}
+                    onChange={(v) => update(s.id, { ciudad: v })}
+                    tag="p"
+                    placeholder="Ciudad"
+                    style={{ color: palette.inkSoft }}
+                    className="text-sm mt-0.5"
+                    maxLength={30}
+                  />
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => remove(s.id)}
+                      aria-label={`Quitar ${s.nombre}`}
+                      className="absolute top-3 right-2 opacity-40 hover:opacity-100 transition-opacity"
+                      style={{ color: palette.ink }}
+                    >
+                      <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={add}
+                  className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-3 border-2 border-dashed mt-2"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-3 h-3" /> Agregar sucursal
+                </button>
+              )}
+            </div>
+            <div className="border" style={{ borderColor: palette.line }}>
+              <div className="h-[200px] @lg:h-[240px] flex items-center justify-center" style={{ background: palette.line }}>
+                <span className="font-mono text-xs uppercase tracking-wide" style={{ color: palette.inkSoft }}>
+                  Mapa (simulado)
+                </span>
+              </div>
+              {current && (
+                <div className="p-6 grid grid-cols-1 @sm:grid-cols-3 gap-5">
+                  {[
+                    { label: 'Dirección', key: 'direccion', maxLength: 100 },
+                    { label: 'Horarios', key: 'horarios', maxLength: 60 },
+                    { label: 'Teléfono', key: 'telefono', maxLength: 30 },
+                  ].map((f) => (
+                    <div key={f.key}>
+                      <p className="font-mono text-[10px] uppercase tracking-wide mb-1" style={{ color: palette.inkSoft }}>
+                        {f.label}
+                      </p>
+                      <Editable
+                        editable={editable}
+                        value={current[f.key]}
+                        onChange={(v) => update(current.id, { [f.key]: v })}
+                        tag="p"
+                        block
+                        placeholder="—"
+                        style={{ color: palette.ink }}
+                        className="text-sm"
+                        maxLength={f.maxLength}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -10194,7 +11160,7 @@ function SeccionAnuncio({ mensaje, onUpdateMensaje, telefono, editable, bgColor,
 // es texto plano en loop, no una fila fija de imágenes. En el editor se ve
 // una fila estática (más fácil de tocar para editar); el movimiento infinito
 // solo corre en el sitio publicado.
-function SeccionMarquee({ mensajes = [], onUpdate, editable, bgColor, textColor, palette = {}, separador = '·', velocidad }) {
+function SeccionMarquee({ mensajes = [], onUpdate, editable, bgColor, textColor, palette = {}, separador = '·', velocidad, fuente = 'font-serif' }) {
   const update = (id, patch) => onUpdate?.(mensajes.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   const remove = (id) => onUpdate?.(mensajes.filter((m) => m.id !== id));
   const add = () => onUpdate?.([...mensajes, { id: `marquee-${Date.now()}`, texto: 'Nueva mención' }]);
@@ -10254,7 +11220,7 @@ function SeccionMarquee({ mensajes = [], onUpdate, editable, bgColor, textColor,
         {loop.map((m, i) => (
           <span
             key={`${m.id}-${i}`}
-            className="font-serif text-base font-semibold px-8 whitespace-nowrap shrink-0"
+            className={`${fuente} text-base font-semibold px-8 whitespace-nowrap shrink-0`}
             style={{ color: textoSuave }}
           >
             {m.texto} {separador}

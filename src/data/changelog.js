@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.12.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Nexo Tech": tienda de electrónica, con tipografía Outfit/Figtree/Azeret Mono y acento verde azulado.' },
+      { type: 'nuevo', text: 'Nueva sección "Comparador de productos": elegís dos productos de una lista y se comparan lado a lado en una tabla, resaltando el más barato.' },
+      { type: 'nuevo', text: 'Nueva sección "Plan canje": el cliente elige su equipo usado y su estado de conservación, y ve al instante cuánto se le toma a cuenta de una compra nueva.' },
+      { type: 'nuevo', text: 'Nueva sección "Sucursales": lista de locales físicos — tocar uno muestra su dirección, horario y teléfono al lado.' },
+      { type: 'nuevo', text: 'Portada "Vidriera rotativa": ahora puede llevar precio anterior tachado, un halo de color detrás de la foto y una frase fija arriba del precio (ej: "Oferta del mes"); también se le puede sumar una fila de números destacados (ej: "+12.000 equipos vendidos").' },
+      { type: 'nuevo', text: 'Productos o servicios (Catálogo): cada ítem puede llevar una etiqueta de texto libre con color propio (ej: "Nuevo", "Oferta"), además del estado de disponible/reservado.' },
+      { type: 'nuevo', text: 'Menciones/marquee: la tipografía del texto en movimiento ahora se puede elegir por plantilla (antes siempre usaba la misma).' },
+      { type: 'nuevo', text: 'Pie de página: nueva distribución en 3 columnas con medios de pago y datos de contacto, para negocios de venta de productos.' },
+    ],
+  },
+  {
     version: '1.11.0',
     date: '2026-07-29',
     changes: [

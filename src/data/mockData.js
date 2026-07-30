@@ -896,6 +896,21 @@ export const SECCIONES_CATALOGO = [
     desc: 'Grilla de fotos en distintos tamaños — tocar una la amplía en pantalla completa.',
   },
   {
+    id: 'comparador',
+    label: 'Comparador de productos',
+    desc: 'Elegí dos productos de una lista y compará sus datos lado a lado en una tabla.',
+  },
+  {
+    id: 'canje',
+    label: 'Plan canje',
+    desc: 'Calculadora simple: el cliente elige su equipo usado y su estado, y ve cuánto se le toma a cuenta.',
+  },
+  {
+    id: 'sucursales',
+    label: 'Sucursales',
+    desc: 'Lista de locales físicos — tocar uno muestra su dirección, horario y teléfono al lado.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',
@@ -998,6 +1013,7 @@ export const SECTION_VARIANTS = {
     { id: 'columnas', label: 'Con columnas', skeleton: 'split' },
     { id: 'minimal', label: 'Minimalista con redes', skeleton: 'footerMinimal' },
     { id: 'newsletter', label: 'Con newsletter', skeleton: 'footerNewsletter' },
+    { id: 'tienda', label: 'Con medios de pago y contacto', skeleton: 'footerMinimal' },
   ],
   categorias: [{ id: 'scroll', label: 'Fila con scroll', skeleton: 'categoriasScroll' }],
   pasos: [
