@@ -128,7 +128,10 @@ export default function Checkout() {
               Incluye
             </p>
             <ul className="space-y-3">
-              {PLAN.beneficios.map((b) => (
+              {/* Los 3 más fuertes de PLAN.beneficios (dominio propio, editor
+                  ilimitado, soporte) — la lista completa de 6 ya se mostró en
+                  el resto del embudo, acá alcanza con lo más convincente. */}
+              {[PLAN.beneficios[0], PLAN.beneficios[3], PLAN.beneficios[5]].map((b) => (
                 <li key={b} className="flex items-start gap-3 text-sm text-ink-200">
                   <CheckIcon /> {b}
                 </li>

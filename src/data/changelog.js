@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.20.3',
+    date: '2026-07-30',
+    changes: [
+      { type: 'mejora', text: 'Checkout: la lista "Incluye" mostraba los 6 beneficios del plan otra vez, ya vistos antes en el resto del recorrido. Ahora muestra solo los 3 más fuertes (dominio propio, editor ilimitado, soporte) para una pantalla más liviana.' },
+    ],
+  },
+  {
     version: '1.20.2',
     date: '2026-07-30',
     changes: [
