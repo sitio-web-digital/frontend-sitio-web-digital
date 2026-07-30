@@ -1012,6 +1012,26 @@ export const SECCIONES_CATALOGO = [
     desc: 'Selector de zonas con el técnico o referente de cada una, sus datos clave y una foto real.',
   },
   {
+    id: 'escalas-volumen',
+    label: 'Escalas por volumen',
+    desc: 'Tarjetas con rangos de cantidad y el descuento que corresponde a cada uno, para ventas mayoristas.',
+  },
+  {
+    id: 'pedido-mayorista',
+    label: 'Catálogo con carrito',
+    desc: 'Buscador + tabs de categoría + tabla de productos con contador de bultos y un carrito lateral con descuento por volumen y mínimo de compra.',
+  },
+  {
+    id: 'logistica-zonas',
+    label: 'Zonas de reparto',
+    desc: 'Texto + foto y una tabla de zonas con días de reparto, mínimo y flete (gratis o no).',
+  },
+  {
+    id: 'condiciones',
+    label: 'Condiciones / políticas',
+    desc: 'Grilla conectada por borde con título y descripción corta, sobre fondo oscuro — sin números ni fechas.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',

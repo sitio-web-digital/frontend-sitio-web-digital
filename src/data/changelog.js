@@ -5,6 +5,17 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.18.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Mayorista Punto Norte": distribuidora mayorista con catálogo, carrito y descuento por volumen, tipografía Saira Condensed/Overpass Mono/Rubik y paleta azul noche/naranja.' },
+      { type: 'nuevo', text: 'Nueva sección "Escalas por volumen": tarjetas con rangos de cantidad y el descuento que corresponde a cada uno.' },
+      { type: 'nuevo', text: 'Nueva sección "Catálogo con carrito": buscador + tabs de categoría + tabla de productos con contador de bultos y un carrito lateral que calcula el descuento por volumen y el mínimo de compra en vivo.' },
+      { type: 'nuevo', text: 'Nueva sección "Zonas de reparto": texto + foto y una tabla de zonas con días de reparto, mínimo de compra y flete (marcado como gratis o no).' },
+      { type: 'nuevo', text: 'Nueva sección "Condiciones / políticas": grilla conectada por borde con título y descripción corta, sobre fondo oscuro.' },
+    ],
+  },
+  {
     version: '1.17.0',
     date: '2026-07-30',
     changes: [

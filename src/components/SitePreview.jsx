@@ -1080,6 +1080,84 @@ export default function SitePreview({
                 palette={palette}
               />
             )}
+            {sec.type === 'escalas-volumen' && (
+              <SeccionEscalasVolumen
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'pedido-mayorista' && (
+              <SeccionPedidoMayorista
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                tiers={sec.tiers ?? []}
+                onUpdateTiers={(tiers) => onSetSectionStyle?.(sec.id, { tiers })}
+                montoMinimo={sec.montoMinimo ?? 0}
+                onUpdateMontoMinimo={(v) => onSetSectionStyle?.(sec.id, { montoMinimo: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'logistica-zonas' && (
+              <SeccionLogisticaZonas
+                zonas={sec.zonas ?? []}
+                onUpdate={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
+                onAdd={(zona) => onSetSectionStyle?.(sec.id, { zonas: [...(sec.zonas ?? []), zona] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { zonas: (sec.zonas ?? []).filter((z) => z.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                imagen={sec.imagen}
+                onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'condiciones' && (
+              <SeccionCondiciones
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                onAdd={(item) => onSetSectionStyle?.(sec.id, { items: [...(sec.items ?? []), item] })}
+                onRemove={(id) => onSetSectionStyle?.(sec.id, { items: (sec.items ?? []).filter((it) => it.id !== id) })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
             {sec.type === 'contacto' && (
               <SeccionContacto
                 accent={accent}
@@ -8040,6 +8118,394 @@ function SeccionCatalogoInsumos({
   );
 }
 
+// Catálogo con buscador + tabs de categoría + tabla de productos con
+// contador +/− por fila, más un carrito lateral fijo (líneas, subtotal,
+// descuento por volumen ya aplicado según los umbrales de "tiers", y un
+// mensaje de mínimo de compra) — a diferencia de "Catálogo con buscador"
+// (que es solo lectura, sin carrito) o "Pedidos especiales" (que es UN
+// pedido puntual por formulario), acá el visitante arma un pedido de
+// varios productos a la vez y ve el total con descuento en vivo. El
+// carrito es ephemeral de la sesión del visitante, no hay backend de
+// pedidos real conectado del otro lado — el envío solo confirma en
+// pantalla, el vendedor real lo recibe por WhatsApp/otro canal aparte.
+function SeccionPedidoMayorista({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  tiers = [],
+  onUpdateTiers,
+  montoMinimo = 0,
+  onUpdateMontoMinimo,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [query, setQuery] = useState('');
+  const [categoria, setCategoria] = useState('Todas');
+  const [cart, setCart] = useState({});
+  const [orderSent, setOrderSent] = useState(false);
+
+  const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const categorias = ['Todas', ...Array.from(new Set(items.map((p) => p.categoria).filter(Boolean)))];
+  const q = norm(query);
+  const shown = items.filter((p) => {
+    const byCat = categoria === 'Todas' || p.categoria === categoria;
+    const byQ = q === '' || norm(p.nombre).includes(q) || norm(p.sku).includes(q);
+    return byCat && byQ;
+  });
+
+  const bump = (id, delta) => {
+    setCart((prev) => {
+      const next = { ...prev };
+      const v = Math.max(0, (next[id] || 0) + delta);
+      if (v === 0) delete next[id];
+      else next[id] = v;
+      return next;
+    });
+    setOrderSent(false);
+  };
+
+  const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
+
+  let totalBultos = 0;
+  let subtotal = 0;
+  const cartLines = [];
+  Object.entries(cart).forEach(([id, qty]) => {
+    const p = items.find((x) => x.id === id);
+    if (!p) return;
+    totalBultos += qty;
+    subtotal += qty * (p.precio || 0);
+    cartLines.push({ id, label: `${qty} × ${p.nombre}`, value: money(qty * (p.precio || 0)) });
+  });
+
+  const sortedTiers = [...tiers].sort((a, b) => (a.umbral || 0) - (b.umbral || 0));
+  let tier = null;
+  for (const t of sortedTiers) {
+    if (totalBultos >= (t.umbral || 0)) tier = t;
+  }
+  const discountPct = tier?.descuento || 0;
+  const discount = (subtotal * discountPct) / 100;
+  const total = subtotal - discount;
+  const reached = total >= montoMinimo;
+  const missing = montoMinimo - total;
+
+  const updateItem = (id, patch) => onUpdate?.(items.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const removeItem = (id) => onRemove?.(id);
+  const addItem = () =>
+    onAdd?.({ id: `prod-${Date.now()}`, sku: 'SKU-000', nombre: 'Nuevo producto', categoria: 'Sin categoría', unidad: 'Bulto x 1', precio: 0, stockN: 0 });
+
+  const updateTier = (id, patch) => onUpdateTiers?.(tiers.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const removeTier = (id) => onUpdateTiers?.(tiers.filter((t) => t.id !== id));
+  const addTier = () => onUpdateTiers?.([...tiers, { id: `nivel-${Date.now()}`, umbral: 0, descuento: 0, etiqueta: 'Nuevo nivel' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-6xl mx-auto">
+        <Reveal className="flex flex-wrap items-end justify-between gap-5 mb-6">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="pedidomayorista.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: '#2a4d9b' }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Armá tu pedido'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="pedidomayorista.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl"
+              maxLength={70}
+            />
+          </div>
+          <div className="flex items-stretch border min-w-[min(100%,300px)]" style={{ borderColor: palette.line, background: palette.bg }}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por producto o SKU..."
+              className="flex-1 min-w-0 bg-transparent border-none outline-none px-3.5 py-2.5 text-sm"
+              style={{ color: palette.ink }}
+            />
+            <div className="flex items-center px-3.5 font-mono text-xs border-l" style={{ color: palette.inkSoft, borderColor: palette.line }}>
+              {shown.length}/{items.length}
+            </div>
+          </div>
+        </Reveal>
+
+        <div className="flex flex-wrap gap-2 mb-7">
+          {categorias.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategoria(c)}
+              className="border text-sm px-3.5 py-2 transition-colors"
+              style={
+                categoria === c
+                  ? { borderColor: palette.ink, background: palette.ink, color: palette.bg }
+                  : { borderColor: palette.line, color: palette.ink, background: 'transparent' }
+              }
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid @lg:grid-cols-[1.6fr_1fr] gap-6 @lg:gap-9 items-start">
+          <div className="overflow-x-auto">
+            <div className="min-w-[560px] border" style={{ borderColor: palette.line, background: palette.bg }}>
+              <div
+                className="grid text-[11px] font-mono uppercase tracking-wide"
+                style={{ gridTemplateColumns: '1.7fr 0.85fr 0.85fr 1.05fr', background: palette.inkHex || palette.ink, color: palette.bg }}
+              >
+                <div className="px-4 py-3">Producto</div>
+                <div className="px-4 py-3 text-right">Precio bulto</div>
+                <div className="px-4 py-3 text-right">Stock</div>
+                <div className="px-4 py-3 text-right">Cantidad</div>
+              </div>
+              {shown.map((p) => {
+                const qty = cart[p.id] || 0;
+                const stockColor = p.stockN <= 25 ? accent : '#1f7a4d';
+                return (
+                  <div
+                    key={p.id}
+                    className="relative grid items-center border-t"
+                    style={{ gridTemplateColumns: '1.7fr 0.85fr 0.85fr 1.05fr', borderColor: palette.line, background: qty > 0 ? (palette.accentSoft ?? '#fff6f1') : palette.bg }}
+                  >
+                    <div className="px-4 py-3">
+                      <Editable
+                        editable={editable}
+                        value={p.nombre}
+                        onChange={(v) => updateItem(p.id, { nombre: v })}
+                        tag="div"
+                        block
+                        placeholder="Nombre"
+                        style={{ color: palette.ink }}
+                        className="text-sm font-medium leading-tight"
+                        maxLength={60}
+                      />
+                      <div className="font-mono text-[11px] mt-0.5" style={{ color: palette.inkSoft }}>
+                        <Editable editable={editable} value={p.sku} onChange={(v) => updateItem(p.id, { sku: v })} tag="span" placeholder="SKU" maxLength={20} /> ·{' '}
+                        <Editable editable={editable} value={p.unidad} onChange={(v) => updateItem(p.id, { unidad: v })} tag="span" placeholder="Bulto x 1" maxLength={20} />
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 text-right">
+                      <Editable
+                        editable={editable}
+                        value={p.precio}
+                        onChange={(v) => updateItem(p.id, { precio: Number(v) || 0 })}
+                        tag="div"
+                        type="number"
+                        format={(v) => money(v)}
+                        style={{ color: palette.ink }}
+                        className="font-mono text-sm font-semibold"
+                      />
+                    </div>
+                    <div className="px-4 py-3 text-right font-mono text-xs" style={{ color: stockColor }}>
+                      {editable ? (
+                        <Editable editable value={p.stockN} onChange={(v) => updateItem(p.id, { stockN: Number(v) || 0 })} tag="span" type="number" style={{ color: stockColor }} />
+                      ) : (
+                        p.stockN
+                      )}{' '}
+                      bultos
+                    </div>
+                    <div className="px-4 py-3 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => bump(p.id, -1)}
+                        aria-label="Restar"
+                        className="w-7 h-7 border flex items-center justify-center font-mono"
+                        style={{ borderColor: palette.line, color: palette.inkSoft, background: palette.bg }}
+                      >
+                        −
+                      </button>
+                      <span className="font-mono text-sm font-semibold min-w-[1.6rem] text-center">{qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => bump(p.id, 1)}
+                        aria-label="Sumar"
+                        className="w-7 h-7 flex items-center justify-center font-mono"
+                        style={{ background: accent, color: '#fff' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(p.id)}
+                        aria-label={`Quitar ${p.nombre}`}
+                        className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                        style={{ color: palette.ink }}
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {editable && (
+              <button
+                type="button"
+                onClick={addItem}
+                className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3 h-3" /> Agregar producto
+              </button>
+            )}
+          </div>
+
+          <div className="border" style={{ borderColor: palette.line, background: palette.bg }}>
+            <div className="px-5 py-3.5 font-semibold text-sm uppercase tracking-wide" style={{ background: palette.inkHex || palette.ink, color: palette.bg }}>
+              Tu pedido
+            </div>
+            <div className="p-5">
+              {totalBultos === 0 ? (
+                <p className="text-sm leading-relaxed mb-2" style={{ color: palette.inkSoft }}>
+                  Todavía no cargaste bultos. Usá los botones + de la tabla para armar el pedido y ver el descuento por volumen.
+                </p>
+              ) : (
+                <div>
+                  <div className="flex flex-col gap-2.5 mb-4 max-h-[220px] overflow-y-auto">
+                    {cartLines.map((l) => (
+                      <div key={l.id} className="flex justify-between gap-3 text-sm pb-2.5 border-b" style={{ borderColor: palette.line }}>
+                        <span style={{ color: palette.inkSoft }}>{l.label}</span>
+                        <span className="font-mono whitespace-nowrap">{l.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-2 pt-3.5" style={{ borderTop: `1px dashed ${palette.line}` }}>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span style={{ color: palette.inkSoft }}>Bultos totales</span>
+                      <span className="font-mono font-semibold">{totalBultos}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span style={{ color: palette.inkSoft }}>Subtotal</span>
+                      <span className="font-mono font-semibold">{money(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span style={{ color: accent }}>{tier?.etiqueta || 'Sin descuento'}</span>
+                      <span className="font-mono font-semibold" style={{ color: accent }}>
+                        {discount > 0 ? `− ${money(discount)}` : '$0'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span style={{ color: palette.ink }}>Total sin IVA</span>
+                      <span className="font-mono font-semibold" style={{ color: palette.ink }}>
+                        {money(total)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div
+                className="px-4 py-3.5 mt-4 text-xs font-mono leading-relaxed"
+                style={{ background: reached ? '#eaf6ef' : '#f6f7f9', border: `1px solid ${reached ? '#bfe3cd' : '#e2e5eb'}`, color: reached ? '#1f7a4d' : palette.inkSoft }}
+              >
+                {totalBultos === 0
+                  ? `Pedido mínimo: ${money(montoMinimo)} + IVA.`
+                  : reached
+                    ? `✓ Superás el mínimo de ${money(montoMinimo)}. Podés enviar el pedido.`
+                    : `Te faltan ${money(missing)} para alcanzar el mínimo de ${money(montoMinimo)}.`}
+              </div>
+              <button
+                type="button"
+                onClick={() => reached && setOrderSent(true)}
+                className="w-full text-center text-sm font-semibold py-3 mt-4 transition-colors"
+                style={{ background: reached ? accent : palette.line, color: '#fff' }}
+              >
+                {reached ? 'Enviar pedido al vendedor' : 'Completá el mínimo para enviar'}
+              </button>
+              {orderSent && (
+                <p className="font-mono text-xs mt-3.5 leading-relaxed" style={{ color: '#1f7a4d' }}>
+                  ✓ Pedido enviado. Un vendedor te confirma stock y fecha de entrega hoy mismo.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {editable && (
+          <div className="mt-8 pt-6 border-t" style={{ borderColor: palette.line }}>
+            <div className="font-mono text-[11px] uppercase tracking-wide mb-3" style={{ color: palette.inkSoft }}>
+              Escalas de descuento (umbral en bultos totales del pedido)
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {sortedTiers.map((t) => (
+                <div key={t.id} className="relative border p-2.5 flex flex-col gap-1 min-w-[160px]" style={{ borderColor: palette.line }}>
+                  <button
+                    type="button"
+                    onClick={() => removeTier(t.id)}
+                    aria-label="Quitar nivel"
+                    className="absolute top-1 right-1 opacity-50 hover:opacity-100"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                  <Editable editable value={t.etiqueta} onChange={(v) => updateTier(t.id, { etiqueta: v })} tag="span" className="text-xs font-semibold pr-3" style={{ color: palette.ink }} maxLength={30} />
+                  <div className="flex gap-1">
+                    <input
+                      type="number"
+                      value={t.umbral ?? 0}
+                      onChange={(e) => updateTier(t.id, { umbral: Number(e.target.value) || 0 })}
+                      placeholder="Bultos desde"
+                      className="w-full border px-1.5 py-1 text-xs"
+                      style={{ borderColor: palette.line, color: palette.ink }}
+                    />
+                    <input
+                      type="number"
+                      value={t.descuento ?? 0}
+                      onChange={(e) => updateTier(t.id, { descuento: Number(e.target.value) || 0 })}
+                      placeholder="% off"
+                      className="w-full border px-1.5 py-1 text-xs"
+                      style={{ borderColor: palette.line, color: palette.ink }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addTier}
+                className="border-2 border-dashed flex items-center justify-center px-3 text-xs font-semibold min-w-[90px]"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <label className="block font-mono text-[11px] uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+              Monto mínimo de pedido (sin IVA)
+            </label>
+            <input
+              type="number"
+              value={montoMinimo}
+              onChange={(e) => onUpdateMontoMinimo?.(Number(e.target.value) || 0)}
+              className="border px-3 py-2 text-sm w-48"
+              style={{ borderColor: palette.line, color: palette.ink }}
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function SeccionTestimonios({
   testimonios = [],
   variant = 'grid',
@@ -10263,6 +10729,192 @@ function SeccionEnsayos({
   );
 }
 
+// Texto + foto a la izquierda, tabla de zonas de reparto a la derecha (zona,
+// días, mínimo, flete — el flete se colorea verde cuando es gratis) — a
+// diferencia de "Tabla de resultados" (columnas libres, siempre la última en
+// el mismo color), acá las columnas son fijas y el color del flete depende
+// de un dato propio de cada fila (si es gratis o no), no de la posición.
+function SeccionLogisticaZonas({
+  zonas = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  imagen,
+  onUpdateImagen,
+  editable,
+  bgColor,
+  headingColor,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(zonas.map((z) => (z.id === id ? { ...z, ...patch } : z)));
+  const remove = (id) => onRemove?.(id);
+  const add = () => onAdd?.({ id: `zona-${Date.now()}`, zona: 'Nueva zona', dias: 'Días', minimo: '$0', flete: 'A convenir', gratis: false });
+
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.85fr_1.15fr] gap-8 @lg:gap-12 items-start">
+        <Reveal>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="logisticazonas.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: '#2a4d9b' }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Días de reparto por zona'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="logisticazonas.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-4"
+            maxLength={80}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción breve"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6 max-w-md"
+            maxLength={200}
+          />
+          <label className={`group/limg relative block aspect-[4/3] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}>
+            {imagen ? (
+              <img src={imagen} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                Agregá una foto
+              </div>
+            )}
+            {editable && (
+              <>
+                <span className="absolute inset-0 bg-black/0 group-hover/limg:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/limg:opacity-100">
+                  <PencilIcon className="w-4 h-4 text-white" />
+                </span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+              </>
+            )}
+          </label>
+        </Reveal>
+        <Reveal delay={0.12} className="overflow-x-auto">
+          <div className="min-w-[520px] border" style={{ borderColor: palette.line, background: palette.bg }}>
+            <div
+              className="grid text-[11px] font-mono uppercase tracking-wide"
+              style={{ gridTemplateColumns: '1.3fr 1fr 0.9fr 0.9fr', background: '#2a4d9b', color: '#fff' }}
+            >
+              <div className="px-4 py-3">Zona</div>
+              <div className="px-4 py-3">Días de reparto</div>
+              <div className="px-4 py-3 text-right">Mínimo</div>
+              <div className="px-4 py-3 text-right">Flete</div>
+            </div>
+            {zonas.map((z) => (
+              <div
+                key={z.id}
+                className="relative grid items-center border-t"
+                style={{ gridTemplateColumns: '1.3fr 1fr 0.9fr 0.9fr', borderColor: palette.line }}
+              >
+                <Editable
+                  editable={editable}
+                  value={z.zona}
+                  onChange={(v) => update(z.id, { zona: v })}
+                  tag="div"
+                  className="text-sm font-medium px-4 py-3"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={z.dias}
+                  onChange={(v) => update(z.id, { dias: v })}
+                  tag="div"
+                  className="font-mono text-xs px-4 py-3"
+                  style={{ color: palette.inkSoft }}
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={z.minimo}
+                  onChange={(v) => update(z.id, { minimo: v })}
+                  tag="div"
+                  className="font-mono text-xs px-4 py-3 text-right"
+                  maxLength={20}
+                />
+                <div className="flex items-center justify-end gap-1.5 px-4 py-3">
+                  <Editable
+                    editable={editable}
+                    value={z.flete}
+                    onChange={(v) => update(z.id, { flete: v })}
+                    tag="span"
+                    className="font-mono text-xs text-right"
+                    style={{ color: z.gratis ? '#1f7a4d' : palette.ink }}
+                    maxLength={20}
+                  />
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => update(z.id, { gratis: !z.gratis })}
+                      aria-label="Alternar gratis"
+                      className="shrink-0"
+                      title="Marcar como flete gratis"
+                    >
+                      <CheckCircleIcon className="w-3.5 h-3.5" style={{ color: z.gratis ? '#1f7a4d' : palette.line }} />
+                    </button>
+                  )}
+                </div>
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => remove(z.id)}
+                    aria-label="Quitar zona"
+                    className="absolute -right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+      {editable && (
+        <div className="max-w-5xl mx-auto mt-4">
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3 h-3" /> Agregar zona
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 // Selector de sucursales: lista clickeable a la izquierda (nombre + ciudad +
 // abierto/cerrado), panel con mapa simulado + datos de la sucursal activa a
 // la derecha — mismo patrón de switcher que Series/Estilos, pero con datos
@@ -12068,6 +12720,124 @@ function SeccionHistoria({
   );
 }
 
+// Grilla conectada por borde con SOLO título + descripción (sin número ni
+// año) sobre fondo oscuro — a diferencia de "Historia" (que siempre lleva un
+// año grande arriba) o "Ciclo de trabajo" (que lleva número + rango de
+// fechas + sub-lista), pensada para condiciones/políticas cortas tipo FAQ
+// en columnas, no una línea de tiempo.
+function SeccionCondiciones({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onRemove?.(id);
+  const add = () => onAdd?.({ id: `cond-${Date.now()}`, titulo: 'Nueva condición', desc: '' });
+
+  const suave = textColor || 'rgba(244,245,247,0.72)';
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink, color: textColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="mb-9 max-w-xl">
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="condiciones.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Cómo trabajamos'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="condiciones.titulo"
+            style={{ color: headingColor || textColor || palette.bg }}
+            className="font-serif text-2xl @lg:text-3xl"
+            maxLength={70}
+          />
+        </Reveal>
+        <div
+          className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4"
+          style={{ borderTop: '1px solid rgba(244,245,247,0.2)', borderLeft: '1px solid rgba(244,245,247,0.2)' }}
+        >
+          {items.map((it, i) => (
+            <Reveal
+              key={it.id}
+              delay={Math.min(i * 0.08, 0.4)}
+              className="relative px-6 py-7"
+              style={{ borderRight: '1px solid rgba(244,245,247,0.2)', borderBottom: '1px solid rgba(244,245,247,0.2)' }}
+            >
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(it.id)}
+                  aria-label="Quitar"
+                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
+                  style={{ color: textColor || palette.bg }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <Editable
+                editable={editable}
+                value={it.titulo}
+                onChange={(v) => update(it.id, { titulo: v })}
+                tag="div"
+                block
+                placeholder="Título"
+                style={{ color: accent }}
+                className="font-serif font-bold text-xl mb-2.5"
+                maxLength={40}
+              />
+              <Editable
+                editable={editable}
+                value={it.desc}
+                onChange={(v) => update(it.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                placeholder="Descripción breve"
+                style={{ color: suave }}
+                className="text-sm leading-relaxed"
+                maxLength={160}
+              />
+            </Reveal>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-r border-b flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold"
+              style={{ borderColor: 'rgba(244,245,247,0.2)', color: suave }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Tarjetas de hospedaje (nombre, distancia, descripción, precio + código de
 // descuento) — para invitados que vienen de afuera del evento, distinta de
 // "Lugares del evento" (que son los lugares DEL evento en sí, con hora y
@@ -12920,6 +13690,155 @@ function SeccionPrecios({
           )}
         </div>
       )}
+    </section>
+  );
+}
+
+// Escalas de descuento por volumen: tarjetas con un rango de cantidad, un
+// porcentaje de descuento grande y una etiqueta opcional ("El más elegido")
+// — a diferencia de "Precios" (que son planes de suscripción con lista de
+// características), acá cada tarjeta es un escalón de una MISMA tabla de
+// descuento por cantidad total, no una oferta independiente.
+function SeccionEscalasVolumen({
+  items = [],
+  onUpdate,
+  onRemove,
+  onAdd,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onRemove?.(id);
+  const add = () =>
+    onAdd?.({ id: `tier-${Date.now()}`, tag: '', rango: 'Nuevo rango', off: '−0 %', desc: '', topColor: '#c6ccd8' });
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="mb-7 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="span"
+              block
+              styleKey="escalasvolumen.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ color: '#2a4d9b' }}
+              className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Más bultos, mejor precio'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="escalasvolumen.titulo"
+              style={{ color: headingColor || palette.ink }}
+              className="font-serif text-2xl @lg:text-3xl"
+              maxLength={70}
+            />
+          </div>
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="span"
+            block
+            placeholder="Nota breve (opcional)"
+            style={{ color: palette.inkSoft }}
+            className="font-mono text-xs max-w-xs"
+            maxLength={160}
+          />
+        </Reveal>
+        <div className="grid @sm:grid-cols-2 @lg:grid-cols-3 gap-5">
+          {items.map((it, i) => (
+            <Reveal
+              key={it.id}
+              delay={Math.min(i * 0.08, 0.4)}
+              className="relative bg-white px-6 py-7"
+              style={{ border: `1px solid ${palette.line}`, borderTop: `4px solid ${it.topColor || palette.line}`, background: palette.bg }}
+            >
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(it.id)}
+                  aria-label="Quitar"
+                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <Editable
+                editable={editable}
+                value={it.tag}
+                onChange={(v) => update(it.id, { tag: v })}
+                tag="div"
+                block
+                placeholder="Etiqueta (opcional)"
+                style={{ color: it.topColor || accent }}
+                className="font-mono text-[11px] uppercase tracking-wide mb-3 min-h-[1rem]"
+                maxLength={30}
+              />
+              <Editable
+                editable={editable}
+                value={it.rango}
+                onChange={(v) => update(it.id, { rango: v })}
+                tag="div"
+                block
+                placeholder="Rango (ej: 6 a 20 bultos)"
+                style={{ color: palette.ink }}
+                className="font-semibold text-lg mb-1.5"
+                maxLength={40}
+              />
+              <Editable
+                editable={editable}
+                value={it.off}
+                onChange={(v) => update(it.id, { off: v })}
+                tag="div"
+                placeholder="−0 %"
+                style={{ color: accent }}
+                className="font-serif font-bold text-4xl leading-none mb-3"
+                maxLength={10}
+              />
+              <Editable
+                editable={editable}
+                value={it.desc}
+                onChange={(v) => update(it.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                placeholder="Descripción breve"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed"
+                maxLength={140}
+              />
+            </Reveal>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold min-h-[220px]"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar escalón
+            </button>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
