@@ -23,7 +23,13 @@ function primerasSecciones(template, n) {
   return (template.sections || []).slice(0, n).map((s, i) => ({ ...s, id: `${s.type}-${i}` }));
 }
 
-function Tile({ template, size }) {
+// Algunas miniaturas (no todas — ver `buildRow`) además scrollean solas
+// lentamente para abajo y vuelven, mostrando más de la página real en vez
+// de quedarse quietas en el hero — así la pared se siente menos como una
+// grilla de fotos fijas y más como sitios de verdad, con algo de vida.
+// Necesitan bastante más contenido real (`sectionCount` alto) para que
+// haya algo que mostrar durante todo el recorrido del scroll.
+function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
   const scale = size / REAL_WIDTH;
   return (
     <div
@@ -46,13 +52,22 @@ function Tile({ template, size }) {
           pointerEvents: 'none',
         }}
       >
-        <SitePreview
-          template={template}
-          siteData={template.demo}
-          theme={{ accent: template.accent, accentSoft: template.accentSoft }}
-          sections={primerasSecciones(template, 3)}
-          widgets={{ whatsappFloating: false }}
-        />
+        <div
+          className={autoScroll ? 'swd-hero-tile-scroll' : undefined}
+          style={
+            autoScroll
+              ? { '--swd-scroll-depth': `-${scrollDepth}px`, animationDuration: `${scrollDuration}s` }
+              : undefined
+          }
+        >
+          <SitePreview
+            template={template}
+            siteData={template.demo}
+            theme={{ accent: template.accent, accentSoft: template.accentSoft }}
+            sections={primerasSecciones(template, autoScroll ? 9 : 3)}
+            widgets={{ whatsappFloating: false }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -60,12 +75,22 @@ function Tile({ template, size }) {
 
 // Filas de la pared: cada una cicla las plantillas reales en un orden
 // desfasado (no la misma secuencia en cada fila) para que no se repita el
-// mismo patrón vertical.
+// mismo patrón vertical. Una de cada cuatro miniaturas scrollea sola (ver
+// `Tile`) — el patrón de cuál le toca se desfasa por fila (+rowIndex) para
+// que no queden siempre alineadas en columna.
 function buildRow(rowIndex, count, size, templates) {
   const tiles = [];
   for (let i = 0; i < count; i++) {
     const idx = (i * 3 + rowIndex * 2) % templates.length;
-    tiles.push({ key: `${rowIndex}-${i}`, template: templates[idx], size });
+    const autoScroll = (i + rowIndex) % 4 === 0;
+    tiles.push({
+      key: `${rowIndex}-${i}`,
+      template: templates[idx],
+      size,
+      autoScroll,
+      scrollDepth: 460 + ((i * 5 + rowIndex * 7) % 4) * 70,
+      scrollDuration: 15 + ((i * 3 + rowIndex) % 5) * 2,
+    });
   }
   return tiles;
 }
@@ -84,10 +109,24 @@ function Row({ row }) {
         style={{ display: 'flex', gap: 14, width: 'max-content', animationDuration: `${row.duration}s` }}
       >
         {row.tiles.map((t) => (
-          <Tile key={`a-${t.key}`} template={t.template} size={t.size} />
+          <Tile
+            key={`a-${t.key}`}
+            template={t.template}
+            size={t.size}
+            autoScroll={t.autoScroll}
+            scrollDepth={t.scrollDepth}
+            scrollDuration={t.scrollDuration}
+          />
         ))}
         {row.tiles.map((t) => (
-          <Tile key={`b-${t.key}`} template={t.template} size={t.size} />
+          <Tile
+            key={`b-${t.key}`}
+            template={t.template}
+            size={t.size}
+            autoScroll={t.autoScroll}
+            scrollDepth={t.scrollDepth}
+            scrollDuration={t.scrollDuration}
+          />
         ))}
       </div>
     </div>
@@ -150,8 +189,19 @@ export default function HeroWall() {
         .swd-hero-wall-track { animation-timing-function: linear; animation-iteration-count: infinite; }
         .swd-hero-wall-left { animation-name: swd-hero-wall-left; }
         .swd-hero-wall-right { animation-name: swd-hero-wall-right; }
+        @keyframes swd-hero-tile-scroll {
+          0%, 8% { transform: translateY(0); }
+          45%, 55% { transform: translateY(var(--swd-scroll-depth)); }
+          92%, 100% { transform: translateY(0); }
+        }
+        .swd-hero-tile-scroll {
+          animation-name: swd-hero-tile-scroll;
+          animation-timing-function: cubic-bezier(.65,0,.35,1);
+          animation-iteration-count: infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
           .swd-hero-wall-track { animation: none; }
+          .swd-hero-tile-scroll { animation: none; }
         }
       `}</style>
     </div>

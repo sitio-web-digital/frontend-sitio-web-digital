@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.19.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'mejora', text: 'Home: una de cada cuatro miniaturas de la pared del hero ahora scrollea sola lentamente para mostrar más de la página real, en vez de quedarse quieta en el hero.' },
+    ],
+  },
+  {
     version: '1.18.1',
     date: '2026-07-30',
     changes: [
