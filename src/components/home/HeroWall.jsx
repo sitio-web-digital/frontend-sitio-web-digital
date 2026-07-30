@@ -27,8 +27,10 @@ function primerasSecciones(template, n) {
 // lentamente para abajo y vuelven, mostrando más de la página real en vez
 // de quedarse quietas en el hero — así la pared se siente menos como una
 // grilla de fotos fijas y más como sitios de verdad, con algo de vida.
-// Necesitan bastante más contenido real (`sectionCount` alto) para que
-// haya algo que mostrar durante todo el recorrido del scroll.
+// Necesitan TODAS las secciones reales de esa plantilla (no un recorte
+// corto) — si el scroll llega más abajo de lo que hay contenido real
+// cargado, se ve fondo vacío a mitad de pantalla, como si la plantilla
+// "desapareciera" sin haber llegado a salir del cuadro.
 function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
   const scale = size / REAL_WIDTH;
   return (
@@ -64,7 +66,7 @@ function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
             template={template}
             siteData={template.demo}
             theme={{ accent: template.accent, accentSoft: template.accentSoft }}
-            sections={primerasSecciones(template, autoScroll ? 9 : 3)}
+            sections={primerasSecciones(template, autoScroll ? (template.sections || []).length : 3)}
             widgets={{ whatsappFloating: false }}
           />
         </div>

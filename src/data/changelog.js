@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.19.1',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: 'Home: en algunas plantillas, la miniatura que scrollea sola llegaba más abajo del contenido real cargado y se veía un hueco en blanco a mitad de recorrido, antes de volver arriba. Ahora carga todas las secciones reales de esa plantilla, así el scroll nunca se queda sin contenido.' },
+    ],
+  },
+  {
     version: '1.19.0',
     date: '2026-07-30',
     changes: [
