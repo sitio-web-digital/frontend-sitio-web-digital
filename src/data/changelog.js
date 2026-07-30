@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.18.1',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: 'Home: la pared de miniaturas del fondo del hero mostraba solo el header y el hero de cada plantilla, dejando un hueco en blanco abajo en las que tienen un hero más corto. Ahora se recorta un poco más abajo de cada página real, así siempre se ve contenido de punta a punta.' },
+    ],
+  },
+  {
     version: '1.18.0',
     date: '2026-07-30',
     changes: [

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import SitePreview from '../SitePreview';
 import { useApp } from '../../context/AppContext';
-import { seccionesPropias } from '../quiz/QuizSteps';
 
 // Fondo del hero principal: una "pared" infinita de miniaturas en perspectiva
 // y en movimiento lento. Son capturas de verdad de las plantillas reales del
@@ -11,6 +10,18 @@ import { seccionesPropias } from '../quiz/QuizSteps';
 // plantillas usa una marca real (son negocios de ejemplo que armamos
 // nosotros), así que se pueden repetir acá sin problema.
 const REAL_WIDTH = 1200;
+
+// El recorte real (sin escalar) que deja visible cada miniatura es siempre
+// el mismo alto, sin importar el tamaño final del tile (el ancho y el alto
+// escalan juntos con `scale`) — por eso alcanza con que el contenido real
+// llegue a esta altura para que no quede espacio en blanco abajo. Con
+// header + hero solos, algunas plantillas (heroes cortos tipo "minimal" o
+// "centro") no llegaban a esta altura y dejaban un hueco vacío; sumando la
+// sección siguiente casi siempre alcanza y sobra, igual que una captura de
+// pantalla real que corta a mitad de una sección al hacer scroll.
+function primerasSecciones(template, n) {
+  return (template.sections || []).slice(0, n).map((s, i) => ({ ...s, id: `${s.type}-${i}` }));
+}
 
 function Tile({ template, size }) {
   const scale = size / REAL_WIDTH;
@@ -39,7 +50,7 @@ function Tile({ template, size }) {
           template={template}
           siteData={template.demo}
           theme={{ accent: template.accent, accentSoft: template.accentSoft }}
-          sections={seccionesPropias(template, ['header', 'hero'])}
+          sections={primerasSecciones(template, 3)}
           widgets={{ whatsappFloating: false }}
         />
       </div>
