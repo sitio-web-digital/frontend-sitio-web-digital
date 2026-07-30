@@ -6,6 +6,8 @@ import EditorTutorial from '../components/EditorTutorial';
 import AuthGate from '../components/AuthGate';
 import SupportTicketList from '../components/support/SupportTicketList';
 import NewTicketModal from '../components/support/NewTicketModal';
+import SupportToast from '../components/support/SupportToast';
+import { apiGetSupportUnread, apiMarkSupportSeen } from '../api/client';
 import {
   MonitorIcon,
   TabletIcon,
@@ -109,6 +111,8 @@ export default function Editor() {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [fontPickerOpen, setFontPickerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [unreadSupport, setUnreadSupport] = useState({ count: 0, tickets: [] });
+  const [supportToast, setSupportToast] = useState(null);
   // Un admin editando (adminEditingSite) siempre puede seguir, sea cual sea
   // el bloqueo — el bloqueo es específicamente para frenar al dueño.
   const editingBlocked = siteLocked && !adminEditingSite;
@@ -138,6 +142,39 @@ export default function Editor() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminEditingSite]);
+
+  // Sondea cada 10s si soporte respondió algo nuevo mientras se está editando
+  // — sin esto, alguien que se queda un buen rato en el editor recién se
+  // enteraría de la respuesta si vuelve a abrir el ícono de Soporte. El
+  // cartel solo aparece cuando el conteo SUBE respecto del que ya se mostró,
+  // igual que en Dashboard (mismo mecanismo, ver Dashboard.jsx).
+  useEffect(() => {
+    if (!user) return undefined;
+    let cancelado = false;
+    const check = async () => {
+      const result = await apiGetSupportUnread();
+      if (cancelado) return;
+      setUnreadSupport((prev) => {
+        if (result.count > prev.count) setSupportToast(result);
+        return result;
+      });
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
+  }, [user]);
+
+  // Al abrir el modal de Soporte se avisa al backend que ya se vio — el
+  // punto sobre el ícono se limpia recién en el próximo sondeo (10s
+  // después), igual que en Dashboard.
+  useEffect(() => {
+    if (!supportOpen || !user) return;
+    setSupportToast(null);
+    apiMarkSupportSeen();
+  }, [supportOpen, user]);
 
   useEffect(() => {
     let seen = true;
@@ -302,9 +339,15 @@ export default function Editor() {
               onClick={() => setSupportOpen(true)}
               title="Soporte"
               aria-label="Contactar a soporte"
-              className="w-9 h-9 text-ink-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center"
+              className="relative w-9 h-9 text-ink-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center"
             >
               <SendIcon className="w-4 h-4" />
+              {unreadSupport.count > 0 && (
+                <span
+                  className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500"
+                  aria-label="Soporte te respondió"
+                />
+              )}
             </button>
           </div>
 
@@ -416,6 +459,14 @@ export default function Editor() {
       )}
 
       <EditorTutorial open={tutorialOpen} isAdmin={user?.role === 'admin'} onClose={() => setTutorialOpen(false)} />
+
+      {supportToast && !supportOpen && (
+        <SupportToast
+          data={supportToast}
+          onVer={() => setSupportOpen(true)}
+          onClose={() => setSupportToast(null)}
+        />
+      )}
 
       {supportOpen && (
         <SupportModal

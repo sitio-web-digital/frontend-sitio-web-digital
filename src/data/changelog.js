@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.20.1',
+    date: '2026-07-30',
+    changes: [
+      { type: 'mejora', text: 'Editor: si soporte responde mientras se sigue editando, aparece un aviso (y un punto sobre el ícono de Soporte) sin tener que volver a abrirlo para enterarse — mismo mecanismo que ya avisa en Dashboard > Soporte.' },
+    ],
+  },
+  {
     version: '1.20.0',
     date: '2026-07-30',
     changes: [
