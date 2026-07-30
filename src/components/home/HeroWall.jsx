@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import SitePreview from '../SitePreview';
 import { useApp } from '../../context/AppContext';
 
@@ -30,15 +30,41 @@ function primerasSecciones(template, n) {
 // Necesitan TODAS las secciones reales de esa plantilla (no un recorte
 // corto) — si el scroll llega más abajo de lo que hay contenido real
 // cargado, se ve fondo vacío a mitad de pantalla, como si la plantilla
-// "desapareciera" sin haber llegado a salir del cuadro. Además, en el
-// momento en que el ciclo vuelve a arrancar desde arriba, la miniatura
-// entera (tarjeta + sombra, no solo el contenido) se desvanece y vuelve a
-// aparecer con un fundido de casi un segundo, en vez de cortar de golpe.
+// "desapareciera" sin haber llegado a salir del cuadro.
+//
+// El ciclo (baja, pausa, vuelve arriba) tiene su propio reloj interno,
+// independiente de en qué punto de la pared horizontal está esa miniatura
+// en ese momento — así que el reinicio del ciclo podía caer con la
+// miniatura bien visible en el centro de la pantalla, y se notaba. En vez
+// de disimularlo con un fundido a ciegas, un IntersectionObserver detecta
+// el instante exacto en que la miniatura termina de salir de la pantalla
+// (se mueve todo el tiempo por la fila horizontal) y ahí — solo ahí, que
+// es invisible — se reinicia la animación desde el principio. Cuando
+// vuelve a entrar en cámara, arranca de nuevo desde arriba de la página.
 function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
   const scale = size / REAL_WIDTH;
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (!autoScroll) return undefined;
+    const el = scrollRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          el.style.animationName = 'none';
+          void el.offsetHeight; // fuerza a "olvidar" el punto del ciclo anterior
+          el.style.animationName = 'swd-hero-tile-scroll';
+        }
+      },
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [autoScroll]);
+
   return (
     <div
-      className={autoScroll ? 'swd-hero-tile-fade' : undefined}
       style={{
         width: size,
         height: size * 0.66,
@@ -48,7 +74,6 @@ function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
         background: 'white',
         boxShadow: '0 14px 30px -10px oklch(0.15 0.02 258 / 0.4)',
         border: '1px solid oklch(1 0 0 / 0.08)',
-        ...(autoScroll ? { animationDuration: `${scrollDuration}s` } : null),
       }}
     >
       <div
@@ -60,6 +85,7 @@ function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
         }}
       >
         <div
+          ref={autoScroll ? scrollRef : undefined}
           className={autoScroll ? 'swd-hero-tile-scroll' : undefined}
           style={
             autoScroll
@@ -206,21 +232,9 @@ export default function HeroWall() {
           animation-timing-function: cubic-bezier(.65,0,.35,1);
           animation-iteration-count: infinite;
         }
-        @keyframes swd-hero-tile-fade {
-          0% { opacity: 0; }
-          7% { opacity: 1; }
-          93% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-        .swd-hero-tile-fade {
-          animation-name: swd-hero-tile-fade;
-          animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite;
-        }
         @media (prefers-reduced-motion: reduce) {
           .swd-hero-wall-track { animation: none; }
           .swd-hero-tile-scroll { animation: none; }
-          .swd-hero-tile-fade { animation: none; opacity: 1; }
         }
       `}</style>
     </div>

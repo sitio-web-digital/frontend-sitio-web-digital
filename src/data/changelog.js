@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.19.3',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: 'Home: el reinicio del ciclo de las miniaturas que scrollean solas caía en cualquier momento, a veces con la miniatura bien visible en el medio de la pantalla. Ahora se reinicia justo cuando esa miniatura termina de salir de la pantalla (nunca a la vista), sacando el fundido a ciegas que se había agregado antes.' },
+    ],
+  },
+  {
     version: '1.19.2',
     date: '2026-07-30',
     changes: [
