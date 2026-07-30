@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.20.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Editor: el botón de Soporte ahora abre el mismo chat de tickets real de Dashboard > Soporte (antes solo mandaba un mensaje simulado) — se puede crear una consulta nueva y seguir la conversación sin salir del editor.' },
+    ],
+  },
+  {
     version: '1.19.3',
     date: '2026-07-30',
     changes: [

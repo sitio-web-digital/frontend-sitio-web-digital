@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
 import Logo from '../components/Logo';
-import SupportThread from '../components/support/SupportThread';
+import SupportTicketList from '../components/support/SupportTicketList';
+import NewTicketModal from '../components/support/NewTicketModal';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify } from '../data/mockData';
-import { validateImageFiles } from '../utils/imageValidation';
 import {
   apiGetSubscription,
   apiCancelSubscription,
@@ -663,8 +663,6 @@ function SubscriptionRow({ page, setPublished, saveSiteToBackend, navigate, isFr
 // modal y armar una nueva en paralelo. Al abrir una, se ve el chat completo
 // (mensaje inicial + réplicas) y se puede seguir respondiendo ahí mismo.
 function SoporteSection({ tickets, onOpenNew, currentUserId, unreadIds = [] }) {
-  const [expandedId, setExpandedId] = useState(null);
-
   return (
     <Panel
       title="Soporte"
@@ -677,181 +675,8 @@ function SoporteSection({ tickets, onOpenNew, currentUserId, unreadIds = [] }) {
         </button>
       }
     >
-      {tickets.length === 0 ? (
-        <p className="text-sm text-ink-400">
-          Todavía no escribiste a soporte. Si tenés una duda o un problema, contanos con "Nueva consulta".
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {tickets.map((t) => {
-            const isOpen = expandedId === t.id;
-            return (
-              <div key={t.id} className="border border-white/10 bg-navy-900 hover:border-white/20 transition-colors">
-                <button
-                  onClick={() => setExpandedId(isOpen ? null : t.id)}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
-                >
-                  <div className="min-w-0 flex items-center gap-2">
-                    {unreadIds.includes(t.id) && (
-                      <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" aria-label="Respuesta nueva" />
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold truncate">{t.asunto}</p>
-                        <span
-                          className={`shrink-0 text-[0.65rem] font-semibold uppercase px-1.5 py-0.5 border rounded ${
-                            t.status === 'cerrado'
-                              ? 'text-ink-400 bg-white/5 border-white/15'
-                              : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25'
-                          }`}
-                        >
-                          {t.status === 'cerrado' ? 'Cerrado' : 'Abierto'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-ink-500 mt-0.5">
-                        {new Date(t.createdAt).toLocaleDateString('es-AR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-ink-500 shrink-0">{isOpen ? 'Ocultar' : 'Ver'}</span>
-                </button>
-                {isOpen && <SupportThread ticketId={t.id} currentUserId={currentUserId} />}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <SupportTicketList tickets={tickets} currentUserId={currentUserId} unreadIds={unreadIds} />
     </Panel>
-  );
-}
-
-function NewTicketModal({ onClose, onSubmit }) {
-  const [asunto, setAsunto] = useState('');
-  const [mensaje, setMensaje] = useState('');
-  const [adjuntos, setAdjuntos] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  const onFiles = async (e) => {
-    const files = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (!files.length) return;
-    setBusy(true);
-    const validos = await validateImageFiles(files.slice(0, 3 - adjuntos.length), 'soporte');
-    const leidos = await Promise.all(
-      validos.map(
-        (file) =>
-          new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve({ name: file.name, dataUrl: reader.result });
-            reader.readAsDataURL(file);
-          })
-      )
-    );
-    setAdjuntos((prev) => [...prev, ...leidos].slice(0, 3));
-    setBusy(false);
-  };
-
-  const removeAdjunto = (i) => setAdjuntos((prev) => prev.filter((_, idx) => idx !== i));
-
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!asunto.trim() || !mensaje.trim()) return;
-    setBusy(true);
-    setError('');
-    const result = await onSubmit({ asunto: asunto.trim(), mensaje: mensaje.trim(), adjuntos });
-    setBusy(false);
-    if (!result.ok) setError(result.error || 'No se pudo enviar la consulta.');
-  };
-
-  return (
-    <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-md border border-white/10 bg-navy-850 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2">
-          <span className="text-white font-semibold text-sm">Contactar a soporte</span>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-ink-400 hover:text-white transition-colors text-lg leading-none">
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={submit} className="p-6 space-y-3">
-          <div>
-            <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
-              Asunto
-            </label>
-            <input
-              required
-              autoFocus
-              value={asunto}
-              onChange={(e) => setAsunto(e.target.value)}
-              maxLength={80}
-              placeholder="Ej: No me carga el editor"
-              className="w-full border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
-              Mensaje
-            </label>
-            <textarea
-              required
-              rows={5}
-              maxLength={800}
-              value={mensaje}
-              onChange={(e) => setMensaje(e.target.value)}
-              placeholder="Contanos qué necesitás..."
-              className="w-full border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
-              Adjuntar capturas <span className="text-ink-500 normal-case">(opcional, hasta 3)</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {adjuntos.map((a, i) => (
-                <div key={i} className="relative w-16 h-16 shrink-0">
-                  <img src={a.dataUrl} alt={a.name} className="w-full h-full object-cover border border-white/10" />
-                  <button
-                    type="button"
-                    onClick={() => removeAdjunto(i)}
-                    aria-label="Quitar"
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-navy-950 border border-white/15 text-white flex items-center justify-center text-[0.6rem] leading-none"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              {adjuntos.length < 3 && (
-                <label className="w-16 h-16 shrink-0 border-2 border-dashed border-white/15 hover:border-gold-500/60 transition-colors cursor-pointer flex items-center justify-center text-ink-400 text-xl">
-                  +
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={onFiles} disabled={busy} />
-                </label>
-              )}
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-red-400">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={!asunto.trim() || !mensaje.trim() || busy}
-            className="w-full inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold py-3 disabled:opacity-40 disabled:pointer-events-none"
-          >
-            {busy ? 'Enviando...' : 'Enviar mensaje'}
-          </button>
-        </form>
-      </div>
-    </div>
   );
 }
 

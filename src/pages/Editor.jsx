@@ -4,6 +4,8 @@ import SitePreview from '../components/SitePreview';
 import Logo from '../components/Logo';
 import EditorTutorial from '../components/EditorTutorial';
 import AuthGate from '../components/AuthGate';
+import SupportTicketList from '../components/support/SupportTicketList';
+import NewTicketModal from '../components/support/NewTicketModal';
 import {
   MonitorIcon,
   TabletIcon,
@@ -83,6 +85,8 @@ export default function Editor() {
     user,
     login,
     register,
+    supportTickets,
+    addSupportTicket,
     saveSiteToBackend,
     adminEditingSite,
     stopAdminEditSite,
@@ -100,6 +104,7 @@ export default function Editor() {
   const [widgetsOpen, setWidgetsOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [newTicketOpen, setNewTicketOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [fontPickerOpen, setFontPickerOpen] = useState(false);
@@ -413,7 +418,25 @@ export default function Editor() {
       <EditorTutorial open={tutorialOpen} isAdmin={user?.role === 'admin'} onClose={() => setTutorialOpen(false)} />
 
       {supportOpen && (
-        <SupportModal user={user} login={login} register={register} onClose={() => setSupportOpen(false)} />
+        <SupportModal
+          user={user}
+          login={login}
+          register={register}
+          tickets={supportTickets}
+          onOpenNew={() => setNewTicketOpen(true)}
+          onClose={() => setSupportOpen(false)}
+        />
+      )}
+
+      {newTicketOpen && (
+        <NewTicketModal
+          onClose={() => setNewTicketOpen(false)}
+          onSubmit={async (ticket) => {
+            const result = await addSupportTicket(ticket);
+            if (result.ok) setNewTicketOpen(false);
+            return result;
+          }}
+        />
       )}
 
       {saveTemplateOpen && (
@@ -429,28 +452,18 @@ export default function Editor() {
   );
 }
 
-// Modal para escribirle a soporte — si todavía no hay una cuenta creada, antes
-// de poder mandar el mensaje pide registrarte (reutiliza el mismo AuthGate
-// que usan el checkout y el login), y recién ahí deja enviar.
-function SupportModal({ user, login, register, onClose }) {
-  const [mensaje, setMensaje] = useState('');
-  const [sent, setSent] = useState(false);
-  const [needsAuth, setNeedsAuth] = useState(false);
-
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!mensaje.trim()) return;
-    if (!user) {
-      setNeedsAuth(true);
-      return;
-    }
-    // MOCK: acá se mandaría el mensaje a un backend real de soporte.
-    setSent(true);
-  };
+// Modal de soporte del editor — mismo sistema real de tickets que
+// Dashboard > Soporte (mismos endpoints, mismos componentes de lista/chat),
+// solo que acá vive en un modal compacto en vez de una sección de página
+// completa. Si todavía no hay una cuenta creada, antes de poder ver o
+// mandar un ticket pide registrarte (reutiliza el mismo AuthGate que usan
+// el checkout y el login), y recién ahí deja ver la lista y escribir.
+function SupportModal({ user, login, register, tickets, onOpenNew, onClose }) {
+  const [needsAuth, setNeedsAuth] = useState(!user);
 
   return (
     <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
           onClick={onClose}
@@ -465,55 +478,23 @@ function SupportModal({ user, login, register, onClose }) {
             login={login}
             register={register}
             title="Creá tu cuenta para escribirle a soporte"
-            onSuccess={() => {
-              setNeedsAuth(false);
-              setSent(true);
-            }}
+            onSuccess={() => setNeedsAuth(false)}
           />
         ) : (
-          <div className="border border-white/10 bg-navy-850 p-6 text-left">
-            {sent ? (
-              <div className="text-center py-4">
-                <span className="inline-flex w-12 h-12 bg-emerald-500/15 text-emerald-400 items-center justify-center mb-3">
-                  <CheckBadgeIcon className="w-6 h-6" />
-                </span>
-                <p className="font-display text-lg font-semibold text-white">¡Mensaje enviado!</p>
-                <p className="text-sm text-ink-400 mt-1">Te vamos a responder por email a la brevedad.</p>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="mt-5 text-sm font-semibold text-gold-500 hover:text-gold-400 transition-colors"
-                >
-                  Cerrar
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSend}>
-                <p className="font-display text-lg font-semibold text-white mb-1">Contactar a soporte</p>
-                <p className="text-xs text-ink-500 mb-4">Contanos qué necesitás — te vamos a responder por email.</p>
-                <textarea
-                  required
-                  autoFocus
-                  rows={5}
-                  maxLength={800}
-                  value={mensaje}
-                  onChange={(e) => setMensaje(e.target.value)}
-                  placeholder="Escribí tu consulta acá..."
-                  className="w-full border border-white/10 bg-navy-900 px-4 py-3 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 resize-none mb-3"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold py-3"
-                >
-                  Enviar mensaje
-                </button>
-                {!user && (
-                  <p className="text-[11px] text-ink-500 text-center mt-3">
-                    Te vamos a pedir que crees una cuenta para poder enviarlo.
-                  </p>
-                )}
-              </form>
-            )}
+          <div className="border border-white/10 bg-navy-850 shadow-2xl max-h-[80vh] flex flex-col">
+            <div className="bg-navy-950 border-b border-white/8 px-5 py-4 flex items-center justify-between gap-2 shrink-0">
+              <span className="text-white font-semibold text-sm">Soporte</span>
+              <button
+                type="button"
+                onClick={onOpenNew}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
+              >
+                Nueva consulta
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <SupportTicketList tickets={tickets} currentUserId={user?.id} />
+            </div>
           </div>
         )}
       </div>
