@@ -14,6 +14,7 @@ export const FONT_OPTIONS = [
   { id: 'cormorant', label: 'Editorial itálica', family: '"Cormorant Garamond", Georgia, serif' },
   { id: 'dm-serif', label: 'Salón elegante', family: '"DM Serif Display", Georgia, serif' },
   { id: 'newsreader', label: 'Estudio clásico', family: '"Newsreader", Georgia, serif' },
+  { id: 'parisienne', label: 'Caligráfica', family: '"Parisienne", cursive' },
 ];
 
 // Íconos seleccionables para FAQ, testimonios y los datos de "Sobre nosotros" —
@@ -911,6 +912,36 @@ export const SECCIONES_CATALOGO = [
     desc: 'Lista de locales físicos — tocar uno muestra su dirección, horario y teléfono al lado.',
   },
   {
+    id: 'cronograma',
+    label: 'Cronograma',
+    desc: 'Línea de tiempo con hora, título y descripción de cada momento — para el orden de una fiesta o evento.',
+  },
+  {
+    id: 'lugares',
+    label: 'Lugares del evento',
+    desc: 'Tarjetas con foto, dirección y hora de cada lugar (ej: ceremonia y fiesta), con link para llegar.',
+  },
+  {
+    id: 'dresscode',
+    label: 'Dress code',
+    desc: 'Qué ponerse: una lista de sí/no y una paleta de colores sugerida, sobre fondo oscuro.',
+  },
+  {
+    id: 'rsvp',
+    label: 'Confirmación de asistencia (RSVP)',
+    desc: 'Formulario en 3 pasos para que el invitado confirme si viene, con cuántos y qué menú elige.',
+  },
+  {
+    id: 'playlist',
+    label: 'Playlist / pedidos de canción',
+    desc: 'Lista de canciones ya pedidas, más un campo para que el invitado sume la suya.',
+  },
+  {
+    id: 'regalos',
+    label: 'Mesa de regalos',
+    desc: 'Tarjetas simples con un símbolo, título, descripción y un dato final (ej: alias, urna).',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',
@@ -967,6 +998,7 @@ export const SECTION_VARIANTS = {
     { id: 'minimal', label: 'Minimalista', skeleton: 'heroMinimal' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera' },
+    { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera' },
     { id: 'duo', label: 'Dos fotos', skeleton: 'heroDuo' },
     { id: 'centro', label: 'Todo centrado, sin foto', skeleton: 'heroCentro' },
   ],
@@ -975,6 +1007,7 @@ export const SECTION_VARIANTS = {
     { id: 'carousel', label: 'Carrusel', skeleton: 'carousel' },
     { id: 'masonry', label: 'Masonry', skeleton: 'masonry' },
     { id: 'bento', label: 'Destacado + grilla', skeleton: 'galeriaBento' },
+    { id: 'scroll', label: 'Fila con scroll', skeleton: 'carousel' },
   ],
   testimonios: [
     { id: 'grid', label: 'Tarjetas', skeleton: 'grid3' },
@@ -1014,6 +1047,7 @@ export const SECTION_VARIANTS = {
     { id: 'minimal', label: 'Minimalista con redes', skeleton: 'footerMinimal' },
     { id: 'newsletter', label: 'Con newsletter', skeleton: 'footerNewsletter' },
     { id: 'tienda', label: 'Con medios de pago y contacto', skeleton: 'footerMinimal' },
+    { id: 'evento', label: 'Cierre de evento con hashtag', skeleton: 'centered' },
   ],
   categorias: [{ id: 'scroll', label: 'Fila con scroll', skeleton: 'categoriasScroll' }],
   pasos: [

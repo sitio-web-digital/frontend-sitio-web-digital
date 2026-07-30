@@ -5,6 +5,25 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.13.0',
+    date: '2026-07-30',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Mis XV Valentina": invitación de evento (cumpleaños de 15, casamientos) con tipografía Cormorant Garamond/Jost/Parisienne y cuenta regresiva en vivo hasta la fecha del evento.' },
+      { type: 'nuevo', text: 'Nueva distribución del Hero "Cuenta regresiva a una fecha": nombre grande, fecha con líneas doradas y un contador de días/horas/minutos/segundos que corre solo.' },
+      { type: 'nuevo', text: 'Nueva sección "Cronograma": línea de tiempo con hora, título y descripción de cada momento de un evento.' },
+      { type: 'nuevo', text: 'Nueva sección "Lugares del evento": tarjetas con foto, dirección y hora de cada lugar, con link para llegar por Google Maps.' },
+      { type: 'nuevo', text: 'Nueva sección "Dress code": lista de sí/no sobre qué ponerse, más una paleta de colores sugerida, sobre fondo oscuro.' },
+      { type: 'nuevo', text: 'Nueva sección "Confirmación de asistencia (RSVP)": formulario en 3 pasos (nombre y acompañantes, menú, nota) con pantalla de confirmado.' },
+      { type: 'nuevo', text: 'Nueva sección "Playlist": lista de canciones ya pedidas para el evento, más un campo para que el invitado sume la suya.' },
+      { type: 'nuevo', text: 'Nueva sección "Mesa de regalos": tarjetas simples con un símbolo, título, descripción y un dato final (alias, urna, etc).' },
+      { type: 'nuevo', text: 'Sobre nosotros: se le puede agregar una firma corta al final del texto (ej: tu nombre).' },
+      { type: 'nuevo', text: 'Galería de fotos: nueva distribución en fila con scroll horizontal.' },
+      { type: 'nuevo', text: 'Pie de página: nueva distribución para eventos, con un cierre grande y un hashtag.' },
+      { type: 'nuevo', text: 'Se sumó "Caligráfica" (Parisienne) a las tipografías elegibles por texto en el editor.' },
+      { type: 'fix', text: 'Un botón de texto sin color de fondo (solo borde) podía quedar con el texto invisible si no tenía un color válido asignado.' },
+    ],
+  },
+  {
     version: '1.12.0',
     date: '2026-07-30',
     changes: [

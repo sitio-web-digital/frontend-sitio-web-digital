@@ -488,6 +488,10 @@ export default function SitePreview({
                 stats={sec.stats ?? []}
                 ofertasEtiquetaSuperior={sec.ofertasEtiquetaSuperior}
                 ofertasVelocidad={sec.ofertasVelocidad}
+                fechaEvento={sec.fechaEvento}
+                onUpdateFechaEvento={(v) => onSetSectionStyle?.(sec.id, { fechaEvento: v })}
+                fechaEventoLabel={sec.fechaEventoLabel}
+                onUpdateFechaEventoLabel={(v) => onSetSectionStyle?.(sec.id, { fechaEventoLabel: v })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -515,6 +519,8 @@ export default function SitePreview({
                 galeria={galeria}
                 imagen={sec.imagen}
                 onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                firma={sec.firma}
+                onUpdateFirma={(v) => onSetSectionStyle?.(sec.id, { firma: v })}
               />
             )}
             {sec.type === 'footer' && (
@@ -536,6 +542,10 @@ export default function SitePreview({
                 onUpdateMediosPago={(mediosPago) => onSetSectionStyle?.(sec.id, { mediosPago })}
                 contactoLineas={sec.contactoLineas ?? []}
                 onUpdateContactoLineas={(contactoLineas) => onSetSectionStyle?.(sec.id, { contactoLineas })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                hashtag={sec.hashtag}
+                onUpdateHashtag={(v) => onSetSectionStyle?.(sec.id, { hashtag: v })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -690,6 +700,113 @@ export default function SitePreview({
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 eyebrow={sec.eyebrow}
                 onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'cronograma' && (
+              <SeccionCronograma
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'lugares' && (
+              <SeccionLugares
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'dresscode' && (
+              <SeccionDressCode
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                notas={sec.notas ?? []}
+                onUpdateNotas={(notas) => onSetSectionStyle?.(sec.id, { notas })}
+                paletaColores={sec.paletaColores ?? []}
+                onUpdatePaletaColores={(paletaColores) => onSetSectionStyle?.(sec.id, { paletaColores })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'rsvp' && (
+              <SeccionRSVP
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                menuOptions={sec.menuOptions ?? []}
+                onUpdateMenuOptions={(menuOptions) => onSetSectionStyle?.(sec.id, { menuOptions })}
+                mensajeConfirmado={sec.mensajeConfirmado}
+                onUpdateMensajeConfirmado={(v) => onSetSectionStyle?.(sec.id, { mensajeConfirmado: v })}
+                mensajeDeclinado={sec.mensajeDeclinado}
+                onUpdateMensajeDeclinado={(v) => onSetSectionStyle?.(sec.id, { mensajeDeclinado: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'playlist' && (
+              <SeccionPlaylist
+                canciones={sec.canciones ?? []}
+                onUpdate={(canciones) => onSetSectionStyle?.(sec.id, { canciones })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'regalos' && (
+              <SeccionRegalos
+                items={sec.items ?? []}
+                onUpdate={(items) => onSetSectionStyle?.(sec.id, { items })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
@@ -4290,6 +4407,56 @@ function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = 
   );
 }
 
+// Cuenta regresiva en vivo hasta una fecha — usada por la variante "Cuenta
+// regresiva" del Hero. Corre con un intervalo propio (no depende de que el
+// resto de la página se vuelva a renderizar) y no rompe si todavía no hay
+// fecha cargada (muestra un placeholder fijo en vez de romper el cálculo).
+function CountdownBoxes({ fechaEvento, accent, palette = {} }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const target = fechaEvento ? new Date(fechaEvento).getTime() : null;
+  const valid = target && !Number.isNaN(target);
+  const diff = valid ? Math.max(0, target - now) : 0;
+  const pad = (n) => String(n).padStart(2, '0');
+  const items = valid
+    ? [
+        { value: Math.floor(diff / 86400000), label: 'Días' },
+        { value: pad(Math.floor((diff % 86400000) / 3600000)), label: 'Horas' },
+        { value: pad(Math.floor((diff % 3600000) / 60000)), label: 'Min' },
+        { value: pad(Math.floor((diff % 60000) / 1000)), label: 'Seg' },
+      ]
+    : [
+        { value: '—', label: 'Días' },
+        { value: '—', label: 'Horas' },
+        { value: '—', label: 'Min' },
+        { value: '—', label: 'Seg' },
+      ];
+
+  return (
+    <div className="flex justify-center gap-3 @lg:gap-5 mb-9 flex-wrap">
+      {items.map((it, i) => (
+        <div
+          key={i}
+          className="min-w-[62px] @lg:min-w-[84px] border px-3 py-3.5"
+          style={{ borderColor: palette.line, background: 'rgba(255,255,255,0.72)' }}
+        >
+          <div className="font-serif text-2xl @lg:text-3xl leading-none" style={{ color: accent }}>
+            {it.value}
+          </div>
+          <div className="text-[10px] uppercase tracking-wide mt-1.5" style={{ color: palette.inkSoft }}>
+            {it.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SeccionHero({
   variant = 'centrado',
   nombreNegocio,
@@ -4322,6 +4489,10 @@ function SeccionHero({
   stats = [],
   ofertasEtiquetaSuperior,
   ofertasVelocidad,
+  fechaEvento,
+  onUpdateFechaEvento,
+  fechaEventoLabel,
+  onUpdateFechaEventoLabel,
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
   const inkHex = palette.inkHex || '#171717';
@@ -4588,6 +4759,68 @@ function SeccionHero({
 
   // Imagen de fondo a sangre, texto encima con velo oscuro — para rubros que
   // quieren abrir con una foto grande (locales, obras, viandas).
+  // Cuenta regresiva — pensada para eventos con fecha fija (cumpleaños de
+  // 15, casamientos, aniversarios): foto de fondo con velo claro, nombre
+  // grande centrado, una fecha con líneas doradas a los costados, y una
+  // cuenta regresiva que corre sola en vivo (días/horas/min/seg) hasta
+  // `fechaEvento`. A diferencia del resto de variantes del Hero (pensadas
+  // para negocios), acá todo queda centrado y sobre fondo claro con velo,
+  // no oscuro a sangre.
+  if (variant === 'cuenta-regresiva') {
+    const heroImg = heroImagen || galeria?.[0];
+    return (
+      <section className="relative overflow-hidden px-6 @lg:px-10 py-20 @lg:py-28 text-center" style={{ background: palette.bg }}>
+        {heroImg && (
+          <div
+            className="absolute inset-0"
+            style={{ backgroundImage: `url(${heroImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom, ${palette.bg}cc, ${palette.bg}8c 45%, ${palette.bg}f0)`,
+          }}
+        />
+        <div className="relative max-w-2xl mx-auto">
+          {eyebrow('text-center justify-center')}
+          {heading('text-5xl @lg:text-7xl text-center mx-auto')}
+          <div className="flex items-center justify-center gap-4 mb-7">
+            <span className="h-px flex-1 max-w-16" style={{ background: '#c0a05c' }} />
+            <Editable
+              editable={editable}
+              value={fechaEventoLabel}
+              onChange={onUpdateFechaEventoLabel}
+              tag="span"
+              styleKey="hero.fechaEventoLabel"
+              placeholder="Sábado 14 de noviembre · 2026"
+              style={{ color: textColor || palette.inkSoft }}
+              className="font-serif tracking-[0.22em] text-sm @lg:text-base"
+              maxLength={60}
+            />
+            <span className="h-px flex-1 max-w-16" style={{ background: '#c0a05c' }} />
+          </div>
+          {editable && (
+            <div className="mb-6 flex items-center justify-center gap-2">
+              <label className="text-xs" style={{ color: palette.inkSoft }}>
+                Fecha y hora del evento:
+              </label>
+              <input
+                type="datetime-local"
+                value={fechaEvento ? fechaEvento.slice(0, 16) : ''}
+                onChange={(e) => onUpdateFechaEvento?.(e.target.value ? new Date(e.target.value).toISOString() : null)}
+                className="border px-2 py-1 text-xs"
+                style={{ borderColor: palette.line, color: palette.ink }}
+              />
+            </div>
+          )}
+          <CountdownBoxes fechaEvento={fechaEvento} accent={accent} palette={palette} />
+          {botones('justify-center')}
+        </div>
+      </section>
+    );
+  }
+
   if (variant === 'fondo') {
     const heroImg = heroImagen || galeria?.[0];
     const easeLumen = [0.16, 1, 0.3, 1];
@@ -4740,6 +4973,8 @@ function SeccionSobreNosotros({
   galeria,
   imagen,
   onUpdateImagen,
+  firma,
+  onUpdateFirma,
 }) {
   const fondo = variant === 'fondo';
   // Si esta sección tiene su propia foto puesta a mano, esa gana — si no,
@@ -4797,6 +5032,22 @@ function SeccionSobreNosotros({
     />
   );
 
+  const firmaBlock = (color) =>
+    (firma || editable) && (
+      <Editable
+        editable={editable}
+        value={firma}
+        onChange={onUpdateFirma}
+        tag="p"
+        block
+        styleKey="sobrenosotros.firma"
+        placeholder="Firma (opcional, ej: tu nombre)"
+        style={{ color }}
+        className="font-serif text-2xl mt-5"
+        maxLength={40}
+      />
+    );
+
   if (fondo) {
     const fondoStyle = heroImg
       ? {
@@ -4811,6 +5062,7 @@ function SeccionSobreNosotros({
           {eyebrow(accent)}
           {quoteBlock('#ffffff')}
           {bodyBlock('rgba(255,255,255,0.82)')}
+          {firmaBlock('#ffffff')}
         </div>
       </section>
     );
@@ -4844,6 +5096,7 @@ function SeccionSobreNosotros({
           {eyebrow(accent)}
           {quoteBlock(headingColor || palette.ink)}
           {bodyBlock(textColor || palette.inkSoft)}
+          {firmaBlock(accent)}
         </div>
       </div>
     </section>
@@ -4877,6 +5130,10 @@ function SeccionFooter({
   onUpdateMediosPago,
   contactoLineas = [],
   onUpdateContactoLineas,
+  titulo,
+  onUpdateTitulo,
+  hashtag,
+  onUpdateHashtag,
 }) {
   const footerTargetDefaults = {
     primary: whatsapp,
@@ -5099,6 +5356,72 @@ function SeccionFooter({
         <div className="max-w-6xl mx-auto pt-4 border-t" style={{ borderColor: palette.line }}>
           {credito}
         </div>
+      </footer>
+    );
+  }
+
+  // "evento" — pensada para invitaciones (XV, casamientos): un cierre grande
+  // y personal ("Nos vemos ahí") en vez de la marca del negocio, un hashtag
+  // del evento, y 3 links de acción (a diferencia de los 2 fijos del resto
+  // de variantes, acá "Confirmar asistencia" y "Cómo llegar" son atajos a
+  // otras secciones de la misma página, además del WhatsApp de siempre).
+  if (variant === 'evento') {
+    const eventoSlots = [
+      { key: 'confirmar', defaultFuncion: 'seccion', defaultLabel: 'Confirmar asistencia' },
+      { key: 'llegar', defaultFuncion: 'seccion', defaultLabel: 'Cómo llegar' },
+      { key: 'whatsapp', defaultFuncion: 'whatsapp', defaultLabel: 'Escribir por WhatsApp' },
+    ];
+    return (
+      <footer className="px-6 @lg:px-10 py-14 @lg:py-16 text-center" style={{ background: bgColor || palette.inkHex || '#171717', color: textColor || '#ffffff' }}>
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Nos vemos ahí'}
+          onChange={onUpdateTitulo}
+          tag="p"
+          block
+          styleKey="footer.evento.titulo"
+          style={{ color: textColor || '#ffffff' }}
+          className="font-serif text-4xl @lg:text-6xl mb-2.5 text-balance"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={hashtag}
+          onChange={onUpdateHashtag}
+          tag="p"
+          block
+          placeholder="#Hashtag"
+          style={{ color: accent }}
+          className="font-serif tracking-[0.22em] text-base mb-8"
+          maxLength={30}
+        />
+        <div className="flex flex-wrap justify-center gap-6 text-sm mb-8" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          {eventoSlots.map((slot) => {
+            const v = botonesData[slot.key];
+            const defaultTarget = slot.key === 'whatsapp' ? whatsapp : undefined;
+            if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+            return (
+              <ButtonObject
+                key={slot.key}
+                value={v}
+                onChange={(patch) => onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })}
+                editable={editable}
+                seccionesDisponibles={seccionesDisponibles}
+                nombreNegocio={nombreNegocio}
+                defaultFuncion={slot.defaultFuncion}
+                defaultLabel={slot.defaultLabel}
+                defaultColor="rgba(255,255,255,0.65)"
+                defaultTarget={defaultTarget}
+                outline
+                size="sm"
+                className="!px-0 !py-0 !border-0"
+              />
+            );
+          })}
+        </div>
+        <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          Sitio creado con SitioWeb Digital
+        </p>
       </footer>
     );
   }
@@ -5408,6 +5731,38 @@ function SeccionGaleria({
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddFiles} />
             </label>
           )}
+        </div>
+      ) : variant === 'scroll' ? (
+        <div className="max-w-6xl mx-auto -mx-6 @lg:mx-0 px-6 @lg:px-0">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-3">
+            {images.map((img, i) => (
+              <div key={i} className="relative shrink-0 snap-center w-[230px] @lg:w-[300px] aspect-[3/4] bg-black/5 overflow-hidden group/scrollimg">
+                <img src={img} alt="" className="w-full h-full object-cover" />
+                {editable && (
+                  <>
+                    <label className="absolute inset-0 bg-black/0 group-hover/scrollimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/scrollimg:opacity-100 cursor-pointer">
+                      <span className="text-white text-xs font-semibold">Cambiar</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleReplace(i)} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => onRemove?.(i)}
+                      aria-label="Quitar foto"
+                      className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white flex items-center justify-center"
+                    >
+                      <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <label className="shrink-0 w-[230px] @lg:w-[300px] aspect-[3/4] border-2 border-dashed flex flex-col items-center justify-center gap-1.5 text-sm font-semibold cursor-pointer" style={{ borderColor: palette.line, color: palette.inkSoft }}>
+                <PlusIcon className="w-4 h-4" /> Agregar fotos
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddFiles} />
+              </label>
+            )}
+          </div>
         </div>
       ) : variant === 'masonry' ? (
         <div className="max-w-4xl mx-auto columns-2 @lg:columns-3 gap-3 @lg:gap-4">
@@ -8131,6 +8486,1094 @@ function SeccionSucursales({
               )}
             </div>
           </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Línea de tiempo vertical (hora + punto + línea conectora + título/desc) —
+// pensada para el orden de una fiesta o evento con horarios fijos, a
+// diferencia de "Pasos" (que numera pasos de un proceso, sin hora).
+function SeccionCronograma({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
+  const add = () => onUpdate?.([...items, { id: `cron-${Date.now()}`, time: '00:00', title: 'Nuevo momento', desc: '' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-xl mx-auto text-center mb-10">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="cronograma.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Cronograma'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="cronograma.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl mb-3"
+          maxLength={70}
+        />
+        <Editable
+          editable={editable}
+          value={descripcion}
+          onChange={onUpdateDescripcion}
+          tag="p"
+          block
+          multiline
+          placeholder="Bajada (opcional)"
+          style={{ color: palette.inkSoft }}
+          className="text-sm"
+          maxLength={140}
+        />
+      </div>
+      <div className="max-w-xl mx-auto">
+        {items.map((it, i) => (
+          <div key={it.id} className="relative grid gap-5" style={{ gridTemplateColumns: 'auto auto 1fr' }}>
+            <Editable
+              editable={editable}
+              value={it.time}
+              onChange={(v) => update(it.id, { time: v })}
+              tag="span"
+              placeholder="00:00"
+              style={{ color: accent }}
+              className="font-serif text-lg text-right pt-0.5 min-w-[3.4rem]"
+              maxLength={10}
+            />
+            <div className="flex flex-col items-center self-stretch">
+              <span className="w-2.5 h-2.5 rounded-full border mt-1.5" style={{ background: i === 0 ? accent : palette.bg, borderColor: accent }} />
+              {i < items.length - 1 && <span className="flex-1 w-px min-h-10" style={{ background: palette.line }} />}
+            </div>
+            <div className="pb-8 relative">
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(it.id)}
+                  aria-label="Quitar"
+                  className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <Editable
+                editable={editable}
+                value={it.title}
+                onChange={(v) => update(it.id, { title: v })}
+                tag="p"
+                block
+                placeholder="Título del momento"
+                style={{ color: palette.ink }}
+                className="font-medium text-[15px] mb-1 pr-4"
+                maxLength={60}
+              />
+              <Editable
+                editable={editable}
+                value={it.desc}
+                onChange={(v) => update(it.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                placeholder="Descripción breve"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed max-w-[26rem]"
+                maxLength={160}
+              />
+            </div>
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2 border-2 border-dashed ml-[4.7rem]"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3 h-3" /> Agregar momento
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Tarjetas de lugares físicos con foto, tipo, nombre, dirección y hora —
+// pensada para eventos con más de un lugar (ceremonia + fiesta), a
+// diferencia de "Sucursales" (que es para varios locales de un negocio, con
+// selector y mapa único). Acá cada lugar es autosuficiente, sin selector.
+function SeccionLugares({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
+  const add = () =>
+    onUpdate?.([...items, { id: `lugar-${Date.now()}`, kind: 'Lugar', nombre: 'Nuevo lugar', direccion: '', hora: '', imagen: '' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-xl mx-auto text-center mb-9">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="lugares.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Dónde'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="lugares.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl"
+          maxLength={70}
+        />
+      </div>
+      <div className="max-w-4xl mx-auto grid @lg:grid-cols-2 gap-6">
+        {items.map((it) => (
+          <div key={it.id} className="relative border" style={{ borderColor: palette.line, background: palette.bg }}>
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(it.id)}
+                aria-label={`Quitar ${it.nombre}`}
+                className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <label
+              className={`relative block aspect-[16/10] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {it.imagen ? (
+                <img src={it.imagen} alt={it.nombre} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: palette.inkSoft }}>
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+              )}
+              {editable && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (file && (await validateImageFile(file, 'galeria'))) update(it.id, { imagen: await uploadImage(file) });
+                  }}
+                />
+              )}
+            </label>
+            <div className="p-5">
+              <Editable
+                editable={editable}
+                value={it.kind}
+                onChange={(v) => update(it.id, { kind: v })}
+                tag="span"
+                block
+                placeholder="Tipo (ej: Misa, Salón)"
+                style={{ color: accent }}
+                className="font-mono text-[11px] uppercase tracking-wide mb-1.5"
+                maxLength={20}
+              />
+              <Editable
+                editable={editable}
+                value={it.nombre}
+                onChange={(v) => update(it.id, { nombre: v })}
+                tag="p"
+                block
+                placeholder="Nombre del lugar"
+                style={{ color: palette.ink }}
+                className="font-serif text-xl mb-1.5"
+                maxLength={60}
+              />
+              <Editable
+                editable={editable}
+                value={it.direccion}
+                onChange={(v) => update(it.id, { direccion: v })}
+                tag="p"
+                block
+                placeholder="Dirección"
+                style={{ color: palette.inkSoft }}
+                className="text-sm mb-3"
+                maxLength={100}
+              />
+              <div className="flex items-center justify-between gap-3 pt-3 border-t" style={{ borderColor: palette.line }}>
+                <Editable
+                  editable={editable}
+                  value={it.hora}
+                  onChange={(v) => update(it.id, { hora: v })}
+                  tag="span"
+                  placeholder="19:00 hs"
+                  style={{ color: palette.ink }}
+                  className="font-serif text-base"
+                  maxLength={20}
+                />
+                {it.direccion && !editable && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(it.direccion)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs uppercase tracking-wide border-b"
+                    style={{ color: accent, borderColor: palette.line }}
+                  >
+                    Cómo llegar
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-4 h-4" /> Agregar lugar
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Dress code / código de vestimenta: columna de texto + checklist de
+// sí/no, más una paleta de colores sugerida (swatches) al lado — pensada
+// para eventos formales donde importa aclarar qué ponerse.
+function SeccionDressCode({
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  notas = [],
+  onUpdateNotas,
+  paletaColores = [],
+  onUpdatePaletaColores,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const updateNota = (id, patch) => onUpdateNotas?.(notas.map((n) => (n.id === id ? { ...n, ...patch } : n)));
+  const removeNota = (id) => onUpdateNotas?.(notas.filter((n) => n.id !== id));
+  const addNota = () => onUpdateNotas?.([...notas, { id: `nota-${Date.now()}`, positivo: true, texto: 'Nueva nota' }]);
+
+  const updateColor = (id, patch) => onUpdatePaletaColores?.(paletaColores.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const removeColor = (id) => onUpdatePaletaColores?.(paletaColores.filter((c) => c.id !== id));
+  const addColor = () => onUpdatePaletaColores?.([...paletaColores, { id: `color-${Date.now()}`, nombre: 'Color', hex: '#a8577a' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[1.05fr_0.95fr] gap-10 @lg:gap-14 items-center">
+        <div>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="dresscode.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: '#c0a05c' }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Dress code'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="dresscode.titulo"
+            style={{ color: headingColor || textColor || '#ffffff' }}
+            className="font-serif text-2xl @lg:text-3xl mb-4"
+            maxLength={80}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Descripción del dress code"
+            style={{ color: 'rgba(255,255,255,0.7)' }}
+            className="text-sm leading-relaxed mb-7 max-w-md"
+            maxLength={220}
+          />
+          <div className="flex flex-col gap-3">
+            {notas.map((n) => (
+              <div key={n.id} className="relative grid gap-3 items-baseline" style={{ gridTemplateColumns: 'auto 1fr' }}>
+                {editable ? (
+                  <button
+                    type="button"
+                    onClick={() => updateNota(n.id, { positivo: !n.positivo })}
+                    className="font-serif text-lg"
+                    style={{ color: n.positivo ? '#c0a05c' : accent }}
+                  >
+                    {n.positivo ? '✓' : '✕'}
+                  </button>
+                ) : (
+                  <span className="font-serif text-lg" style={{ color: n.positivo ? '#c0a05c' : accent }}>
+                    {n.positivo ? '✓' : '✕'}
+                  </span>
+                )}
+                <Editable
+                  editable={editable}
+                  value={n.texto}
+                  onChange={(v) => updateNota(n.id, { texto: v })}
+                  tag="span"
+                  block
+                  placeholder="Nota"
+                  style={{ color: 'rgba(255,255,255,0.82)' }}
+                  className="text-sm pr-5"
+                  maxLength={100}
+                />
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => removeNota(n.id)}
+                    aria-label="Quitar"
+                    className="absolute top-0 right-0 opacity-50 hover:opacity-100"
+                    style={{ color: '#fff' }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addNota}
+                className="text-xs font-semibold underline decoration-dotted self-start"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                + Agregar nota
+              </button>
+            )}
+          </div>
+        </div>
+        <div>
+          <div className="font-mono text-[11px] uppercase tracking-wide mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Paleta sugerida
+          </div>
+          <div className="grid grid-cols-3 @sm:grid-cols-5 gap-3">
+            {paletaColores.map((c) => (
+              <div key={c.id} className="relative">
+                {editable ? (
+                  <input
+                    type="color"
+                    value={c.hex}
+                    onChange={(e) => updateColor(c.id, { hex: e.target.value })}
+                    className="w-full aspect-square border cursor-pointer"
+                    style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                  />
+                ) : (
+                  <div className="aspect-square border" style={{ background: c.hex, borderColor: 'rgba(255,255,255,0.2)' }} />
+                )}
+                <Editable
+                  editable={editable}
+                  value={c.nombre}
+                  onChange={(v) => updateColor(c.id, { nombre: v })}
+                  tag="p"
+                  block
+                  placeholder="Nombre"
+                  style={{ color: 'rgba(255,255,255,0.62)' }}
+                  className="text-[11px] mt-1.5"
+                  maxLength={20}
+                />
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => removeColor(c.id)}
+                    aria-label="Quitar color"
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center"
+                  >
+                    <XIcon className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addColor}
+                className="aspect-square border-2 border-dashed flex items-center justify-center"
+                style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.6)' }}
+              >
+                <PlusIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Formulario de confirmación de asistencia (RSVP) en 3 pasos — nombre y
+// acompañantes, menú, nota + resumen — con barra de progreso y pantalla
+// final de confirmado. Todo el recorrido vive en estado local del
+// visitante (nombre/invitados/menú/nota no se guardan en ningún lado real,
+// es una demo funcional igual que el resto del sitio no tiene backend de
+// pedidos/reservas conectado). Lo único persistente/editable por el dueño
+// es el copy y la lista de menús.
+function SeccionRSVP({
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  menuOptions = [],
+  onUpdateMenuOptions,
+  mensajeConfirmado,
+  onUpdateMensajeConfirmado,
+  mensajeDeclinado,
+  onUpdateMensajeDeclinado,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState('');
+  const [guests, setGuests] = useState(1);
+  const [menu, setMenu] = useState(menuOptions[0]?.id ?? '');
+  const [note, setNote] = useState('');
+  const [done, setDone] = useState(null);
+
+  const updateMenu = (id, patch) => onUpdateMenuOptions?.(menuOptions.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const removeMenu = (id) => onUpdateMenuOptions?.(menuOptions.filter((m) => m.id !== id));
+  const addMenu = () => onUpdateMenuOptions?.([...menuOptions, { id: `menu-${Date.now()}`, nombre: 'Menú', desc: '' }]);
+
+  const menuName = menuOptions.find((m) => m.id === menu)?.nombre || 'Sin elegir';
+  const guestLabel = guests === 1 ? 'Solo yo' : `${guests} personas`;
+  const stepValid = [name.trim().length > 1, !!menu, true][step];
+  const nextLabels = ['Continuar', 'Continuar', 'Enviar confirmación'];
+
+  const reset = () => {
+    setDone(null);
+    setStep(0);
+    setName('');
+    setGuests(1);
+    setMenu(menuOptions[0]?.id ?? '');
+    setNote('');
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-xl mx-auto text-center mb-9">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="rsvp.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? '¿Vas a venir?'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="rsvp.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl mb-3"
+          maxLength={70}
+        />
+        <Editable
+          editable={editable}
+          value={descripcion}
+          onChange={onUpdateDescripcion}
+          tag="p"
+          block
+          multiline
+          placeholder="Ej: Confirmame antes del 31 de octubre así reservamos tu lugar."
+          style={{ color: palette.inkSoft }}
+          className="text-sm"
+          maxLength={160}
+        />
+      </div>
+
+      <div className="max-w-md mx-auto border p-7 @lg:p-9" style={{ borderColor: palette.line, background: palette.bg }}>
+        {done !== null ? (
+          <div className="text-center">
+            <div
+              className="w-14 h-14 mx-auto mb-5 rounded-full border flex items-center justify-center font-serif text-xl"
+              style={{ borderColor: accent, color: accent }}
+            >
+              ✓
+            </div>
+            <p className="font-serif text-xl mb-2.5" style={{ color: palette.ink }}>
+              {done === 'yes' ? '¡Te esperamos!' : 'Gracias por avisar'}
+            </p>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: palette.inkSoft }}>
+              {done === 'yes'
+                ? (mensajeConfirmado || 'Tu lugar está confirmado. Te vamos a escribir unos días antes con los últimos detalles.')
+                    .replace('{nombre}', name.trim() || 'Tu lugar')
+                    .replace('{invitados}', guestLabel.toLowerCase())
+                    .replace('{menu}', menuName.toLowerCase())
+                : mensajeDeclinado || 'Nos vas a hacer falta, pero gracias por avisar. ¡Nos vemos pronto!'}
+            </p>
+            <button type="button" onClick={reset} className="text-xs uppercase tracking-wide border-b" style={{ color: accent, borderColor: palette.line }}>
+              Cargar otra respuesta
+            </button>
+            {editable && (
+              <div className="mt-6 pt-5 border-t text-left" style={{ borderColor: palette.line }}>
+                <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+                  Mensaje si confirma (usá {'{nombre}'}, {'{invitados}'}, {'{menu}'})
+                </label>
+                <textarea
+                  value={mensajeConfirmado || ''}
+                  onChange={(e) => onUpdateMensajeConfirmado?.(e.target.value)}
+                  rows={2}
+                  className="w-full border px-2.5 py-2 text-xs mb-3"
+                  style={{ borderColor: palette.line, color: palette.ink }}
+                />
+                <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+                  Mensaje si no puede venir
+                </label>
+                <textarea
+                  value={mensajeDeclinado || ''}
+                  onChange={(e) => onUpdateMensajeDeclinado?.(e.target.value)}
+                  rows={2}
+                  className="w-full border px-2.5 py-2 text-xs"
+                  style={{ borderColor: palette.line, color: palette.ink }}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="flex gap-1 mb-7">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex-1 h-[3px]" style={{ background: i <= step ? accent : palette.line }} />
+              ))}
+            </div>
+
+            {step === 0 && (
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                  Tu nombre y apellido
+                </label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ej: Camila Ríos"
+                  className="w-full box-border border px-3.5 py-2.5 text-sm outline-none mb-6"
+                  style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+                />
+                <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                  ¿Venís sola/o o con acompañantes?
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 3, 4].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setGuests(n)}
+                      className="border px-4 py-2.5 text-sm transition-colors"
+                      style={
+                        guests === n
+                          ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)', color: accent }
+                          : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                      }
+                    >
+                      {n === 1 ? 'Solo yo' : `${n} personas`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wide mb-3" style={{ color: palette.inkSoft }}>
+                  Elegí tu menú
+                </label>
+                <div className="flex flex-col gap-2">
+                  {menuOptions.map((m) => (
+                    <div key={m.id} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => !editable && setMenu(m.id)}
+                        className="w-full text-left border px-4 py-3.5 flex items-center gap-3.5 transition-colors"
+                        style={
+                          menu === m.id
+                            ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)' }
+                            : { borderColor: palette.line, background: palette.bg }
+                        }
+                      >
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border shrink-0"
+                          style={{ borderColor: accent, background: menu === m.id ? accent : 'transparent' }}
+                        />
+                        <span className="flex-1 min-w-0">
+                          {editable ? (
+                            <>
+                              <Editable editable value={m.nombre} onChange={(v) => updateMenu(m.id, { nombre: v })} tag="span" block className="block text-sm font-medium" maxLength={40} />
+                              <Editable editable value={m.desc} onChange={(v) => updateMenu(m.id, { desc: v })} tag="span" block className="block text-xs mt-0.5" style={{ color: palette.inkSoft }} maxLength={60} />
+                            </>
+                          ) : (
+                            <>
+                              <span className="block text-sm font-medium" style={{ color: palette.ink }}>{m.nombre}</span>
+                              <span className="block text-xs mt-0.5" style={{ color: palette.inkSoft }}>{m.desc}</span>
+                            </>
+                          )}
+                        </span>
+                      </button>
+                      {editable && (
+                        <button
+                          type="button"
+                          onClick={() => removeMenu(m.id)}
+                          aria-label="Quitar menú"
+                          className="absolute top-2 right-2 opacity-40 hover:opacity-100"
+                          style={{ color: palette.ink }}
+                        >
+                          <XIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={addMenu}
+                      className="text-xs font-semibold underline decoration-dotted self-start mt-1"
+                      style={{ color: palette.inkSoft }}
+                    >
+                      + Agregar menú
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wide mb-2" style={{ color: palette.inkSoft }}>
+                  ¿Alguna alergia o algo que deba saber?
+                </label>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                  placeholder="Opcional — contame si tenés alguna restricción"
+                  className="w-full box-border border px-3.5 py-2.5 text-sm outline-none resize-y mb-5"
+                  style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+                />
+                <div className="p-4" style={{ background: palette.accentSoft || 'rgba(0,0,0,0.03)' }}>
+                  <div className="text-[11px] font-mono uppercase tracking-wide mb-2.5" style={{ color: palette.inkSoft }}>
+                    Tu confirmación
+                  </div>
+                  {[
+                    { label: 'Invitado', value: name.trim() || '—' },
+                    { label: 'Asistentes', value: guestLabel },
+                    { label: 'Menú', value: menuName },
+                  ].map((r) => (
+                    <div key={r.label} className="flex justify-between gap-3 text-sm py-1">
+                      <span style={{ color: palette.inkSoft }}>{r.label}</span>
+                      <span className="font-medium text-right" style={{ color: palette.ink }}>
+                        {r.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 items-center mt-7">
+              {step > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => Math.max(0, s - 1))}
+                  className="border px-4 py-2.5 text-xs uppercase tracking-wide"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  Atrás
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!stepValid) return;
+                  if (step < 2) setStep((s) => s + 1);
+                  else setDone('yes');
+                }}
+                className="flex-1 text-center text-xs uppercase tracking-wide py-3"
+                style={{ background: stepValid ? accent : palette.line, color: '#fff' }}
+              >
+                {nextLabels[step]}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDone('no')}
+              className="block mx-auto mt-4 text-xs underline"
+              style={{ color: palette.inkSoft }}
+            >
+              No voy a poder ir
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Pedidos de canción para el DJ: el visitante suma un tema a una lista en
+// vivo (queda solo en su sesión, no se guarda en la plantilla real — mismo
+// motivo que el RSVP no tiene backend propio) mientras el dueño edita la
+// lista semilla que todos ven al entrar.
+function SeccionPlaylist({
+  canciones = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const [input, setInput] = useState('');
+  const [extra, setExtra] = useState([]);
+
+  const update = (id, patch) => onUpdate?.(canciones.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const remove = (id) => onUpdate?.(canciones.filter((c) => c.id !== id));
+  const add = () => onUpdate?.([...canciones, { id: `song-${Date.now()}`, titulo: 'Artista — Tema', por: 'Vos' }]);
+
+  const addRequest = () => {
+    const v = input.trim();
+    if (!v) return;
+    setExtra((prev) => [...prev, { titulo: v, por: 'Vos' }]);
+    setInput('');
+  };
+
+  const allSongs = [...canciones, ...extra];
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[0.95fr_1.05fr] gap-10 @lg:gap-14 items-start">
+        <div>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="playlist.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Pedí tu canción'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="playlist.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl mb-3"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            placeholder="Bajada (opcional)"
+            style={{ color: palette.inkSoft }}
+            className="text-sm leading-relaxed mb-6 max-w-sm"
+            maxLength={140}
+          />
+          {!editable && (
+            <>
+              <div className="flex gap-2 mb-3">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addRequest()}
+                  placeholder="Artista — Tema"
+                  className="flex-1 min-w-0 border px-3.5 py-2.5 text-sm outline-none"
+                  style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+                />
+                <button
+                  type="button"
+                  onClick={addRequest}
+                  className="shrink-0 px-4 text-xs uppercase tracking-wide font-semibold"
+                  style={{ background: accent, color: '#fff' }}
+                >
+                  Sumar
+                </button>
+              </div>
+              <div className="text-xs" style={{ color: palette.inkSoft }}>
+                {allSongs.length} canciones en la lista — sumá la tuya
+              </div>
+            </>
+          )}
+        </div>
+        <div>
+          <div className="font-mono text-[11px] uppercase tracking-wide mb-4" style={{ color: palette.inkSoft }}>
+            Ya pidieron
+          </div>
+          <div className="flex flex-col">
+            {canciones.map((s, i) => (
+              <div key={s.id} className="relative grid gap-3 items-center py-3 border-b" style={{ gridTemplateColumns: 'auto 1fr auto', borderColor: palette.line }}>
+                <span className="font-serif text-base min-w-[1.6rem]" style={{ color: '#c0a05c' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <Editable
+                  editable={editable}
+                  value={s.titulo}
+                  onChange={(v) => update(s.id, { titulo: v })}
+                  tag="span"
+                  placeholder="Artista — Tema"
+                  style={{ color: palette.ink }}
+                  className="text-sm truncate pr-4"
+                  maxLength={60}
+                />
+                {editable ? (
+                  <div className="flex items-center gap-2">
+                    <Editable editable value={s.por} onChange={(v) => update(s.id, { por: v })} tag="span" placeholder="Quién lo pidió" style={{ color: palette.inkSoft }} className="text-xs" maxLength={20} />
+                    <button type="button" onClick={() => remove(s.id)} aria-label="Quitar" className="opacity-40 hover:opacity-100" style={{ color: palette.ink }}>
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs" style={{ color: palette.inkSoft }}>
+                    {s.por}
+                  </span>
+                )}
+              </div>
+            ))}
+            {extra.map((s, i) => (
+              <div key={`extra-${i}`} className="grid gap-3 items-center py-3 border-b" style={{ gridTemplateColumns: 'auto 1fr auto', borderColor: palette.line }}>
+                <span className="font-serif text-base min-w-[1.6rem]" style={{ color: '#c0a05c' }}>
+                  {String(canciones.length + i + 1).padStart(2, '0')}
+                </span>
+                <span className="text-sm truncate pr-4" style={{ color: palette.ink }}>
+                  {s.titulo}
+                </span>
+                <span className="text-xs" style={{ color: palette.inkSoft }}>
+                  {s.por}
+                </span>
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed mt-3 self-start"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3 h-3" /> Agregar canción
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Tarjetas simples con un glifo/símbolo en un recuadro, título, descripción
+// y un dato final destacado — pensada para mesas de regalo/opciones cortas
+// (a diferencia de Beneficios, que usa la librería de íconos del sitio; acá
+// el símbolo es un carácter suelto elegido a mano, más personal).
+function SeccionRegalos({
+  items = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
+  const add = () => onUpdate?.([...items, { id: `regalo-${Date.now()}`, glyph: '♡', titulo: 'Nueva opción', desc: '', detalle: '' }]);
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-xl mx-auto text-center mb-9">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="regalos.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Mesa de regalos'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="regalos.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl mb-3"
+          maxLength={70}
+        />
+        <Editable
+          editable={editable}
+          value={descripcion}
+          onChange={onUpdateDescripcion}
+          tag="p"
+          block
+          multiline
+          placeholder="Bajada (opcional)"
+          style={{ color: palette.inkSoft }}
+          className="text-sm"
+          maxLength={160}
+        />
+      </div>
+      <div className="max-w-4xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
+        {items.map((it) => (
+          <div key={it.id} className="relative border text-center px-6 py-8" style={{ borderColor: palette.line, background: palette.bg }}>
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(it.id)}
+                aria-label="Quitar"
+                className="absolute top-2 right-2 opacity-40 hover:opacity-100"
+                style={{ color: palette.ink }}
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <Editable
+              editable={editable}
+              value={it.glyph}
+              onChange={(v) => update(it.id, { glyph: v })}
+              tag="div"
+              className="w-10 h-10 mx-auto mb-4 border flex items-center justify-center font-serif text-lg"
+              style={{ borderColor: '#c0a05c', color: '#c0a05c' }}
+              maxLength={2}
+            />
+            <Editable
+              editable={editable}
+              value={it.titulo}
+              onChange={(v) => update(it.id, { titulo: v })}
+              tag="p"
+              block
+              placeholder="Título"
+              style={{ color: palette.ink }}
+              className="font-serif text-xl mb-2"
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={it.desc}
+              onChange={(v) => update(it.id, { desc: v })}
+              tag="p"
+              block
+              multiline
+              placeholder="Descripción"
+              style={{ color: palette.inkSoft }}
+              className="text-sm leading-relaxed mb-3"
+              maxLength={140}
+            />
+            <Editable
+              editable={editable}
+              value={it.detalle}
+              onChange={(v) => update(it.id, { detalle: v })}
+              tag="p"
+              block
+              placeholder="Detalle (ej: Alias)"
+              style={{ color: accent }}
+              className="text-sm font-medium"
+              maxLength={60}
+            />
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-sm font-semibold"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-4 h-4" /> Agregar
+          </button>
         )}
       </div>
     </section>
