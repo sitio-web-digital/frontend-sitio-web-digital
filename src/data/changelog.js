@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.15.1',
+    date: '2026-07-30',
+    changes: [
+      { type: 'fix', text: 'Se sacó la barra con la URL falsa que aparecía arriba de la vista previa al tocar "Ver mi página" después de editar.' },
+    ],
+  },
+  {
     version: '1.15.0',
     date: '2026-07-30',
     changes: [

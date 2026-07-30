@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BrowserChrome from '../components/BrowserChrome';
 import SitePreview from '../components/SitePreview';
 import Button from '../components/Button';
 import { useApp } from '../context/AppContext';
-import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 export default function SubdomainPreview() {
   const {
     template,
     siteData,
     logoUrl,
-    subdomain,
     published,
     theme,
     sections,
@@ -36,8 +33,6 @@ export default function SubdomainPreview() {
 
   return (
     <div className="min-h-screen bg-navy-950">
-      <BrowserChrome url={subdomain ? `${subdomain}.${ROOT_DOMAIN}` : `tunegocio.${ROOT_DOMAIN}`} />
-
       <SitePreview
         template={template}
         siteData={siteData}
