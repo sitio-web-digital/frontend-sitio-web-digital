@@ -30,11 +30,15 @@ function primerasSecciones(template, n) {
 // Necesitan TODAS las secciones reales de esa plantilla (no un recorte
 // corto) — si el scroll llega más abajo de lo que hay contenido real
 // cargado, se ve fondo vacío a mitad de pantalla, como si la plantilla
-// "desapareciera" sin haber llegado a salir del cuadro.
+// "desapareciera" sin haber llegado a salir del cuadro. Además, en el
+// momento en que el ciclo vuelve a arrancar desde arriba, la miniatura
+// entera (tarjeta + sombra, no solo el contenido) se desvanece y vuelve a
+// aparecer con un fundido de casi un segundo, en vez de cortar de golpe.
 function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
   const scale = size / REAL_WIDTH;
   return (
     <div
+      className={autoScroll ? 'swd-hero-tile-fade' : undefined}
       style={{
         width: size,
         height: size * 0.66,
@@ -44,6 +48,7 @@ function Tile({ template, size, autoScroll, scrollDepth, scrollDuration }) {
         background: 'white',
         boxShadow: '0 14px 30px -10px oklch(0.15 0.02 258 / 0.4)',
         border: '1px solid oklch(1 0 0 / 0.08)',
+        ...(autoScroll ? { animationDuration: `${scrollDuration}s` } : null),
       }}
     >
       <div
@@ -201,9 +206,21 @@ export default function HeroWall() {
           animation-timing-function: cubic-bezier(.65,0,.35,1);
           animation-iteration-count: infinite;
         }
+        @keyframes swd-hero-tile-fade {
+          0% { opacity: 0; }
+          7% { opacity: 1; }
+          93% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        .swd-hero-tile-fade {
+          animation-name: swd-hero-tile-fade;
+          animation-timing-function: ease-in-out;
+          animation-iteration-count: infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
           .swd-hero-wall-track { animation: none; }
           .swd-hero-tile-scroll { animation: none; }
+          .swd-hero-tile-fade { animation: none; opacity: 1; }
         }
       `}</style>
     </div>

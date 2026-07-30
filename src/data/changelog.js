@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.19.2',
+    date: '2026-07-30',
+    changes: [
+      { type: 'mejora', text: 'Home: la miniatura que scrollea sola ahora se desvanece de a poco (más de un segundo) al volver a arrancar el ciclo, en vez de cortar de golpe.' },
+    ],
+  },
+  {
     version: '1.19.1',
     date: '2026-07-30',
     changes: [
