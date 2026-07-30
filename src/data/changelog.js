@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.15.2',
+    date: '2026-07-30',
+    changes: [
+      { type: 'mejora', text: 'En la vista previa ("Ver mi página"), el botón para volver a editar ahora es un botón bien visible ("‹ Volver"), separado del botón dorado de "Publicar ahora" para no confundirlos.' },
+    ],
+  },
+  {
     version: '1.15.1',
     date: '2026-07-30',
     changes: [

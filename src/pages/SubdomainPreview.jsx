@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
 import Button from '../components/Button';
+import { ChevronLeftIcon } from '../components/icons';
 import { useApp } from '../context/AppContext';
 
 export default function SubdomainPreview() {
@@ -63,12 +64,9 @@ export default function SubdomainPreview() {
                 <p className="text-sm text-ink-400">Publicala para que todos la vean.</p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <button
-                  onClick={() => navigate('/editor')}
-                  className="text-sm font-semibold text-ink-300 hover:text-white transition-colors px-3 py-2"
-                >
-                  Seguir editando
-                </button>
+                <Button variant="secondary" onClick={() => navigate('/editor')}>
+                  <ChevronLeftIcon className="w-4 h-4" /> Volver
+                </Button>
                 <Button onClick={() => navigate('/checkout')}>Publicar ahora</Button>
               </div>
             </div>
