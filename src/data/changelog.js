@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.20.5',
+    date: '2026-07-31',
+    changes: [
+      { type: 'mejora', text: 'Checkout: ya no manda a Configuración a elegir el subdominio a mano si el nombre del negocio (dado en el Paso 1 del quiz) está libre — se lo asigna solo, con un link "Cambiar" al lado por si querés otro. El aviso de "elegilo primero" solo aparece si ese nombre puntual ya está en uso.' },
+    ],
+  },
+  {
     version: '1.20.4',
     date: '2026-07-30',
     changes: [

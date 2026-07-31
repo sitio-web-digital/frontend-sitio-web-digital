@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import AuthGate from '../components/AuthGate';
 import { useApp } from '../context/AppContext';
-import { PLAN } from '../data/mockData';
+import { PLAN, slugify } from '../data/mockData';
 import { trackEvent } from '../utils/analytics';
 import { apiStartSubscription, apiPublishFree } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
@@ -20,17 +20,41 @@ export default function Checkout() {
     logout,
     saveSiteToBackend,
     refreshSiteStatus,
+    updateSubdomain,
   } = useApp();
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle'); // idle | processing
   const [error, setError] = useState('');
+  const [autoAssignDone, setAutoAssignDone] = useState(false);
   const isFree = (user?.freeSubscriptions ?? 0) > 0;
 
   useEffect(() => {
     if (!template || !siteData) navigate('/plantillas', { replace: true });
   }, [template, siteData, navigate]);
 
+  // El nombre del negocio (y con él, el subdominio sugerido) ya se pidió en
+  // el Paso 1 del quiz — no tiene sentido mandar a alguien a Configuración a
+  // "elegirlo" de nuevo si ese nombre está libre. Se lo asignamos solo apenas
+  // tiene cuenta, y recién si ESE en particular ya está tomado por otro
+  // negocio cae al aviso de abajo para elegir uno a mano.
+  useEffect(() => {
+    if (!user || subdomain || !siteData?.nombreNegocio) return undefined;
+    let cancelado = false;
+    (async () => {
+      await saveSiteToBackend();
+      if (cancelado) return;
+      await updateSubdomain(slugify(siteData.nombreNegocio));
+      if (!cancelado) setAutoAssignDone(true);
+    })();
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, subdomain, siteData?.nombreNegocio]);
+
   if (!template || !siteData) return null;
+
+  const autoAssigning = !!user && !subdomain && !!siteData.nombreNegocio && !autoAssignDone;
 
   // Suscripción real de Mercado Pago (un mismo link de checkout para todas
   // las páginas, ver server/src/utils/mercadopago.js) — antes de mandarlo
@@ -97,12 +121,30 @@ export default function Checkout() {
               />
               <div className="min-w-0">
                 <p className="font-semibold truncate">{siteData.nombreNegocio}</p>
-                {subdomain && <p className="text-sm text-gold-500 truncate">{subdomain}.{ROOT_DOMAIN}</p>}
+                {subdomain && (
+                  <p className="text-sm text-gold-500 truncate">
+                    {subdomain}.{ROOT_DOMAIN}{' '}
+                    <button
+                      type="button"
+                      onClick={() => navigate('/dashboard')}
+                      className="text-ink-500 hover:text-ink-300 transition-colors underline text-xs"
+                    >
+                      Cambiar
+                    </button>
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          {!subdomain && (
+          {autoAssigning && (
+            <div className="border border-white/10 bg-navy-850 p-5 mb-6 flex items-center gap-3">
+              <Spinner />
+              <p className="text-sm text-ink-300">Preparando tu subdominio...</p>
+            </div>
+          )}
+
+          {!subdomain && !autoAssigning && (
             <div className="border border-amber-500/30 bg-amber-500/10 p-5 mb-6 flex items-start gap-3">
               <span className="text-lg leading-none mt-0.5">⚠️</span>
               <div>
