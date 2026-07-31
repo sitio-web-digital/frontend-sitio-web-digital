@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.22.0',
+    date: '2026-07-31',
+    changes: [
+      { type: 'nuevo', text: 'Admin > Suscripciones: ahora muestra el estado real de Mercado Pago (Autorizada, Pendiente, Pausada, Cancelada) y la fecha del próximo cobro por página, en vez de solo la fecha de alta. "Dar de baja" cancela la suscripción real en Mercado Pago si es una cuenta paga, o simplemente despublica si es una cuenta de prueba regalada.' },
+    ],
+  },
+  {
     version: '1.21.1',
     date: '2026-07-31',
     changes: [

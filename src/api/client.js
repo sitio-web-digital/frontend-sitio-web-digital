@@ -313,6 +313,16 @@ export async function apiAdminSubscriptions() {
   return result.ok ? result.subscriptions : [];
 }
 
+// Admin > Suscripciones > "Dar de baja" en una cuenta paga de verdad — cancela
+// la suscripción real en Mercado Pago (ver POST /admin/subscriptions/:id/cancel).
+// Para cuentas gratis (freeSubscriptions >= 1) no hace falta esto: alcanza con
+// despublicar via apiAdminSetSitePublished, no hay nada real que cancelar.
+export async function apiAdminCancelSubscription(siteId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/admin/subscriptions/${siteId}/cancel`, { method: 'POST', token });
+}
+
 export async function apiAdminSupportTickets() {
   const token = getToken();
   if (!token) return [];

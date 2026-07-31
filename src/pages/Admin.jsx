@@ -26,6 +26,7 @@ import {
   apiAdminMarkSupportSeen,
   apiGetTerms,
   apiAdminUpdateTerms,
+  apiAdminCancelSubscription,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
@@ -197,6 +198,19 @@ export default function Admin() {
     setSites((list) => list.map((s) => (s.id === siteId ? { ...s, published: !currentlyPublished } : s)));
   };
 
+  // Admin > Suscripciones > "Dar de baja": una cuenta gratis (regalada,
+  // freeSubscriptions >= 1) nunca tuvo una suscripción real de Mercado Pago
+  // detrás, así que alcanza con despublicar (mismo camino que Páginas). Una
+  // paga de verdad necesita cancelar en Mercado Pago primero (ver
+  // POST /admin/subscriptions/:id/cancel) — despublicar sola no frena el
+  // cobro recurrente del lado de ellos.
+  const cancelSubscription = async (siteId, isFree) => {
+    const result = isFree ? await setPagePublished(siteId, false) : await apiAdminCancelSubscription(siteId);
+    if (!result.ok) return result;
+    setSubscriptions((list) => list.filter((s) => s.id !== siteId));
+    return { ok: true };
+  };
+
   const createUser = async (payload) => {
     const result = await apiAdminCreateUser(payload);
     if (!result.ok) return result;
@@ -296,7 +310,9 @@ export default function Admin() {
               onDeleteRubro={deleteRubro}
             />
           )}
-          {section === 'suscripciones' && <SuscripcionesSection subscriptions={subscriptions} />}
+          {section === 'suscripciones' && (
+            <SuscripcionesSection subscriptions={subscriptions} onCancel={cancelSubscription} />
+          )}
           {section === 'usuarios' && (
             <UsuariosSection
               users={users}
@@ -1167,7 +1183,19 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish }) {
   );
 }
 
-function SuscripcionesSection({ subscriptions }) {
+// Estado real de Mercado Pago (sites.mp_subscription_status) — "pending" es
+// la aprobación todavía sin confirmar del lado de ellos, "pending_redirect"
+// es nuestro propio estado interno para "recién mandado a pagar, esperando
+// el webhook o el sondeo" (ver subscription.js), nunca lo pone MP.
+const MP_STATUS_INFO = {
+  authorized: { label: 'Autorizada', className: 'text-emerald-400' },
+  pending: { label: 'Pendiente', className: 'text-amber-400' },
+  pending_redirect: { label: 'Esperando pago', className: 'text-amber-400' },
+  paused: { label: 'Pausada', className: 'text-amber-400' },
+  cancelled: { label: 'Cancelada', className: 'text-red-400' },
+};
+
+function SuscripcionesSection({ subscriptions, onCancel }) {
   const total = subscriptions.filter((s) => (s.freeSubscriptions ?? 0) <= 0).length * PLAN.precio;
 
   return (
@@ -1189,35 +1217,94 @@ function SuscripcionesSection({ subscriptions }) {
               <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
                 <th className="pb-2 pr-4 font-semibold">Página</th>
                 <th className="pb-2 pr-4 font-semibold">Cuenta</th>
-                <th className="pb-2 pr-4 font-semibold">Desde</th>
-                <th className="pb-2 font-semibold text-right">Precio</th>
+                <th className="pb-2 pr-4 font-semibold">Estado</th>
+                <th className="pb-2 pr-4 font-semibold">Próximo cobro</th>
+                <th className="pb-2 pr-4 font-semibold text-right">Precio</th>
+                <th className="pb-2 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {subscriptions.map((s) => {
-                const isFree = (s.freeSubscriptions ?? 0) > 0;
-                return (
-                  <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                    <td className="py-2.5 pr-4 font-semibold">{s.nombre || '—'}</td>
-                    <td className="py-2.5 pr-4 text-ink-300">{s.email}</td>
-                    <td className="py-2.5 pr-4 text-ink-500">
-                      {new Date(s.updatedAt).toLocaleDateString('es-AR')}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      {isFree ? (
-                        <span className="text-emerald-400 font-semibold">Gratis (cuenta de prueba)</span>
-                      ) : (
-                        <span className="text-ink-200">${PLAN.precio.toLocaleString('es-AR')}/mes</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {subscriptions.map((s) => (
+                <SuscripcionRow key={s.id} s={s} onCancel={onCancel} />
+              ))}
             </tbody>
           </table>
         </div>
       )}
     </Panel>
+  );
+}
+
+function SuscripcionRow({ s, onCancel }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const isFree = (s.freeSubscriptions ?? 0) > 0;
+  const mpInfo = MP_STATUS_INFO[s.mpStatus];
+
+  const confirm = async () => {
+    setBusy(true);
+    setError('');
+    const result = await onCancel(s.id, isFree);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error || 'No se pudo dar de baja.');
+      return;
+    }
+    setConfirming(false);
+  };
+
+  return (
+    <tr className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+      <td className="py-2.5 pr-4 font-semibold">{s.nombre || '—'}</td>
+      <td className="py-2.5 pr-4 text-ink-300">{s.email}</td>
+      <td className="py-2.5 pr-4">
+        {isFree ? (
+          <span className="text-emerald-400 font-semibold text-xs">Gratis</span>
+        ) : mpInfo ? (
+          <span className={`font-semibold text-xs ${mpInfo.className}`}>{mpInfo.label}</span>
+        ) : (
+          <span className="text-ink-500 text-xs">—</span>
+        )}
+      </td>
+      <td className="py-2.5 pr-4 text-ink-500 text-xs">
+        {s.nextPaymentDate ? new Date(s.nextPaymentDate).toLocaleDateString('es-AR') : '—'}
+      </td>
+      <td className="py-2.5 pr-4 text-right">
+        {isFree ? (
+          <span className="text-emerald-400 font-semibold">Gratis (cuenta de prueba)</span>
+        ) : (
+          <span className="text-ink-200">${PLAN.precio.toLocaleString('es-AR')}/mes</span>
+        )}
+      </td>
+      <td className="py-2.5 text-right">
+        {confirming ? (
+          <div className="flex items-center justify-end gap-2">
+            {error && <span className="text-xs text-red-400">{error}</span>}
+            <button
+              disabled={busy}
+              onClick={confirm}
+              className="px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-semibold hover:bg-red-500/25 transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {busy ? 'Dando de baja...' : 'Confirmar'}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              className="px-2.5 py-1.5 border border-white/15 text-xs font-semibold hover:bg-white/5 transition-colors"
+            >
+              Volver
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirming(true)}
+            className="text-xs font-semibold text-ink-400 hover:text-red-300 transition-colors whitespace-nowrap"
+          >
+            Dar de baja
+          </button>
+        )}
+      </td>
+    </tr>
   );
 }
 
