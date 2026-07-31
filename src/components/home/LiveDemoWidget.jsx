@@ -57,7 +57,7 @@ export default function LiveDemoWidget() {
           ASÍ DE SIMPLE
         </div>
         <h2 style={{ fontFamily: 'Sora, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', margin: '0 0 0.9rem' }}>
-          Completá los datos y mirá, en vivo, cómo queda tu página
+          Completá los datos y mirá tu página en vivo
         </h2>
         <p style={{ fontSize: '0.98rem', color: 'oklch(0.78 0.02 258)', lineHeight: 1.6, margin: 0 }}>Empezá por el nombre.</p>
       </div>

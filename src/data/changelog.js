@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.21.1',
+    date: '2026-07-31',
+    changes: [
+      { type: 'mejora', text: 'Home: se simplificaron los títulos de "Negocios que ya están online" y "Así de simple" — menos texto, misma idea.' },
+    ],
+  },
+  {
     version: '1.21.0',
     date: '2026-07-31',
     changes: [

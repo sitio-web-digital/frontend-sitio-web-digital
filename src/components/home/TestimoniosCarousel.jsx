@@ -35,10 +35,10 @@ export default function TestimoniosCarousel() {
     <section id="opiniones" style={{ padding: 'clamp(3rem, 6vw, 4.5rem) 0', borderTop: '1px solid oklch(0.97 0.008 95 / 0.08)' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto 2rem', padding: '0 clamp(1.25rem, 3vw, 2rem)' }}>
         <div style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.18em', color: 'oklch(0.8 0.15 86)', marginBottom: '0.75rem' }}>
-          NEGOCIOS QUE YA ESTÁN ONLINE
+          NEGOCIOS REALES
         </div>
         <h2 style={{ fontFamily: 'Sora, sans-serif', fontWeight: 800, fontSize: 'clamp(1.7rem, 3vw, 2.4rem)', margin: 0, maxWidth: '32rem' }}>
-          Comercios reales que hoy tienen su página con nosotros
+          Ya están online con nosotros
         </h2>
       </div>
       <div style={{ padding: '0 clamp(1.25rem, 3vw, 2rem)' }}>
