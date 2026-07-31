@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.24.0',
+    date: '2026-07-31',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Barbería Don Vito": hero con foto y estadísticas, wizard de reserva de turno (barbero + servicio + día + horario), lista de precios, equipo, reseñas, el local y footer — pensada para barberías y peluquerías con turno.' },
+    ],
+  },
+  {
+    version: '1.23.0',
+    date: '2026-07-31',
+    changes: [
+      { type: 'nuevo', text: 'Nueva plantilla "Manos de Barro": hero con fotos y estadísticas, proceso de trabajo paso a paso, presentación de artesanas, catálogo de piezas por material, agenda de ferias, citas rotativas y visita al taller — pensada para talleres de cerámica y oficios artesanales.' },
+    ],
+  },
+  {
     version: '1.22.0',
     date: '2026-07-31',
     changes: [

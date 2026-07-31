@@ -452,6 +452,7 @@ export default function SitePreview({
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
                 bgColor={sec.bgColor}
                 textColor={sec.textColor}
+                sticky={sec.sticky}
               />
             )}
             {sec.type === 'hero' && (
@@ -499,6 +500,35 @@ export default function SitePreview({
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+              />
+            )}
+            {sec.type === 'hero-barberia' && (
+              <SeccionHeroBarberia
+                rubroLabel={sec.rubroLabel}
+                onUpdateRubroLabel={(v) => onSetSectionStyle?.(sec.id, { rubroLabel: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                heroImagen={sec.heroImagen}
+                onUpdateHeroImagen={(v) => onSetSectionStyle?.(sec.id, { heroImagen: v })}
+                caption={sec.caption}
+                onUpdateCaption={(v) => onSetSectionStyle?.(sec.id, { caption: v })}
+                stats={sec.stats ?? []}
+                botones={sec.botones ?? {}}
+                onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
+                whatsapp={whatsapp}
+                telefono={telefono}
+                nombreNegocio={nombreNegocio}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
               />
             )}
             {sec.type === 'sobre-nosotros' && (
@@ -550,6 +580,22 @@ export default function SitePreview({
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 hashtag={sec.hashtag}
                 onUpdateHashtag={(v) => onSetSectionStyle?.(sec.id, { hashtag: v })}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+              />
+            )}
+            {sec.type === 'footer-barberia' && (
+              <SeccionFooterBarberia
+                nombreNegocio={nombreNegocio}
+                whatsapp={whatsapp}
+                instagram={instagram}
+                editable={editable}
+                bgColor={sec.bgColor}
+                textColor={sec.textColor}
+                palette={palette}
+                botones={sec.botones ?? {}}
+                onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -1154,6 +1200,204 @@ export default function SitePreview({
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
                 textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'proceso-taller' && (
+              <SeccionProcesoTaller
+                pasos={sec.pasos ?? []}
+                onAddPaso={(p) => onSetSectionStyle?.(sec.id, { pasos: [...(sec.pasos ?? []), p] })}
+                onRemovePaso={(id) => onSetSectionStyle?.(sec.id, { pasos: (sec.pasos ?? []).filter((p) => p.id !== id) })}
+                onUpdatePaso={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, { pasos: (sec.pasos ?? []).map((p) => (p.id === id ? { ...p, ...patch } : p)) })
+                }
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'artesanas' && (
+              <SeccionArtesanas
+                artesanas={sec.artesanas ?? []}
+                onAddArtesana={(a) => onSetSectionStyle?.(sec.id, { artesanas: [...(sec.artesanas ?? []), a] })}
+                onRemoveArtesana={(id) =>
+                  onSetSectionStyle?.(sec.id, { artesanas: (sec.artesanas ?? []).filter((a) => a.id !== id) })
+                }
+                onUpdateArtesana={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, {
+                    artesanas: (sec.artesanas ?? []).map((a) => (a.id === id ? { ...a, ...patch } : a)),
+                  })
+                }
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'ferias' && (
+              <SeccionFerias
+                ferias={sec.ferias ?? []}
+                onAddFeria={(f) => onSetSectionStyle?.(sec.id, { ferias: [...(sec.ferias ?? []), f] })}
+                onRemoveFeria={(id) => onSetSectionStyle?.(sec.id, { ferias: (sec.ferias ?? []).filter((f) => f.id !== id) })}
+                onUpdateFeria={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, { ferias: (sec.ferias ?? []).map((f) => (f.id === id ? { ...f, ...patch } : f)) })
+                }
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                subtitulo={sec.subtitulo}
+                onUpdateSubtitulo={(v) => onSetSectionStyle?.(sec.id, { subtitulo: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'turnos' && (
+              <SeccionTurnos
+                barberos={sec.barberos ?? []}
+                onAddBarbero={(b) => onSetSectionStyle?.(sec.id, { barberos: [...(sec.barberos ?? []), b] })}
+                onRemoveBarbero={(id) =>
+                  onSetSectionStyle?.(sec.id, { barberos: (sec.barberos ?? []).filter((b) => b.id !== id) })
+                }
+                onUpdateBarbero={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, {
+                    barberos: (sec.barberos ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+                  })
+                }
+                servicios={sec.servicios ?? []}
+                onAddServicio={(sv) => onSetSectionStyle?.(sec.id, { servicios: [...(sec.servicios ?? []), sv] })}
+                onRemoveServicio={(id) =>
+                  onSetSectionStyle?.(sec.id, { servicios: (sec.servicios ?? []).filter((sv) => sv.id !== id) })
+                }
+                onUpdateServicio={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, {
+                    servicios: (sec.servicios ?? []).map((sv) => (sv.id === id ? { ...sv, ...patch } : sv)),
+                  })
+                }
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'precios-barberia' && (
+              <SeccionPreciosBarberia
+                servicios={sec.servicios ?? []}
+                onAddServicio={(sv) => onSetSectionStyle?.(sec.id, { servicios: [...(sec.servicios ?? []), sv] })}
+                onRemoveServicio={(id) =>
+                  onSetSectionStyle?.(sec.id, { servicios: (sec.servicios ?? []).filter((sv) => sv.id !== id) })
+                }
+                onUpdateServicio={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, {
+                    servicios: (sec.servicios ?? []).map((sv) => (sv.id === id ? { ...sv, ...patch } : sv)),
+                  })
+                }
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                nota={sec.nota}
+                onUpdateNota={(v) => onSetSectionStyle?.(sec.id, { nota: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'barberos' && (
+              <SeccionBarberos
+                barberos={sec.barberos ?? []}
+                onAddBarbero={(b) => onSetSectionStyle?.(sec.id, { barberos: [...(sec.barberos ?? []), b] })}
+                onRemoveBarbero={(id) =>
+                  onSetSectionStyle?.(sec.id, { barberos: (sec.barberos ?? []).filter((b) => b.id !== id) })
+                }
+                onUpdateBarbero={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, {
+                    barberos: (sec.barberos ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+                  })
+                }
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'reviews-barberia' && (
+              <SeccionReviewsBarberia
+                reviews={sec.reviews ?? []}
+                onAddReview={(r) => onSetSectionStyle?.(sec.id, { reviews: [...(sec.reviews ?? []), r] })}
+                onRemoveReview={(id) => onSetSectionStyle?.(sec.id, { reviews: (sec.reviews ?? []).filter((r) => r.id !== id) })}
+                onUpdateReview={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, { reviews: (sec.reviews ?? []).map((r) => (r.id === id ? { ...r, ...patch } : r)) })
+                }
+                editable={editable}
+                bgColor={sec.bgColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'citas-rotativas' && (
+              <SeccionCitasRotativas
+                citas={sec.citas ?? []}
+                onAddCita={(c) => onSetSectionStyle?.(sec.id, { citas: [...(sec.citas ?? []), c] })}
+                onRemoveCita={(id) => onSetSectionStyle?.(sec.id, { citas: (sec.citas ?? []).filter((c) => c.id !== id) })}
+                onUpdateCita={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, { citas: (sec.citas ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)) })
+                }
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'visita-taller' && (
+              <SeccionVisitaTaller
+                filas={sec.filas ?? []}
+                onAddFila={(f) => onSetSectionStyle?.(sec.id, { filas: [...(sec.filas ?? []), f] })}
+                onRemoveFila={(id) => onSetSectionStyle?.(sec.id, { filas: (sec.filas ?? []).filter((f) => f.id !== id) })}
+                onUpdateFila={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, { filas: (sec.filas ?? []).map((f) => (f.id === id ? { ...f, ...patch } : f)) })
+                }
+                imagen={sec.imagen}
+                onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                mapaSimulado={sec.mapaSimulado}
+                imagenPrimero={sec.imagenPrimero}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
                 accent={accent}
                 palette={palette}
               />
@@ -4340,6 +4584,7 @@ function SeccionHeader({
   textColor,
   accent,
   palette,
+  sticky = false,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const list = rutas || [];
@@ -4506,7 +4751,7 @@ function SeccionHeader({
   // Variante "clasico" — logo a la izquierda, menú a la derecha.
   return (
     <header
-      className="relative flex items-center justify-between gap-4 px-6 @lg:px-10 py-4 border-b"
+      className={`${sticky ? 'sticky top-0 z-40 backdrop-blur-md' : 'relative'} flex items-center justify-between gap-4 px-6 @lg:px-10 py-4 border-b`}
       style={{ background: bgColor || palette?.bg, color: textColor || palette?.ink, borderColor: palette?.line }}
     >
       {logoBlock}
@@ -5005,6 +5250,56 @@ function SeccionHero({
     );
   }
 
+  // Una foto a cada lado, texto centrado con estadísticas abajo — para
+  // talleres colectivos o negocios con más de un oficio en un mismo rubro,
+  // donde conviene mostrar dos fotos bien distintas flanqueando el mensaje en
+  // vez de una sola imagen protagonista (a diferencia de "duo", que agrupa
+  // las dos fotos juntas de un mismo lado). Las fotos se editan desde la
+  // sección Galería, igual que en "duo" — acá solo se muestran.
+  if (variant === 'flanqueada') {
+    const img1 = galeria?.[0];
+    const img2 = galeria?.[1];
+    const fotoSlot = (img) => (
+      <div className="relative aspect-[3/4] bg-black/5 overflow-hidden">
+        {img ? (
+          <img src={img} alt="" className="w-full h-full object-cover" style={{ filter: 'grayscale(0.1) contrast(1.03)' }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xs text-center px-2" style={{ color: palette.inkSoft }}>
+            Agregá fotos en tu galería
+          </div>
+        )}
+      </div>
+    );
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1fr_1.15fr_1fr] gap-6 @lg:gap-8 items-end">
+          {fotoSlot(img1)}
+          <div>
+            {eyebrow()}
+            {heading('text-4xl @lg:text-6xl leading-[0.98]')}
+            {paragraph()}
+            {botones()}
+            {stats.length > 0 && (
+              <div className="flex gap-7 border-t pt-4 mt-7" style={{ borderColor: palette.line }}>
+                {stats.map((s, i) => (
+                  <div key={i}>
+                    <div className="font-serif text-2xl leading-none" style={{ color: headingColor || palette.ink }}>
+                      {s.value}
+                    </div>
+                    <div className="font-mono text-[0.65rem] uppercase tracking-wide mt-1" style={{ color: palette.inkSoft }}>
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {fotoSlot(img2)}
+        </div>
+      </section>
+    );
+  }
+
   // Vidriera rotativa — texto a la izquierda, panel de ofertas girando solo a
   // la derecha (ver HeroOfertasPanel). Pensada para negocios con varios
   // productos/promos que quieren mostrar de a uno sin ocupar más lugar.
@@ -5179,6 +5474,20 @@ function SeccionHero({
             {heading('text-3xl @lg:text-5xl')}
             {paragraph()}
             {botones()}
+            {stats.length > 0 && (
+              <div className="flex gap-8 border-t pt-5 mt-7" style={{ borderColor: palette.line }}>
+                {stats.map((s, i) => (
+                  <div key={i}>
+                    <div className="font-serif font-bold text-lg leading-tight" style={{ color: headingColor || palette.ink }}>
+                      {s.value}
+                    </div>
+                    <div className="text-xs" style={{ color: palette.inkSoft }}>
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -5416,6 +5725,162 @@ function SeccionHero({
           {botones()}
         </div>
         {imagePanel(heroImg)}
+      </div>
+    </section>
+  );
+}
+
+// Hero bespoke: texto 1.15fr a la izquierda (eyebrow + título grande en
+// mayúsculas + descripción + botones + fila de stats) y una sola foto fija
+// 0.85fr a la derecha con una franja "Hoy · turnos libres" superpuesta abajo
+// — a diferencia de SeccionHero (ninguna de sus variantes tiene esa franja
+// superpuesta ni el título en mayúsculas de punta a punta), pensado para el
+// estilo "barbería clásica" bien tipográfico.
+function SeccionHeroBarberia({
+  rubroLabel,
+  onUpdateRubroLabel,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  heroImagen,
+  onUpdateHeroImagen,
+  caption,
+  onUpdateCaption,
+  stats = [],
+  botones: botonesData = {},
+  onUpdateBotones,
+  whatsapp,
+  telefono,
+  nombreNegocio,
+  seccionesDisponibles = [],
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateHeroImagen?.(await uploadImage(file));
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1.15fr_0.85fr] gap-10 @lg:gap-16 items-center">
+        <div>
+          <Editable
+            editable={editable}
+            value={rubroLabel}
+            onChange={onUpdateRubroLabel}
+            tag="span"
+            block
+            styleKey="hero-barberia.rubroLabel"
+            placeholder="Categoría · desde cuándo"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.2em] mb-4"
+            maxLength={60}
+          />
+          <Editable
+            editable={editable}
+            value={titulo}
+            onChange={onUpdateTitulo}
+            tag="h1"
+            block
+            multiline
+            styleKey="hero-barberia.titulo"
+            placeholder="Título grande"
+            style={{ color: headingColor || palette.ink, lineHeight: 0.9 }}
+            className="font-serif uppercase text-5xl @lg:text-7xl tracking-tight mb-5"
+            maxLength={80}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            styleKey="hero-barberia.descripcion"
+            placeholder="Descripción breve"
+            style={{ color: textColor || palette.inkSoft }}
+            className="text-base leading-relaxed max-w-lg mb-7"
+            maxLength={220}
+          />
+          <div className="flex flex-wrap gap-3 mb-8">
+            <ButtonObject
+              value={botonesData.primary}
+              onChange={(patch) => onUpdateBotones?.({ ...botonesData, primary: { ...(botonesData.primary || {}), ...patch } })}
+              editable={editable}
+              seccionesDisponibles={seccionesDisponibles}
+              nombreNegocio={nombreNegocio}
+              defaultFuncion="whatsapp"
+              defaultLabel="Reservar turno"
+              defaultColor={accent}
+              defaultTarget={whatsapp || telefono}
+            />
+            <ButtonObject
+              value={botonesData.secondary}
+              onChange={(patch) => onUpdateBotones?.({ ...botonesData, secondary: { ...(botonesData.secondary || {}), ...patch } })}
+              editable={editable}
+              seccionesDisponibles={seccionesDisponibles}
+              nombreNegocio={nombreNegocio}
+              defaultFuncion="seccion"
+              defaultLabel="Ver precios"
+              defaultColor={accent}
+              outline
+            />
+          </div>
+          {(stats.length > 0 || editable) && (
+            <div className="flex gap-8 border-t pt-5" style={{ borderColor: palette.line }}>
+              {stats.map((s, i) => (
+                <div key={i}>
+                  <div className="font-serif text-2xl leading-none" style={{ color: accent }}>
+                    {s.value}
+                  </div>
+                  <div className="font-mono text-[0.65rem] uppercase tracking-wide mt-1.5" style={{ color: palette.inkSoft }}>
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <label
+            className={`relative block w-full aspect-[4/5] bg-black/10 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+            title={editable ? 'Cambiar foto' : undefined}
+          >
+            {heroImagen ? (
+              <img src={heroImagen} alt={nombreNegocio} className="w-full h-full object-cover" style={{ filter: 'grayscale(0.25) contrast(1.08)' }} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageIcon className="w-8 h-8" style={{ color: palette.inkSoft }} />
+              </div>
+            )}
+            {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />}
+          </label>
+          <div
+            className="absolute bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-3"
+            style={{ background: `${palette.bg}e6` }}
+          >
+            <span className="font-mono text-xs uppercase tracking-wide" style={{ color: palette.inkSoft }}>
+              Hoy
+            </span>
+            <Editable
+              editable={editable}
+              value={caption}
+              onChange={onUpdateCaption}
+              tag="span"
+              placeholder="X turnos libres"
+              style={{ color: accent }}
+              className="font-mono text-sm"
+              maxLength={40}
+            />
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -5904,6 +6369,28 @@ function SeccionFooter({
         <p className="font-mono text-xs" style={{ color: textColor || palette.inkSoft }}>
           {nombreNegocio} — Sitio creado con SitioWeb Digital
         </p>
+      </footer>
+    );
+  }
+
+  // El nombre del negocio ocupa casi todo el ancho, gigante — pensado para
+  // marcas con un nombre corto que quieren un cierre editorial/con carácter
+  // en vez de un footer chico y discreto como el resto de las variantes.
+  if (variant === 'gigante') {
+    return (
+      <footer className="border-t overflow-hidden" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+        <div className="px-6 @lg:px-10 py-8 @lg:py-12">
+          <p
+            className="font-serif leading-[0.9] tracking-tight mb-7"
+            style={{ color: palette.line, fontSize: 'clamp(2.5rem,10vw,7rem)' }}
+          >
+            {nombreNegocio}
+          </p>
+          <div className="flex flex-wrap justify-between items-center gap-4 border-t pt-5" style={{ borderColor: palette.line }}>
+            {links}
+            {credito}
+          </div>
+        </div>
       </footer>
     );
   }
@@ -6892,6 +7379,264 @@ function SeccionProductos({
                 placeholder="Precio"
                 className="w-full border px-3 py-2 text-sm outline-none"
                 style={{ borderColor: palette.line }}
+              />
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold py-2 px-4 text-white shrink-0"
+                style={{ background: btnColor }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" /> Agregar
+              </button>
+            </form>
+          )}
+        </div>
+      ) : variant === 'destacada' ? (
+        <div className="max-w-5xl mx-auto">
+          {categorias.length > 0 && (
+            <div className="flex gap-2 flex-wrap mb-8">
+              {['Todos', ...categorias].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategoriaFiltro(c)}
+                  className="font-mono text-xs uppercase tracking-wide px-3 py-1.5 border transition-colors"
+                  style={
+                    categoriaFiltro === c
+                      ? { borderColor: accent, background: accent, color: palette.bg }
+                      : { borderColor: palette.line, color: palette.inkSoft }
+                  }
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+          {(() => {
+            const featured = productosFiltrados[0];
+            const rest = productosFiltrados.slice(1, 5);
+            if (!featured) return null;
+            const gridCols =
+              rest.length >= 4
+                ? '1.5fr 1fr 1fr'
+                : rest.length === 3
+                  ? 'repeat(4,1fr)'
+                  : rest.length === 2
+                    ? '1.3fr 1fr 1fr'
+                    : rest.length === 1
+                      ? '1.2fr 1fr'
+                      : '1fr';
+            return (
+              <div className="grid gap-5" style={{ gridTemplateColumns: gridCols }}>
+                <div className="flex flex-col" style={{ gridRow: rest.length >= 4 ? 'span 2' : 'auto' }}>
+                  <label
+                    className={`relative block w-full flex-1 min-h-[300px] max-h-[520px] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+                    title={editable ? 'Cambiar foto' : undefined}
+                  >
+                    {featured.imagenes?.[0] ? (
+                      <img
+                        src={featured.imagenes[0]}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        style={{ filter: 'grayscale(0.1) contrast(1.03)' }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
+                      </div>
+                    )}
+                    {editable && (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (file && (await validateImageFile(file, 'productos'))) {
+                            onAddProductoImagen?.(featured.id, await uploadImage(file));
+                          }
+                        }}
+                      />
+                    )}
+                  </label>
+                  <div className="pt-4 relative">
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveProducto?.(featured.id)}
+                        aria-label={`Quitar ${featured.nombre}`}
+                        className="absolute top-3 right-0 opacity-50 hover:opacity-100 transition-opacity"
+                        style={{ color: palette.ink }}
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wide" style={{ color: accent }}>
+                        Pieza destacada ·
+                      </span>
+                      <Editable
+                        editable={editable}
+                        value={featured.categoria}
+                        onChange={(v) => onUpdateProducto?.(featured.id, { categoria: v })}
+                        tag="span"
+                        placeholder="Material"
+                        style={{ color: accent }}
+                        className="font-mono text-[10px] uppercase"
+                        maxLength={30}
+                      />
+                    </div>
+                    <Editable
+                      editable={editable}
+                      value={featured.nombre}
+                      onChange={(v) => onUpdateProducto?.(featured.id, { nombre: v })}
+                      tag="p"
+                      block
+                      styleKey={`producto.${featured.id}.nombre`}
+                      placeholder="Nombre de la pieza"
+                      style={{ color: palette.ink }}
+                      className="font-serif text-xl mb-1"
+                      maxLength={60}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={featured.desc}
+                      onChange={(v) => onUpdateProducto?.(featured.id, { desc: v })}
+                      tag="p"
+                      block
+                      multiline
+                      styleKey={`producto.${featured.id}.desc`}
+                      placeholder="Descripción de la pieza"
+                      style={{ color: palette.inkSoft }}
+                      className="text-sm leading-relaxed mb-2 max-w-[34ch]"
+                      maxLength={160}
+                    />
+                    <div className="flex items-baseline gap-2.5">
+                      <Editable
+                        editable={editable}
+                        value={featured.precio}
+                        onChange={(v) => onUpdateProducto?.(featured.id, { precio: v })}
+                        tag="span"
+                        placeholder="Precio"
+                        style={{ color: palette.ink }}
+                        className="font-mono font-bold text-base"
+                        maxLength={20}
+                      />
+                      <Editable
+                        editable={editable}
+                        value={featured.etiqueta}
+                        onChange={(v) => onUpdateProducto?.(featured.id, { etiqueta: v })}
+                        tag="span"
+                        placeholder="Stock (ej: 3 disponibles)"
+                        style={{ color: palette.inkSoft }}
+                        className="font-mono text-xs"
+                        maxLength={30}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {rest.map((p) => (
+                  <div key={p.id} className="relative flex flex-col">
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveProducto?.(p.id)}
+                        aria-label={`Quitar ${p.nombre}`}
+                        className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <label
+                      className={`relative block w-full aspect-square bg-black/5 mb-3 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+                      title={editable ? 'Cambiar foto' : undefined}
+                    >
+                      {p.imagenes?.[0] ? (
+                        <img
+                          src={p.imagenes[0]}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          style={{ filter: 'grayscale(0.1) contrast(1.03)' }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageIcon className="w-5 h-5" style={{ color: palette.inkSoft }} />
+                        </div>
+                      )}
+                      {editable && (
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = '';
+                            if (file && (await validateImageFile(file, 'productos'))) {
+                              onAddProductoImagen?.(p.id, await uploadImage(file));
+                            }
+                          }}
+                        />
+                      )}
+                    </label>
+                    <Editable
+                      editable={editable}
+                      value={p.categoria}
+                      onChange={(v) => onUpdateProducto?.(p.id, { categoria: v })}
+                      tag="span"
+                      placeholder="Material"
+                      style={{ color: palette.inkSoft }}
+                      className="font-mono text-[10px] uppercase tracking-wide mb-1"
+                      maxLength={30}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.nombre}
+                      onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                      tag="p"
+                      block
+                      styleKey={`producto.${p.id}.nombre`}
+                      placeholder="Nombre"
+                      style={{ color: palette.ink }}
+                      className="font-serif text-[1.05rem] mb-1"
+                      maxLength={50}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.precio}
+                      onChange={(v) => onUpdateProducto?.(p.id, { precio: v })}
+                      tag="span"
+                      placeholder="Precio"
+                      style={{ color: accent }}
+                      className="font-mono font-bold text-sm"
+                      maxLength={20}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+          {editable && (
+            <form onSubmit={submit} className="mt-8 flex flex-wrap gap-2">
+              <input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Nombre de la pieza"
+                className="flex-1 min-w-[10rem] border px-3 py-2 text-sm bg-transparent outline-none"
+                style={{ borderColor: palette.line, color: palette.ink }}
+              />
+              <input
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                placeholder="Material"
+                className="w-32 border px-3 py-2 text-sm bg-transparent outline-none"
+                style={{ borderColor: palette.line, color: palette.ink }}
+              />
+              <input
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                placeholder="Precio"
+                className="w-28 border px-3 py-2 text-sm bg-transparent outline-none"
+                style={{ borderColor: palette.line, color: palette.ink }}
               />
               <button
                 type="submit"
@@ -16478,6 +17223,1593 @@ function SeccionMateriales({
             )
           )}
         </div>
+      </div>
+    </section>
+  );
+}
+
+const TURNOS_DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const TURNOS_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const TURNOS_HORARIOS = [
+  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30',
+];
+
+// Patrón fijo (no datos reales) para que algunos horarios se vean "tomados"
+// en la vista previa — mismo espíritu que el calendario de SeccionReservas:
+// una demo con textura, no un backend de turnos de verdad.
+function turnoTomado(barberoIdx, diaOffset, slotIdx) {
+  return ((barberoIdx + 1) * 7 + diaOffset * 5 + slotIdx * 3) % 11 < 4;
+}
+
+// Wizard de 4 pasos (barbero → servicio → día → horario) con resumen y total
+// en vivo al costado — a diferencia de SeccionReservas (calendario mensual +
+// franjas mañana/tarde fijas, sin elegir profesional ni ver un resumen), acá
+// cada combinación barbero+día tiene sus propios horarios ocupados/libres, y
+// el botón final arma un link de WhatsApp con el resumen ya cargado.
+function SeccionTurnos({
+  barberos = [],
+  onAddBarbero,
+  onRemoveBarbero,
+  onUpdateBarbero,
+  servicios = [],
+  onAddServicio,
+  onRemoveServicio,
+  onUpdateServicio,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  whatsapp,
+  nombreNegocio,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const [sel, setSel] = useState({ barbero: 0, servicio: 0, dia: 0, hora: null });
+  const barberoIdx = Math.min(sel.barbero, Math.max(barberos.length - 1, 0));
+  const servicioIdx = Math.min(sel.servicio, Math.max(servicios.length - 1, 0));
+  const barbero = barberos[barberoIdx];
+  const servicio = servicios[servicioIdx];
+  const textoSuave = textColor || palette.inkSoft;
+
+  const dias = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return { offset: i, dayNum: d.getDate(), weekday: TURNOS_DIAS_SEMANA[d.getDay()], month: TURNOS_MESES[d.getMonth()] };
+  });
+
+  const horarios = TURNOS_HORARIOS.map((time, i) => ({ time, taken: turnoTomado(barberoIdx, sel.dia, i) }));
+  const total = servicio ? Number(servicio.precio || 0) : 0;
+  const hasHora = !!sel.hora;
+  const endTime = (() => {
+    if (!hasHora || !servicio) return '—';
+    const [h, m] = sel.hora.split(':').map(Number);
+    const totalMin = h * 60 + m + Number(servicio.minutos || 0);
+    return `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`;
+  })();
+  const diaSel = dias[sel.dia];
+
+  const addBarbero = () =>
+    onAddBarbero?.({ id: `barbero-${Date.now()}`, nombre: 'Nuevo barbero', especialidad: '', imagen: '' });
+  const addServicio = () =>
+    onAddServicio?.({ id: `servicio-${Date.now()}`, nombre: 'Nuevo servicio', minutos: 30, precio: 0 });
+
+  const handleFoto = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateBarbero?.(id, { imagen: await uploadImage(file) });
+  };
+
+  const mensajeWa = barbero && servicio && diaSel && hasHora
+    ? `Hola! Quiero reservar un turno: ${servicio.nombre} con ${barbero.nombre}, ${diaSel.weekday} ${diaSel.dayNum} de ${diaSel.month} a las ${sel.hora}.`
+    : undefined;
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto mb-8">
+        <Editable
+          editable={editable}
+          value={eyebrow ?? 'Reservá online'}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="turnos.eyebrow"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Elegí barbero, servicio y hora'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="turnos.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl mb-3"
+          maxLength={90}
+        />
+        <Editable
+          editable={editable}
+          value={descripcion}
+          onChange={onUpdateDescripcion}
+          tag="p"
+          block
+          multiline
+          styleKey="turnos.descripcion"
+          placeholder="Descripción breve (opcional)"
+          style={{ color: textoSuave }}
+          className="text-sm leading-relaxed max-w-xl"
+          maxLength={160}
+        />
+      </div>
+
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-[1.5fr_1fr] gap-8 @lg:gap-10 items-start">
+        <div className="flex flex-col gap-7">
+          {/* Paso 1: barbero */}
+          <div>
+            <p className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: textoSuave }}>
+              1 · Tu barbero
+            </p>
+            <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+              {barberos.map((b, i) => {
+                const on = i === barberoIdx;
+                return (
+                  <div
+                    key={b.id}
+                    className="relative flex items-center gap-2.5 p-2.5 border cursor-pointer"
+                    onClick={() => setSel((s) => ({ ...s, barbero: i, hora: null }))}
+                    style={{ borderColor: on ? accent : palette.line, background: on ? `${accent}1f` : 'transparent' }}
+                  >
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveBarbero?.(b.id);
+                        }}
+                        aria-label={`Quitar ${b.nombre}`}
+                        className="absolute top-1 right-1 opacity-50 hover:opacity-100 transition-opacity"
+                        style={{ color: palette.ink }}
+                      >
+                        <XIcon className="w-3 h-3" />
+                      </button>
+                    )}
+                    <label
+                      className={`relative w-11 h-11 shrink-0 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+                      onClick={(e) => editable && e.stopPropagation()}
+                      title={editable ? 'Cambiar foto' : undefined}
+                    >
+                      {b.imagen ? (
+                        <img src={b.imagen} alt={b.nombre} className="w-full h-full object-cover" style={{ filter: 'grayscale(0.2) contrast(1.05)' }} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                          <ImageIcon className="w-4 h-4" style={{ color: palette.inkSoft }} />
+                        </div>
+                      )}
+                      {editable && <input type="file" accept="image/*" className="hidden" onChange={handleFoto(b.id)} />}
+                    </label>
+                    <div className="min-w-0 flex-1">
+                      <Editable
+                        editable={editable}
+                        value={b.nombre}
+                        onChange={(v) => onUpdateBarbero?.(b.id, { nombre: v })}
+                        tag="div"
+                        placeholder="Nombre"
+                        style={{ color: palette.ink }}
+                        className="font-semibold text-sm truncate"
+                        maxLength={30}
+                      />
+                      <Editable
+                        editable={editable}
+                        value={b.especialidad}
+                        onChange={(v) => onUpdateBarbero?.(b.id, { especialidad: v })}
+                        tag="div"
+                        placeholder="Especialidad"
+                        style={{ color: on ? accent : palette.inkSoft }}
+                        className="font-mono text-[10px] uppercase tracking-wide truncate"
+                        maxLength={30}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addBarbero}
+                  className="flex items-center justify-center gap-1.5 border-2 border-dashed p-2.5 transition-colors"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-xs font-semibold">Agregar</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Paso 2: servicio */}
+          <div>
+            <p className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: textoSuave }}>
+              2 · Servicio
+            </p>
+            <div className="flex flex-col gap-2">
+              {servicios.map((sv, i) => {
+                const on = i === servicioIdx;
+                return (
+                  <div
+                    key={sv.id}
+                    className="relative flex items-center justify-between gap-3 p-3 border cursor-pointer"
+                    onClick={() => setSel((s) => ({ ...s, servicio: i }))}
+                    style={{ borderColor: on ? accent : palette.line, background: on ? `${accent}1f` : 'transparent' }}
+                  >
+                    <div className="min-w-0">
+                      <Editable
+                        editable={editable}
+                        value={sv.nombre}
+                        onChange={(v) => onUpdateServicio?.(sv.id, { nombre: v })}
+                        tag="div"
+                        placeholder="Nombre del servicio"
+                        style={{ color: palette.ink }}
+                        className="font-semibold text-sm"
+                        maxLength={40}
+                      />
+                      <div className="flex items-center gap-1 font-mono text-xs" style={{ color: on ? accent : textoSuave }}>
+                        <Editable
+                          editable={editable}
+                          value={sv.minutos}
+                          onChange={(v) => onUpdateServicio?.(sv.id, { minutos: Number(v) || 0 })}
+                          tag="span"
+                          type="number"
+                          format={(v) => `${v} min`}
+                          maxLength={4}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Editable
+                        editable={editable}
+                        value={sv.precio}
+                        onChange={(v) => onUpdateServicio?.(sv.id, { precio: Number(v) || 0 })}
+                        tag="span"
+                        type="number"
+                        format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                        style={{ color: accent }}
+                        className="font-mono font-bold text-sm"
+                      />
+                      {editable && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveServicio?.(sv.id);
+                          }}
+                          aria-label={`Quitar ${sv.nombre}`}
+                          className="opacity-50 hover:opacity-100 transition-opacity"
+                          style={{ color: palette.ink }}
+                        >
+                          <XIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addServicio}
+                  className="inline-flex items-center gap-1.5 border-2 border-dashed p-2.5 justify-center transition-colors"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-4 h-4" /> <span className="text-xs font-semibold">Agregar servicio</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Paso 3: día */}
+          <div>
+            <p className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: textoSuave }}>
+              3 · Día
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {dias.map((d) => {
+                const on = sel.dia === d.offset;
+                return (
+                  <button
+                    key={d.offset}
+                    type="button"
+                    onClick={() => setSel((s) => ({ ...s, dia: d.offset, hora: null }))}
+                    className="shrink-0 w-[68px] border py-2.5 text-center transition-colors"
+                    style={{ borderColor: on ? accent : palette.line, background: on ? accent : 'transparent' }}
+                  >
+                    <div className="font-mono text-[10px] uppercase" style={{ color: on ? palette.bg : textoSuave }}>
+                      {d.weekday}
+                    </div>
+                    <div className="font-serif text-lg leading-tight" style={{ color: on ? palette.bg : palette.ink }}>
+                      {d.dayNum}
+                    </div>
+                    <div className="font-mono text-[10px]" style={{ color: on ? palette.bg : textoSuave }}>
+                      {d.month}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Paso 4: horario */}
+          <div>
+            <p className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: textoSuave }}>
+              4 · Horario
+            </p>
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(78px, 1fr))' }}>
+              {horarios.map((h) => {
+                const on = sel.hora === h.time;
+                return (
+                  <button
+                    key={h.time}
+                    type="button"
+                    disabled={h.taken}
+                    onClick={() => setSel((s) => ({ ...s, hora: h.time }))}
+                    className="py-2.5 text-center font-mono text-sm border transition-colors"
+                    style={{
+                      borderColor: on ? accent : h.taken ? 'transparent' : palette.line,
+                      background: on ? accent : 'transparent',
+                      color: on ? palette.bg : h.taken ? palette.inkSoft : palette.ink,
+                      textDecoration: h.taken ? 'line-through' : 'none',
+                      opacity: h.taken ? 0.5 : 1,
+                      cursor: h.taken ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {h.time}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="font-mono text-xs mt-3" style={{ color: textoSuave }}>
+              Los horarios tachados ya están tomados.
+            </p>
+          </div>
+        </div>
+
+        {/* Resumen */}
+        <div className="@lg:sticky @lg:top-20 border" style={{ borderColor: palette.line, background: bgColor || palette.bg }}>
+          <div className="px-5 py-4 border-b" style={{ borderColor: palette.line }}>
+            <span className="font-mono text-xs uppercase tracking-wide" style={{ color: textoSuave }}>
+              Tu turno
+            </span>
+          </div>
+          <div className="px-5 py-4 flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-mono text-xs uppercase" style={{ color: textoSuave }}>
+                Barbero
+              </span>
+              <span className="text-sm font-semibold text-right" style={{ color: palette.ink }}>
+                {barbero?.nombre ?? '—'}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-mono text-xs uppercase" style={{ color: textoSuave }}>
+                Servicio
+              </span>
+              <span className="text-sm font-semibold text-right" style={{ color: palette.ink }}>
+                {servicio ? `${servicio.nombre} · ${servicio.minutos} min` : '—'}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-mono text-xs uppercase" style={{ color: textoSuave }}>
+                Día
+              </span>
+              <span className="text-sm font-semibold text-right" style={{ color: palette.ink }}>
+                {diaSel ? `${diaSel.weekday} ${diaSel.dayNum} de ${diaSel.month}` : '—'}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-mono text-xs uppercase" style={{ color: textoSuave }}>
+                Horario
+              </span>
+              <span className="text-sm font-semibold text-right" style={{ color: hasHora ? accent : textoSuave }}>
+                {hasHora ? `${sel.hora} a ${endTime}` : 'Elegí un horario'}
+              </span>
+            </div>
+          </div>
+          <div className="px-5 py-4 border-t flex items-baseline justify-between" style={{ borderColor: palette.line }}>
+            <span className="font-mono text-xs uppercase" style={{ color: textoSuave }}>
+              Total
+            </span>
+            <span className="font-serif text-2xl" style={{ color: accent }}>
+              ${total.toLocaleString('es-AR')}
+            </span>
+          </div>
+          <div className="px-5 pb-5">
+            <a
+              href={hasHora && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+              target={hasHora ? '_blank' : undefined}
+              rel={hasHora ? 'noreferrer' : undefined}
+              onClick={(e) => !hasHora && e.preventDefault()}
+              className="block text-center font-bold py-3 text-sm transition-colors"
+              style={{
+                background: hasHora ? accent : 'transparent',
+                color: hasHora ? palette.bg : textoSuave,
+                border: `1px solid ${hasHora ? accent : palette.line}`,
+                cursor: hasHora ? 'pointer' : 'not-allowed',
+              }}
+            >
+              {hasHora ? 'Confirmar por WhatsApp →' : 'Elegí un horario'}
+            </a>
+            <p className="font-mono text-[11px] mt-3 text-center" style={{ color: textoSuave }}>
+              Se paga en el local. Si no podés venir, avisá con 2 horas.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Lista de precios numerada (01, 02...) en 4 columnas: número, nombre+
+// descripción, duración y precio — a diferencia de SeccionProductos variant
+// "tarifario" (2 columnas, sin numerar, sin campo de duración propio), pensada
+// para un menú de servicios con precio fijo por duración.
+function SeccionPreciosBarberia({
+  servicios = [],
+  onAddServicio,
+  onRemoveServicio,
+  onUpdateServicio,
+  titulo,
+  onUpdateTitulo,
+  nota,
+  onUpdateNota,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdateServicio?.(id, patch);
+  const remove = (id) => onRemoveServicio?.(id);
+  const add = () =>
+    onAddServicio?.({ id: `precio-${Date.now()}`, nombre: 'Nuevo servicio', desc: '', minutos: 30, precio: 0 });
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto flex flex-wrap items-baseline justify-between gap-3 mb-7 pb-5 border-b" style={{ borderColor: palette.line }}>
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Lista de precios'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          styleKey="precios-barberia.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif uppercase text-3xl @lg:text-4xl"
+          maxLength={70}
+        />
+        <Editable
+          editable={editable}
+          value={nota}
+          onChange={onUpdateNota}
+          tag="span"
+          placeholder="Ej: Vigente desde julio 2026 · Efectivo y transferencia"
+          style={{ color: palette.inkSoft }}
+          className="font-mono text-xs"
+          maxLength={80}
+        />
+      </div>
+      <div className="max-w-5xl mx-auto flex flex-col">
+        {servicios.map((sv, i) => (
+          <div
+            key={sv.id}
+            className="relative grid gap-x-4 @lg:gap-x-7 gap-y-1 items-center py-4 border-b"
+            style={{ gridTemplateColumns: 'auto 1fr auto auto', borderColor: palette.line }}
+          >
+            <span className="font-mono text-xs min-w-[1.8rem]" style={{ color: palette.inkSoft, opacity: 0.6 }}>
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <div className="min-w-0">
+              <Editable
+                editable={editable}
+                value={sv.nombre}
+                onChange={(v) => update(sv.id, { nombre: v })}
+                tag="p"
+                block
+                styleKey={`precio.${sv.id}.nombre`}
+                placeholder="Nombre del servicio"
+                style={{ color: palette.ink }}
+                className="font-bold text-base mb-0.5"
+                maxLength={50}
+              />
+              <Editable
+                editable={editable}
+                value={sv.desc}
+                onChange={(v) => update(sv.id, { desc: v })}
+                tag="p"
+                block
+                styleKey={`precio.${sv.id}.desc`}
+                placeholder="Descripción corta"
+                style={{ color: palette.inkSoft }}
+                className="text-sm"
+                maxLength={80}
+              />
+            </div>
+            <Editable
+              editable={editable}
+              value={sv.minutos}
+              onChange={(v) => update(sv.id, { minutos: Number(v) || 0 })}
+              tag="span"
+              type="number"
+              format={(v) => `${v} min`}
+              style={{ color: palette.inkSoft }}
+              className="font-mono text-xs whitespace-nowrap"
+              maxLength={4}
+            />
+            <div className="flex items-center gap-2">
+              <Editable
+                editable={editable}
+                value={sv.precio}
+                onChange={(v) => update(sv.id, { precio: Number(v) || 0 })}
+                tag="span"
+                type="number"
+                format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                style={{ color: accent }}
+                className="font-serif text-xl whitespace-nowrap"
+              />
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(sv.id)}
+                  aria-label={`Quitar ${sv.nombre}`}
+                  className="opacity-50 hover:opacity-100 transition-opacity"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {editable && (
+        <div className="max-w-5xl mx-auto mt-5">
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide border px-3 py-2 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3.5 h-3.5" /> Agregar servicio
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Grilla de fotos 3/4 con nombre grande (mayúsculas), especialidad+años en
+// mono color acento, y bio corta — a diferencia de SeccionEquipo (todas sus
+// variantes usan nombre en serif itálica minúscula y llevan un borde-top de
+// acento que acá no corresponde), pensada para calzar con la tipografía
+// Anton/mayúsculas del resto de la plantilla.
+function SeccionBarberos({
+  barberos = [],
+  onAddBarbero,
+  onRemoveBarbero,
+  onUpdateBarbero,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdateBarbero?.(id, patch);
+  const remove = (id) => onRemoveBarbero?.(id);
+  const add = () =>
+    onAddBarbero?.({ id: `equipo-${Date.now()}`, nombre: 'Nueva persona', especialidad: '', anios: '', bio: '', foto: '' });
+
+  const handleFoto = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) update(id, { foto: await uploadImage(file) });
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+      <div className="max-w-5xl mx-auto mb-7">
+        <Editable
+          editable={editable}
+          value={eyebrow ?? 'El equipo'}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="barberos.eyebrow"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Quién te atiende'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          styleKey="barberos.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif uppercase text-3xl @lg:text-4xl"
+          maxLength={70}
+        />
+      </div>
+      <div className="max-w-5xl mx-auto grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
+        {barberos.map((b) => (
+          <div key={b.id} className="relative">
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(b.id)}
+                aria-label={`Quitar ${b.nombre}`}
+                className="absolute top-3 right-3 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <label
+              className={`relative block w-full aspect-[3/4] bg-black/10 overflow-hidden mb-4 ${editable ? 'cursor-pointer' : ''}`}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {b.foto ? (
+                <img src={b.foto} alt={b.nombre} className="w-full h-full object-cover" style={{ filter: 'grayscale(0.25) contrast(1.08)' }} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
+                </div>
+              )}
+              {editable && <input type="file" accept="image/*" className="hidden" onChange={handleFoto(b.id)} />}
+            </label>
+            <Editable
+              editable={editable}
+              value={b.nombre}
+              onChange={(v) => update(b.id, { nombre: v })}
+              tag="p"
+              block
+              styleKey={`barbero.${b.id}.nombre`}
+              placeholder="Nombre"
+              style={{ color: palette.ink }}
+              className="font-serif uppercase text-xl mb-1"
+              maxLength={40}
+            />
+            <div className="flex items-center gap-1 font-mono text-xs uppercase tracking-wide mb-2.5" style={{ color: accent }}>
+              <Editable
+                editable={editable}
+                value={b.especialidad}
+                onChange={(v) => update(b.id, { especialidad: v })}
+                tag="span"
+                placeholder="Especialidad"
+                maxLength={30}
+              />
+              {(b.anios || editable) && <span>·</span>}
+              <Editable
+                editable={editable}
+                value={b.anios}
+                onChange={(v) => update(b.id, { anios: v })}
+                tag="span"
+                placeholder="X años"
+                maxLength={20}
+              />
+            </div>
+            <Editable
+              editable={editable}
+              value={b.bio}
+              onChange={(v) => update(b.id, { bio: v })}
+              tag="p"
+              block
+              multiline
+              styleKey={`barbero.${b.id}.bio`}
+              placeholder="Bio corta"
+              style={{ color: palette.inkSoft }}
+              className="text-sm leading-relaxed"
+              maxLength={180}
+            />
+          </div>
+        ))}
+      </div>
+      {editable && (
+        <div className="max-w-5xl mx-auto mt-6">
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide border px-3 py-2 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3.5 h-3.5" /> Agregar persona
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Tarjetas horizontales con scroll-snap: estrellas en mono, cita, persona y
+// meta — a diferencia de TestimonioCard/SeccionTestimonios (que llevan
+// avatar circular y el layout de tarjeta "review de e-commerce" propio del
+// resto de la app), acá es la tarjeta simple con borde que trae el HTML
+// original, sin foto de la persona.
+function SeccionReviewsBarberia({
+  reviews = [],
+  onAddReview,
+  onRemoveReview,
+  onUpdateReview,
+  editable,
+  bgColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdateReview?.(id, patch);
+  const remove = (id) => onRemoveReview?.(id);
+  const add = () => onAddReview?.({ id: `review-${Date.now()}`, cita: 'Escribí acá la reseña.', persona: 'Nombre', meta: 'Detalle' });
+
+  return (
+    <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto flex gap-4 overflow-x-auto pb-2" style={{ scrollSnapType: 'x mandatory' }}>
+        {reviews.map((r) => (
+          <div
+            key={r.id}
+            className="relative shrink-0 w-[320px] border p-6"
+            style={{ scrollSnapAlign: 'start', borderColor: palette.line }}
+          >
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(r.id)}
+                aria-label="Quitar reseña"
+                className="absolute top-3 right-3 opacity-50 hover:opacity-100 transition-opacity"
+                style={{ color: palette.ink }}
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <div className="font-mono tracking-[0.2em] text-sm mb-4" style={{ color: accent }}>
+              ★★★★★
+            </div>
+            <Editable
+              editable={editable}
+              value={r.cita}
+              onChange={(v) => update(r.id, { cita: v })}
+              tag="p"
+              block
+              multiline
+              styleKey={`review.${r.id}.cita`}
+              placeholder="Cita de la reseña"
+              style={{ color: palette.ink, opacity: 0.85 }}
+              className="text-sm leading-relaxed mb-4"
+              maxLength={200}
+            />
+            <Editable
+              editable={editable}
+              value={r.persona}
+              onChange={(v) => update(r.id, { persona: v })}
+              tag="div"
+              placeholder="Nombre"
+              style={{ color: palette.ink }}
+              className="font-bold text-sm"
+              maxLength={30}
+            />
+            <Editable
+              editable={editable}
+              value={r.meta}
+              onChange={(v) => update(r.id, { meta: v })}
+              tag="div"
+              placeholder="Detalle (ej: cliente desde 2020)"
+              style={{ color: palette.inkSoft }}
+              className="font-mono text-xs"
+              maxLength={40}
+            />
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="shrink-0 w-[320px] border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-5 h-5" />
+            <span className="text-xs font-semibold">Agregar reseña</span>
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Footer de una sola fila (nombre, links, crédito, todo en línea) — a
+// diferencia de SeccionFooter variant "minimal" (apila links arriba y
+// crédito centrado abajo en 2 líneas), pensado para cuando el nombre del
+// negocio es corto y entra cómodo junto a los links sin apilar nada.
+function SeccionFooterBarberia({
+  nombreNegocio,
+  whatsapp,
+  instagram,
+  editable,
+  bgColor,
+  textColor,
+  palette = {},
+  botones: botonesData = {},
+  onUpdateBotones,
+  seccionesDisponibles = [],
+}) {
+  const footerTargetDefaults = {
+    primary: instagram ? `https://instagram.com/${instagram.replace('@', '')}` : undefined,
+    secondary: whatsapp,
+  };
+  const slots = [
+    { key: 'primary', defaultFuncion: 'enlace', defaultLabel: 'Instagram' },
+    { key: 'secondary', defaultFuncion: 'whatsapp', defaultLabel: 'WhatsApp' },
+  ];
+
+  return (
+    <footer className="px-6 @lg:px-10 py-8 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+      <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+        <span className="font-serif uppercase text-lg" style={{ color: textColor || palette.ink }}>
+          {nombreNegocio}
+        </span>
+        <div className="flex items-center gap-5">
+          {slots.map((slot) => {
+            const v = botonesData[slot.key];
+            const defaultTarget = footerTargetDefaults[slot.key];
+            if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+            return (
+              <ButtonObject
+                key={slot.key}
+                value={v}
+                onChange={(patch) => onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })}
+                editable={editable}
+                seccionesDisponibles={seccionesDisponibles}
+                nombreNegocio={nombreNegocio}
+                defaultFuncion={slot.defaultFuncion}
+                defaultLabel={slot.defaultLabel}
+                defaultColor={palette.inkHex || palette.ink}
+                defaultTarget={defaultTarget}
+                outline
+                size="sm"
+                className="!px-0 !py-0 !border-0"
+              />
+            );
+          })}
+        </div>
+        <span className="text-xs" style={{ color: palette.inkSoft }}>
+          Sitio creado con SitioWeb Digital
+        </span>
+      </div>
+    </footer>
+  );
+}
+
+// Riel horizontal con scroll-snap: cada paso de un proceso productivo con su
+// propia foto, número y descripción — a diferencia de SeccionPasos (que no
+// tiene una foto por paso en ninguna de sus variantes), pensado para talleres
+// que quieren mostrar el "antes de que llegue el producto terminado" con
+// imágenes reales de cada etapa, una al lado de la otra para hojear.
+function SeccionProcesoTaller({
+  pasos = [],
+  onAddPaso,
+  onRemovePaso,
+  onUpdatePaso,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdatePaso?.(id, patch);
+  const remove = (id) => onRemovePaso?.(id);
+  const add = () =>
+    onAddPaso?.({ id: `proceso-${Date.now()}`, titulo: 'Nueva etapa', desc: 'Describí esta etapa del proceso.', imagen: '' });
+
+  const handleImagen = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) update(id, { imagen: await uploadImage(file) });
+  };
+
+  return (
+    <section className="py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+      <div className="max-w-5xl mx-auto px-6 @lg:px-10 mb-7">
+        <Editable
+          editable={editable}
+          value={eyebrow ?? 'El proceso'}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="proceso-taller.eyebrow"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-2"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'De la materia cruda a tu casa'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="proceso-taller.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl max-w-[22ch]"
+          maxLength={90}
+        />
+      </div>
+      <div className="flex gap-4 overflow-x-auto px-6 @lg:px-10 pb-2" style={{ scrollSnapType: 'x mandatory' }}>
+        {pasos.map((p, i) => (
+          <div key={p.id} className="relative shrink-0 w-[clamp(240px,26vw,320px)]" style={{ scrollSnapAlign: 'start' }}>
+            {editable && (
+              <button
+                type="button"
+                onClick={() => remove(p.id)}
+                aria-label="Quitar etapa"
+                className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <label
+              className={`relative block w-full aspect-[4/3] bg-black/5 mb-3.5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {p.imagen ? (
+                <img src={p.imagen} alt={p.titulo} className="w-full h-full object-cover" style={{ filter: 'contrast(1.03) saturate(0.96)' }} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
+                </div>
+              )}
+              {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen(p.id)} />}
+            </label>
+            <div className="flex items-baseline gap-2.5 mb-1">
+              <span className="font-mono font-bold text-sm" style={{ color: accent }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <Editable
+                editable={editable}
+                value={p.titulo}
+                onChange={(v) => update(p.id, { titulo: v })}
+                tag="span"
+                styleKey={`proceso.${p.id}.titulo`}
+                placeholder="Título de la etapa"
+                style={{ color: palette.ink }}
+                className="font-serif text-lg"
+                maxLength={50}
+              />
+            </div>
+            <Editable
+              editable={editable}
+              value={p.desc}
+              onChange={(v) => update(p.id, { desc: v })}
+              tag="p"
+              block
+              multiline
+              styleKey={`proceso.${p.id}.desc`}
+              placeholder="Descripción de esta etapa"
+              style={{ color: textColor || palette.inkSoft }}
+              className="text-sm leading-relaxed"
+              maxLength={160}
+            />
+          </div>
+        ))}
+        {editable && (
+          <button
+            type="button"
+            onClick={add}
+            className="shrink-0 w-[clamp(240px,26vw,320px)] aspect-[4/3] border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-5 h-5" />
+            <span className="text-xs font-semibold">Agregar etapa</span>
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Grilla de personas con una plaqueta de iniciales (no foto), bio y una
+// "firma" a modo de detalle distintivo — a diferencia de SeccionEquipo (que
+// siempre usa una foto grande o el nombre como centro de la tarjeta), acá el
+// nombre y la plaqueta van en una misma fila chica arriba de la bio, con un
+// desplazamiento vertical alternado entre tarjetas para que la fila no quede
+// perfectamente pareja (mismo espíritu que un masonry, sin serlo del todo).
+function SeccionArtesanas({
+  artesanas = [],
+  onAddArtesana,
+  onRemoveArtesana,
+  onUpdateArtesana,
+  titulo,
+  onUpdateTitulo,
+  editable,
+  bgColor,
+  headingColor,
+  palette = {},
+}) {
+  const BADGE_COLORS = ['#b5502f', '#6b7f5e', '#8a6a3f', '#4a5a7a'];
+  const OFFSETS = ['0rem', '2.5rem', '1.25rem'];
+  const update = (id, patch) => onUpdateArtesana?.(id, patch);
+  const remove = (id) => onRemoveArtesana?.(id);
+  const add = () =>
+    onAddArtesana?.({
+      id: `artesana-${Date.now()}`,
+      nombre: 'Nueva persona',
+      oficio: '',
+      anios: '',
+      bio: '',
+      firma: '',
+      badgeBg: BADGE_COLORS[artesanas.length % BADGE_COLORS.length],
+    });
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto mb-9 pb-5 border-b" style={{ borderColor: palette.line }}>
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Quiénes hacen las piezas'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          styleKey="artesanas.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl"
+          maxLength={70}
+        />
+      </div>
+      {artesanas.length === 0 && !editable ? (
+        <p className="text-center text-sm max-w-sm mx-auto" style={{ color: palette.inkSoft }}>
+          Todavía no agregaste a las personas del taller.
+        </p>
+      ) : (
+        <div className="max-w-5xl mx-auto grid grid-cols-1 @lg:grid-cols-3 gap-7">
+          {artesanas.map((a, i) => (
+            <div key={a.id} className="relative" style={{ marginTop: OFFSETS[i % OFFSETS.length] }}>
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => remove(a.id)}
+                  aria-label={`Quitar ${a.nombre}`}
+                  className="absolute top-0 right-0 opacity-50 hover:opacity-100 transition-opacity"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-4 h-4" />
+                </button>
+              )}
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div
+                  className="w-9 h-9 shrink-0 flex items-center justify-center font-mono font-bold text-xs text-white"
+                  style={{ background: a.badgeBg || '#b5502f' }}
+                >
+                  {initials(a.nombre)}
+                </div>
+                <div className="min-w-0">
+                  <Editable
+                    editable={editable}
+                    value={a.nombre}
+                    onChange={(v) => update(a.id, { nombre: v })}
+                    tag="p"
+                    block
+                    styleKey={`artesana.${a.id}.nombre`}
+                    placeholder="Nombre"
+                    style={{ color: palette.ink }}
+                    className="font-serif text-lg leading-tight"
+                    maxLength={50}
+                  />
+                  <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide" style={{ color: palette.inkSoft }}>
+                    <Editable
+                      editable={editable}
+                      value={a.oficio}
+                      onChange={(v) => update(a.id, { oficio: v })}
+                      tag="span"
+                      placeholder="Oficio"
+                      maxLength={30}
+                    />
+                    {(a.anios || editable) && <span>·</span>}
+                    <Editable
+                      editable={editable}
+                      value={a.anios}
+                      onChange={(v) => update(a.id, { anios: v })}
+                      tag="span"
+                      placeholder="Años"
+                      maxLength={20}
+                    />
+                  </div>
+                </div>
+              </div>
+              <Editable
+                editable={editable}
+                value={a.bio}
+                onChange={(v) => update(a.id, { bio: v })}
+                tag="p"
+                block
+                multiline
+                styleKey={`artesana.${a.id}.bio`}
+                placeholder="Contá quién es y cómo trabaja"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed mb-3"
+                maxLength={220}
+              />
+              <div className="border-t pt-2.5 font-mono text-xs" style={{ borderColor: palette.line, color: '#6b7f5e' }}>
+                Firma:{' '}
+                <Editable
+                  editable={editable}
+                  value={a.firma}
+                  onChange={(v) => update(a.id, { firma: v })}
+                  tag="span"
+                  placeholder="Detalle distintivo de su trabajo"
+                  maxLength={50}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {editable && (
+        <div className="max-w-5xl mx-auto mt-6">
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide border px-3 py-2 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3.5 h-3.5" /> Agregar persona
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Lista de fechas (ferias, mercados, eventos propios) fila por fila: fecha,
+// nombre + lugar, y una etiqueta de estado — a diferencia de SeccionCronograma
+// (pensado para el cronograma de UN evento propio, no una serie de apariciones
+// en distintos eventos de terceros) y SeccionLugares (sucursales fijas, sin
+// fecha). Acá cada fila es una feria puntual con su propio rango de fechas.
+function SeccionFerias({
+  ferias = [],
+  onAddFeria,
+  onRemoveFeria,
+  onUpdateFeria,
+  titulo,
+  onUpdateTitulo,
+  subtitulo,
+  onUpdateSubtitulo,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdateFeria?.(id, patch);
+  const remove = (id) => onRemoveFeria?.(id);
+  const add = () =>
+    onAddFeria?.({ id: `feria-${Date.now()}`, fechas: '', nombre: 'Nueva feria', ciudad: '', stand: '', destacada: false });
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto flex flex-wrap items-end justify-between gap-3 mb-7 pb-5 border-b" style={{ borderColor: palette.line }}>
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Dónde encontrarnos'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          styleKey="ferias.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl"
+          maxLength={70}
+        />
+        <Editable
+          editable={editable}
+          value={subtitulo}
+          onChange={onUpdateSubtitulo}
+          tag="span"
+          placeholder="Ej: Ferias y mercados · 2026"
+          style={{ color: palette.inkSoft }}
+          className="font-mono text-xs"
+          maxLength={50}
+        />
+      </div>
+      {ferias.length === 0 && !editable ? (
+        <p className="text-center text-sm max-w-sm mx-auto" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste ninguna feria o evento.
+        </p>
+      ) : (
+        <div className="max-w-5xl mx-auto flex flex-col">
+          {ferias.map((f) => (
+            <div
+              key={f.id}
+              className="relative grid grid-cols-2 @lg:grid-cols-[auto_1fr_auto_auto] gap-x-4 gap-y-1 items-center py-4 border-b"
+              style={{ borderColor: palette.line }}
+            >
+              <Editable
+                editable={editable}
+                value={f.fechas}
+                onChange={(v) => update(f.id, { fechas: v })}
+                tag="span"
+                placeholder="14—16 AGO"
+                style={{ color: f.destacada ? accent : palette.inkSoft }}
+                className="font-mono text-sm font-bold"
+                maxLength={20}
+              />
+              <div className="col-span-2 @lg:col-span-1 min-w-0">
+                <Editable
+                  editable={editable}
+                  value={f.nombre}
+                  onChange={(v) => update(f.id, { nombre: v })}
+                  tag="p"
+                  block
+                  styleKey={`feria.${f.id}.nombre`}
+                  placeholder="Nombre de la feria"
+                  style={{ color: palette.ink }}
+                  className="font-serif text-lg leading-tight"
+                  maxLength={70}
+                />
+                <Editable
+                  editable={editable}
+                  value={f.ciudad}
+                  onChange={(v) => update(f.id, { ciudad: v })}
+                  tag="span"
+                  placeholder="Lugar y ciudad"
+                  style={{ color: palette.inkSoft }}
+                  className="text-sm"
+                  maxLength={60}
+                />
+              </div>
+              <div className="font-mono text-xs whitespace-nowrap" style={{ color: palette.inkSoft }}>
+                Stand{' '}
+                <Editable
+                  editable={editable}
+                  value={f.stand}
+                  onChange={(v) => update(f.id, { stand: v })}
+                  tag="span"
+                  placeholder="B-12"
+                  maxLength={10}
+                />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => update(f.id, { destacada: !f.destacada })}
+                  className="font-mono text-[10px] uppercase tracking-wide px-2 py-1 transition-colors"
+                  style={
+                    f.destacada
+                      ? { background: accent, color: palette.bg }
+                      : { background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }
+                  }
+                >
+                  {f.destacada ? 'Próxima' : 'Confirmada'}
+                </button>
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => remove(f.id)}
+                    aria-label="Quitar feria"
+                    className="opacity-50 hover:opacity-100 transition-opacity"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {editable && (
+        <div className="max-w-5xl mx-auto mt-5">
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide border px-3 py-2 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3.5 h-3.5" /> Agregar feria
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Una sola frase de cliente por vez, grande e itálica, centrada, con puntos
+// clickeables debajo y auto-avance con timer — a diferencia de
+// SeccionTestimonios (que siempre muestra la tarjeta con estrellas/avatar,
+// aunque sea de a una en variante "carousel"), acá es solo la cita + persona,
+// sin chrome de tarjeta, pensado para un tono más editorial que de reseña.
+function SeccionCitasRotativas({
+  citas = [],
+  onAddCita,
+  onRemoveCita,
+  onUpdateCita,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  accent,
+  palette = {},
+}) {
+  const [idx, setIdx] = useState(0);
+  const current = Math.min(idx, Math.max(citas.length - 1, 0));
+
+  useEffect(() => {
+    if (editable || citas.length < 2) return undefined;
+    const timer = setInterval(() => setIdx((i) => (i + 1) % citas.length), 5200);
+    return () => clearInterval(timer);
+  }, [editable, citas.length]);
+
+  const add = () =>
+    onAddCita?.({ id: `cita-${Date.now()}`, frase: 'Escribí acá la cita de un cliente.', persona: 'Nombre', ciudad: '' });
+
+  if (citas.length === 0 && !editable) return null;
+  const activa = citas[current];
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+      <div className="max-w-2xl mx-auto text-center">
+        <Editable
+          editable={editable}
+          value={eyebrow ?? 'Nos escriben'}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="citas.eyebrow"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.18em] mb-7"
+          maxLength={40}
+        />
+        {activa ? (
+          <>
+            <div className="relative min-h-[5.5rem] flex items-center justify-center">
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onRemoveCita?.(activa.id);
+                    setIdx(0);
+                  }}
+                  aria-label="Quitar esta cita"
+                  className="absolute -top-1 right-0 opacity-50 hover:opacity-100 transition-opacity"
+                  style={{ color: palette.ink }}
+                >
+                  <XIcon className="w-4 h-4" />
+                </button>
+              )}
+              <Editable
+                editable={editable}
+                value={activa.frase}
+                onChange={(v) => onUpdateCita?.(activa.id, { frase: v })}
+                tag="p"
+                block
+                multiline
+                styleKey={`cita.${activa.id}.frase`}
+                placeholder="Cita del cliente"
+                style={{ color: palette.ink }}
+                className="font-serif italic text-xl @lg:text-2xl leading-relaxed"
+                maxLength={200}
+              />
+            </div>
+            <div className="font-mono text-sm mt-7" style={{ color: palette.inkSoft }}>
+              <Editable
+                editable={editable}
+                value={activa.persona}
+                onChange={(v) => onUpdateCita?.(activa.id, { persona: v })}
+                tag="span"
+                placeholder="Nombre"
+                maxLength={40}
+              />
+              {(activa.ciudad || editable) && ' · '}
+              <Editable
+                editable={editable}
+                value={activa.ciudad}
+                onChange={(v) => onUpdateCita?.(activa.id, { ciudad: v })}
+                tag="span"
+                placeholder="Ciudad"
+                maxLength={30}
+              />
+            </div>
+            {citas.length > 1 && (
+              <div className="flex justify-center gap-1.5 mt-7">
+                {citas.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setIdx(i)}
+                    aria-label={`Ver cita ${i + 1}`}
+                    className="h-[5px] transition-all"
+                    style={{ width: i === current ? '22px' : '5px', background: i === current ? accent : palette.line }}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-sm" style={{ color: palette.inkSoft }}>
+            Todavía no cargaste ninguna cita.
+          </p>
+        )}
+      </div>
+      {editable && (
+        <div className="max-w-2xl mx-auto mt-6 text-center">
+          <button
+            type="button"
+            onClick={add}
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide border px-3 py-2 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-3.5 h-3.5" /> Agregar cita
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Filas de label/valor completamente libres (no 3 campos fijos como
+// SeccionContacto variant="directo") + una foto al lado — para cuando el
+// negocio quiere mostrar información puntual (horario de visitas, zona de
+// envíos) que no encaja en el molde fijo "dirección/contacto/horarios".
+function SeccionVisitaTaller({
+  filas = [],
+  onAddFila,
+  onRemoveFila,
+  onUpdateFila,
+  imagen,
+  onUpdateImagen,
+  mapaSimulado = false,
+  imagenPrimero = false,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  accent,
+  palette = {},
+}) {
+  const update = (id, patch) => onUpdateFila?.(id, patch);
+  const remove = (id) => onRemoveFila?.(id);
+  const add = () => onAddFila?.({ id: `visita-${Date.now()}`, label: 'Dato', value: 'Detalle' });
+
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+  };
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-10 @lg:gap-12 items-start">
+        <div className={imagenPrimero ? '@lg:order-2' : ''}>
+          <Editable
+            editable={editable}
+            value={eyebrow ?? 'Visitá el taller'}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="visita-taller.eyebrow"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          {(titulo || descripcion || editable) && (
+            <>
+              <Editable
+                editable={editable}
+                value={titulo}
+                onChange={onUpdateTitulo}
+                tag="h2"
+                block
+                styleKey="visita-taller.titulo"
+                placeholder="Título (opcional)"
+                style={{ color: headingColor || palette.ink }}
+                className="font-serif text-2xl @lg:text-3xl mb-3 leading-tight"
+                maxLength={90}
+              />
+              <Editable
+                editable={editable}
+                value={descripcion}
+                onChange={onUpdateDescripcion}
+                tag="p"
+                block
+                multiline
+                styleKey="visita-taller.descripcion"
+                placeholder="Descripción (opcional)"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed mb-5"
+                maxLength={220}
+              />
+            </>
+          )}
+          <div className="flex flex-col gap-5">
+            {filas.map((f) => (
+              <div key={f.id} className="relative">
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => remove(f.id)}
+                    aria-label="Quitar fila"
+                    className="absolute top-0 right-0 opacity-50 hover:opacity-100 transition-opacity"
+                    style={{ color: palette.ink }}
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <Editable
+                  editable={editable}
+                  value={f.label}
+                  onChange={(v) => update(f.id, { label: v })}
+                  tag="span"
+                  placeholder="Etiqueta (ej: Taller)"
+                  style={{ color: palette.inkSoft }}
+                  className="font-mono text-[10px] uppercase tracking-wide mb-0.5 block"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={f.value}
+                  onChange={(v) => update(f.id, { value: v })}
+                  tag="span"
+                  placeholder="Detalle"
+                  style={{ color: palette.ink }}
+                  className="text-[0.98rem] block"
+                  maxLength={100}
+                />
+              </div>
+            ))}
+          </div>
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide border px-3 py-2 transition-colors mt-5"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-3.5 h-3.5" /> Agregar dato
+            </button>
+          )}
+        </div>
+        {mapaSimulado ? (
+          <div
+            className={`w-full min-h-[220px] flex items-center justify-center ${imagenPrimero ? '@lg:order-1' : ''}`}
+            style={{ background: palette.line }}
+          >
+            <span className="font-mono text-xs uppercase" style={{ color: palette.inkSoft }}>
+              Mapa (simulado)
+            </span>
+          </div>
+        ) : (
+          <label
+            className={`relative block w-full aspect-[4/3] bg-black/5 overflow-hidden ${imagenPrimero ? '@lg:order-1' : ''} ${editable ? 'cursor-pointer' : ''}`}
+            title={editable ? 'Cambiar foto' : undefined}
+          >
+            {imagen ? (
+              <img src={imagen} alt="" className="w-full h-full object-cover" style={{ filter: 'contrast(1.03) saturate(0.96)' }} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
+              </div>
+            )}
+            {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />}
+          </label>
+        )}
       </div>
     </section>
   );

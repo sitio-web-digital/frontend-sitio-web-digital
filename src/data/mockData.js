@@ -1032,6 +1032,61 @@ export const SECCIONES_CATALOGO = [
     desc: 'Grilla conectada por borde con título y descripción corta, sobre fondo oscuro — sin números ni fechas.',
   },
   {
+    id: 'proceso-taller',
+    label: 'Etapas de un proceso',
+    desc: 'Riel horizontal para deslizar con foto, número y descripción de cada etapa — cómo se hace algo, paso a paso.',
+  },
+  {
+    id: 'turnos',
+    label: 'Turnos con resumen',
+    desc: 'Wizard de 4 pasos (profesional, servicio, día, horario) con resumen y total en vivo, y confirmación por WhatsApp — para negocios con varios profesionales que atienden con turno.',
+  },
+  {
+    id: 'hero-barberia',
+    label: 'Portada con franja de disponibilidad',
+    desc: 'Título grande en mayúsculas, foto fija con una franja "Hoy · turnos libres" superpuesta abajo, y una fila de estadísticas.',
+  },
+  {
+    id: 'precios-barberia',
+    label: 'Lista de precios numerada',
+    desc: 'Cada servicio en su propia fila numerada, con nombre, descripción corta, duración y precio.',
+  },
+  {
+    id: 'barberos',
+    label: 'Equipo (foto grande + bio)',
+    desc: 'Foto de cuerpo entero, nombre en mayúsculas, especialidad y años, y una bio corta — para presentar a cada profesional.',
+  },
+  {
+    id: 'reviews-barberia',
+    label: 'Reseñas con estrellas',
+    desc: 'Tarjetas horizontales para deslizar, con estrellas, cita y quién la escribió.',
+  },
+  {
+    id: 'footer-barberia',
+    label: 'Footer en una fila',
+    desc: 'Nombre, links de contacto y el crédito, todo en una sola línea — para nombres de marca cortos.',
+  },
+  {
+    id: 'artesanas',
+    label: 'Personas del equipo (con firma)',
+    desc: 'Plaqueta de iniciales + nombre + oficio, bio y un detalle distintivo ("firma"), en tarjetas con altura escalonada.',
+  },
+  {
+    id: 'ferias',
+    label: 'Ferias / eventos donde estás',
+    desc: 'Lista de fechas con nombre, lugar y una etiqueta de estado (próxima / confirmada) — para negocios que participan de ferias o mercados.',
+  },
+  {
+    id: 'citas-rotativas',
+    label: 'Cita única rotativa',
+    desc: 'Una sola frase de cliente por vez, grande e itálica, con puntos para navegar y cambio automático — más editorial que una reseña con estrellas.',
+  },
+  {
+    id: 'visita-taller',
+    label: 'Datos + foto (libre)',
+    desc: 'Filas de dato/valor completamente libres (no un formulario fijo) junto a una foto — para horarios de visita, zona de envíos, etc.',
+  },
+  {
     id: 'estadisticas',
     label: 'Números / estadísticas',
     desc: 'Una fila de números grandes (años, clientes, unidades vendidas) que suman de 0 al valor real al entrar en pantalla.',
