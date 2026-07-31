@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.21.0',
+    date: '2026-07-31',
+    changes: [
+      { type: 'nuevo', text: 'Admin > Términos y Condiciones: nueva sección para editar el texto completo (antes hardcodeado en el código) como un solo campo, con la fecha de "Última actualización" que se pisa sola en cada guardado. TermsGate ahora lo carga en vivo desde ahí.' },
+    ],
+  },
+  {
     version: '1.20.5',
     date: '2026-07-31',
     changes: [

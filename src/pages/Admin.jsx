@@ -24,6 +24,8 @@ import {
   apiAdminDeleteRubro,
   apiAdminGetSupportUnread,
   apiAdminMarkSupportSeen,
+  apiGetTerms,
+  apiAdminUpdateTerms,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
@@ -38,6 +40,7 @@ const NAV_ITEMS = [
   { id: 'suscripciones', label: 'Suscripciones' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'soporte', label: 'Soporte' },
+  { id: 'terminos', label: 'Términos y Condiciones' },
   { id: 'versiones', label: 'Versiones' },
 ];
 
@@ -312,6 +315,7 @@ export default function Admin() {
               }
             />
           )}
+          {section === 'terminos' && <TerminosSection />}
           {section === 'versiones' && <VersionesSection />}
         </div>
       </div>
@@ -1585,6 +1589,87 @@ function VersionModal({ entry, onClose, onVerTodas }) {
 // actualiza a mano cada vez que se hace un cambio o arreglo. Ver también
 // VersionModal más arriba, que muestra el mismo tipo de aviso una vez por
 // versión nueva.
+// Texto legal que ve cualquiera en TermsGate.jsx antes de aceptar (anónimo o
+// logueado) — un solo campo de texto plano, sin secciones separadas ni
+// formato especial: el admin escribe el documento entero acá mismo, tal
+// como se muestra. `updated_at` lo pisa el backend en cada guardado, nunca
+// se manda desde acá — así "Última actualización" siempre refleja el
+// guardado real, no lo que alguien tipeó.
+function TerminosSection() {
+  const [content, setContent] = useState('');
+  const [savedContent, setSavedContent] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    apiGetTerms().then((result) => {
+      setContent(result.content);
+      setSavedContent(result.content);
+      setUpdatedAt(result.updatedAt);
+      setLoading(false);
+    });
+  }, []);
+
+  const dirty = content !== savedContent;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setStatus(null);
+    const result = await apiAdminUpdateTerms(content);
+    setBusy(false);
+    if (result.ok) {
+      setSavedContent(result.content);
+      setUpdatedAt(result.updatedAt);
+      setStatus({ type: 'ok', msg: 'Términos actualizados.' });
+    } else {
+      setStatus({ type: 'error', msg: result.error || 'No se pudo guardar.' });
+    }
+  };
+
+  return (
+    <Panel title="Términos y Condiciones">
+      {loading ? (
+        <p className="text-sm text-ink-400">Cargando...</p>
+      ) : (
+        <form onSubmit={submit} className="space-y-3">
+          <div>
+            <label className="block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5">
+              Texto completo
+            </label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={22}
+              className="w-full border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors resize-y leading-relaxed"
+              placeholder="Escribí acá el texto completo de los Términos y Condiciones..."
+            />
+          </div>
+          {updatedAt && (
+            <p className="text-xs text-ink-500">
+              Última actualización:{' '}
+              {new Date(updatedAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })} a
+              las {new Date(updatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}.
+            </p>
+          )}
+          {status && (
+            <p className={`text-sm ${status.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{status.msg}</p>
+          )}
+          <button
+            type="submit"
+            disabled={!dirty || busy || !content.trim()}
+            className="px-4 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none"
+          >
+            {busy ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </form>
+      )}
+    </Panel>
+  );
+}
+
 function VersionesSection() {
   return (
     <Panel title="Versiones">

@@ -485,6 +485,23 @@ export async function apiAcceptTerms({ sessionId }) {
   return request('/terms/accept', { method: 'POST', body: { sessionId }, token: getToken() });
 }
 
+// Público, sin auth — el texto vigente de los Términos y Condiciones que
+// carga TermsGate.jsx en cada visita (anónima o logueada, todos ven lo
+// mismo). `content` es texto plano (Admin lo edita como un solo campo).
+export async function apiGetTerms() {
+  const result = await request('/terms');
+  return result.ok ? { content: result.content, updatedAt: result.updatedAt } : { content: '', updatedAt: null };
+}
+
+// Admin > Términos y Condiciones: guarda el texto nuevo — el backend pisa
+// `updated_at` solo, nunca se manda desde acá.
+export async function apiAdminUpdateTerms(content) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  const result = await request('/admin/terms', { method: 'PUT', body: { content }, token });
+  return result.ok ? { ok: true, content: result.content, updatedAt: result.updatedAt } : result;
+}
+
 // Descarga de reportes en PDF (Admin > Analytics/Leads): a diferencia del
 // resto de la API, esto no devuelve JSON — arma un blob con la respuesta y
 // dispara la descarga con un <a> temporal, porque un <a href> común no
