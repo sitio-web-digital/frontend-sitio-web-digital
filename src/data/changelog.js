@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.28.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Portada (Hero) "Armá el tuyo": ahora los objetos (título, texto, botón, etc.) se pueden arrastrar para moverlos, no solo con los botones subir/bajar — incluye pasarlos de una zona a otra (ej. de la columna de texto a la de imagen) cuando el tipo de objeto lo permite. Mientras se arrastra, se resalta qué zonas lo aceptan y cuál no.' },
+    ],
+  },
+  {
     version: '1.27.0',
     date: '2026-08-01',
     changes: [

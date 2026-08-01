@@ -2316,6 +2316,7 @@ function ItemToolbar({
   onDuplicate,
   onToggleOculto,
   onRemove,
+  onDragStart,
   removeLabel = 'Quitar',
   color,
   className = '',
@@ -2329,6 +2330,17 @@ function ItemToolbar({
       className={`flex items-center shrink-0 ${isOverlay ? 'gap-0.5 rounded-full bg-navy-950/80 backdrop-blur px-1 py-0.5' : 'gap-0.5'} ${className}`}
       style={isOverlay ? undefined : { color: color || 'currentColor' }}
     >
+      {onDragStart && (
+        <button
+          type="button"
+          onPointerDown={onDragStart}
+          aria-label="Arrastrar para mover"
+          title="Arrastrar para mover"
+          className={`${btnClass} cursor-grab active:cursor-grabbing touch-none`}
+        >
+          <DragHandleIcon className="w-3 h-3" />
+        </button>
+      )}
       {onMoveUp && (
         <button type="button" onClick={onMoveUp} disabled={!canMoveUp} aria-label="Mover arriba" title="Mover arriba" className={btnClass}>
           <ChevronUpIcon className="w-3 h-3" />
@@ -2559,7 +2571,127 @@ function AddObjectButton({ allowedTypes = [], onAdd, fullWidth = true }) {
 // y cuántos como máximo) — nunca posicionamiento libre. Este componente es
 // el que evita la duplicación de código a futuro: cualquier sección que
 // adopte Zonas reusa el mismo renderer, solo cambian `allowedTypes`/`maxObjetos`.
+// Arrastrar un objeto entre zonas (o reordenarlo dentro de la misma) —
+// coordina el estado de arrastre entre todas las Zonas de una sección, algo
+// que cada ZoneRenderer no puede saber por sí solo (no ve a sus hermanas).
+// Se llama UNA vez por sección (nunca adentro de un `if (variant === ...)`,
+// rompería las reglas de hooks) y el resultado se reparte a cada ZoneRenderer.
+//
+// `zonasConfig`: [{ key, allowedTypes, maxObjetos }] — mismos límites que ya
+// recibe cada ZoneRenderer, acá se repiten para poder validar el destino
+// mientras se arrastra, antes de soltar.
+function useZonasDragDrop(zonasConfig, zonasData, onUpdateZonas) {
+  const [drag, setDrag] = useState(null); // { objetoId, tipo, fromZona, overZona } — solo para pintar
+  // `dragRef` es la fuente de verdad para leer EN el momento de soltar: en
+  // modo desarrollo, React (StrictMode) invoca dos veces el callback de un
+  // `setState(prev => ...)` para detectar efectos impuros — como acá el
+  // "efecto" es escribir la nueva posición del objeto, leerlo desde un state
+  // updater duplicaría el drop. Con un ref no hay ambigüedad: se lee una sola
+  // vez, fuera de cualquier updater.
+  const dragRef = useRef(null);
+  const itemRefs = useRef({});
+  // `data-zona` se marca como "<instancia>:<zonaKey>" — si dos secciones con
+  // Zonas conviven en la misma página (ej. tras "Duplicar sección"), sin este
+  // prefijo un arrastre podría detectar y soltar en la zona de la OTRA
+  // sección, ya que `document.elementFromPoint` no sabe de qué instancia es.
+  const instanceIdRef = useRef(`zdd-${Math.random().toString(36).slice(2, 9)}`);
+
+  const getObjetos = (key) => zonasData?.[key]?.objetos ?? [];
+
+  const isValidZona = (key, tipo, fromZona) => {
+    const cfg = zonasConfig.find((z) => z.key === key);
+    if (!cfg) return false;
+    if (!cfg.allowedTypes.includes(tipo)) return false;
+    if (key === fromZona) return true;
+    return getObjetos(key).length < (cfg.maxObjetos ?? 8);
+  };
+
+  // Mismo mecanismo que el reordenamiento de secciones (ver computeOverIndex
+  // más arriba en este archivo): compara la posición Y del puntero contra el
+  // punto medio de cada ítem ya renderizado para decidir dónde caería.
+  const computeOverIndex = (zonaKey, clientY) => {
+    const objetos = getObjetos(zonaKey);
+    let idx = objetos.length;
+    for (let i = 0; i < objetos.length; i++) {
+      const el = itemRefs.current[`${zonaKey}:${objetos[i].id}`];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) {
+        idx = i;
+        break;
+      }
+    }
+    return idx;
+  };
+
+  const moveAcross = (fromZona, toZona, objetoId, targetIndex) => {
+    const fromObjetos = getObjetos(fromZona);
+    const idx = fromObjetos.findIndex((o) => o.id === objetoId);
+    if (idx === -1) return;
+    const objeto = fromObjetos[idx];
+    if (fromZona === toZona) {
+      const next = [...fromObjetos];
+      next.splice(idx, 1);
+      const insertAt = targetIndex > idx ? targetIndex - 1 : targetIndex;
+      next.splice(Math.max(0, Math.min(insertAt, next.length)), 0, objeto);
+      onUpdateZonas({ ...zonasData, [fromZona]: { objetos: next } });
+    } else {
+      const nextFrom = fromObjetos.filter((o) => o.id !== objetoId);
+      const nextTo = [...getObjetos(toZona)];
+      nextTo.splice(Math.max(0, Math.min(targetIndex, nextTo.length)), 0, objeto);
+      onUpdateZonas({ ...zonasData, [fromZona]: { objetos: nextFrom }, [toZona]: { objetos: nextTo } });
+    }
+  };
+
+  const startDrag = (fromZona, objeto) => (e) => {
+    e.preventDefault();
+    const initial = { objetoId: objeto.id, tipo: objeto.tipo, fromZona, overZona: fromZona };
+    dragRef.current = initial;
+    setDrag(initial);
+    document.body.style.userSelect = 'none';
+
+    const onMove = (ev) => {
+      const hoveredEl = document.elementFromPoint(ev.clientX, ev.clientY);
+      const zonaEl = hoveredEl?.closest?.('[data-zona]');
+      const raw = zonaEl?.getAttribute('data-zona') ?? '';
+      const [rawInstance, rawKey] = raw.split(':');
+      const hovered = rawInstance === instanceIdRef.current ? rawKey : undefined;
+      if (!dragRef.current) return;
+      const overZona = hovered && isValidZona(hovered, dragRef.current.tipo, dragRef.current.fromZona) ? hovered : null;
+      dragRef.current = { ...dragRef.current, overZona };
+      setDrag(dragRef.current);
+    };
+    const onUp = (ev) => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      document.body.style.userSelect = '';
+      const current = dragRef.current;
+      dragRef.current = null;
+      setDrag(null);
+      if (current?.overZona) {
+        moveAcross(current.fromZona, current.overZona, current.objetoId, computeOverIndex(current.overZona, ev.clientY));
+      }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  return {
+    instanceId: instanceIdRef.current,
+    dragging: !!drag,
+    dragObjetoId: drag?.objetoId,
+    overZona: drag?.overZona,
+    isValidZona: (key) => (drag ? isValidZona(key, drag.tipo, drag.fromZona) : false),
+    registerItemRef: (zonaKey, id) => (el) => {
+      itemRefs.current[`${zonaKey}:${id}`] = el;
+    },
+    startDrag,
+  };
+}
+
 function ZoneRenderer({
+  zonaKey,
+  dnd,
   objetos = [],
   onChange,
   allowedTypes = [],
@@ -2596,10 +2728,34 @@ function ZoneRenderer({
 
   const visibles = editable ? objetos : objetos.filter((o) => !o.oculto);
 
+  // Mientras se arrastra un objeto: la zona bajo el puntero se resalta fuerte
+  // (destino activo), las demás zonas que también lo aceptarían quedan con un
+  // resalte tenue (destinos posibles), y las que no lo aceptan se atenúan —
+  // la restricción se ve, no se descubre por prueba y error.
+  const isDragActive = !!dnd?.dragging;
+  const isOverThis = isDragActive && dnd.overZona === zonaKey;
+  const isValidTarget = isDragActive && dnd.isValidZona(zonaKey);
+  const zoneDragClass = !isDragActive
+    ? ''
+    : isOverThis
+      ? 'ring-2 ring-gold-500 ring-offset-2 bg-gold-500/5'
+      : isValidTarget
+        ? 'ring-1 ring-gold-500/30'
+        : 'opacity-30';
+
   return (
-    <div className={`flex flex-col gap-4 ${className}`}>
+    <div
+      data-zona={dnd ? `${dnd.instanceId}:${zonaKey}` : undefined}
+      className={`flex flex-col gap-4 rounded-lg transition-shadow ${zoneDragClass} ${className}`}
+    >
       {visibles.map((o, i, arr) => (
-        <div key={o.id} className={`relative group/objeto ${o.oculto ? 'opacity-40' : ''}`}>
+        <div
+          key={o.id}
+          ref={dnd?.registerItemRef?.(zonaKey, o.id)}
+          className={`relative group/objeto ${o.oculto ? 'opacity-40' : ''} ${
+            isDragActive && dnd.dragObjetoId === o.id ? 'opacity-30' : ''
+          }`}
+        >
           <ObjectRenderer
             objeto={o}
             editable={editable}
@@ -2625,6 +2781,7 @@ function ZoneRenderer({
                 onDuplicate={() => duplicate(o.id)}
                 onToggleOculto={() => toggleOculto(o.id)}
                 onRemove={() => remove(o.id)}
+                onDragStart={dnd ? dnd.startDrag(zonaKey, o) : undefined}
                 removeLabel={`Quitar ${OBJECT_TYPES[o.tipo]?.label?.toLowerCase() || 'objeto'}`}
               />
             </div>
@@ -5509,6 +5666,34 @@ function SeccionHero({
   const heroTargetDefaults = { whatsapp, telefono };
   const inkHex = palette.inkHex || '#171717';
 
+  // useZonasDragDrop se llama siempre (nunca adentro de un `if (variant ===
+  // ...)`, rompería las reglas de hooks) — la config de zonas depende de cuál
+  // de las 3 distribuciones de "Armá el tuyo" esté activa; para el resto de
+  // las 9 variantes viejas queda con un array vacío, sin efecto.
+  const ZONAS_CONFIG_BY_VARIANT = {
+    zonas: [
+      { key: 'izquierda', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 },
+      { key: 'derecha', allowedTypes: ['imagen'], maxObjetos: 1 },
+    ],
+    'zonas-centrado': [{ key: 'centro', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
+    'zonas-superpuesto': [{ key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
+  };
+  const ZONAS_DEFAULTS_BY_VARIANT = {
+    zonas: { izquierda: DEFAULT_ZONA_HERO_IZQUIERDA, derecha: DEFAULT_ZONA_HERO_DERECHA },
+    'zonas-centrado': { centro: DEFAULT_ZONA_HERO_CENTRO },
+    'zonas-superpuesto': { contenido: DEFAULT_ZONA_HERO_CONTENIDO },
+  };
+  // El contenido inicial (DEFAULT_ZONA_HERO_*) solo se usa para lo que se VE
+  // mientras `sec.zonas` sigue sin tocar (undefined) — pero el hook de
+  // arrastre necesita trabajar sobre esos mismos datos "resueltos", no sobre
+  // el `zonas` crudo (que puede no tener ninguna clave todavía), o calcula
+  // posiciones sobre un arreglo vacío y el drop no hace nada.
+  const zonasDefaults = ZONAS_DEFAULTS_BY_VARIANT[variant] ?? {};
+  const resolvedZonasData = Object.fromEntries(
+    Object.keys(zonasDefaults).map((key) => [key, { objetos: zonas?.[key]?.objetos ?? zonasDefaults[key] }])
+  );
+  const dnd = useZonasDragDrop(ZONAS_CONFIG_BY_VARIANT[variant] ?? [], resolvedZonasData, onUpdateZonas);
+
   // Los botones del Hero son objetos Botón con función editable (por defecto
   // WhatsApp / Ir a una sección), cada uno configurable desde su propio menú.
   const botones = (alignClass = 'justify-start') => (
@@ -5638,14 +5823,15 @@ function SeccionHero({
   // arma y ordena, dentro de límites por zona. Arranca con un set default la
   // primera vez que se elige esta distribución (nunca una zona vacía).
   if (variant === 'zonas') {
-    const zonasData = zonas || {};
-    const izquierda = zonasData.izquierda?.objetos ?? DEFAULT_ZONA_HERO_IZQUIERDA;
-    const derecha = zonasData.derecha?.objetos ?? DEFAULT_ZONA_HERO_DERECHA;
-    const updateZona = (key, objetos) => onUpdateZonas?.({ ...zonasData, [key]: { objetos } });
+    const izquierda = resolvedZonasData.izquierda.objetos;
+    const derecha = resolvedZonasData.derecha.objetos;
+    const updateZona = (key, objetos) => onUpdateZonas?.({ ...resolvedZonasData, [key]: { objetos } });
     return (
       <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
         <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1.15fr_0.85fr] gap-10 @lg:gap-16 items-center">
           <ZoneRenderer
+            zonaKey="izquierda"
+            dnd={dnd}
             objetos={izquierda}
             onChange={(next) => updateZona('izquierda', next)}
             allowedTypes={['badge', 'titulo', 'texto', 'boton']}
@@ -5661,6 +5847,8 @@ function SeccionHero({
             telefono={telefono}
           />
           <ZoneRenderer
+            zonaKey="derecha"
+            dnd={dnd}
             objetos={derecha}
             onChange={(next) => updateZona('derecha', next)}
             allowedTypes={['imagen']}
@@ -5677,13 +5865,14 @@ function SeccionHero({
   // "Armá el tuyo" centrado — una sola zona, todo apilado y centrado (mismo
   // espíritu que la variante "centro", pero armable con objetos).
   if (variant === 'zonas-centrado') {
-    const zonasData = zonas || {};
-    const centro = zonasData.centro?.objetos ?? DEFAULT_ZONA_HERO_CENTRO;
-    const updateZona = (next) => onUpdateZonas?.({ ...zonasData, centro: { objetos: next } });
+    const centro = resolvedZonasData.centro.objetos;
+    const updateZona = (next) => onUpdateZonas?.({ ...resolvedZonasData, centro: { objetos: next } });
     return (
       <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
         <div className="max-w-2xl mx-auto text-center">
           <ZoneRenderer
+            zonaKey="centro"
+            dnd={dnd}
             objetos={centro}
             onChange={updateZona}
             allowedTypes={['badge', 'titulo', 'texto', 'boton']}
@@ -5709,9 +5898,8 @@ function SeccionHero({
   // foto de fondo no es un objeto de zona, es una propiedad de la sección,
   // igual que en el resto de las variantes con foto de fondo).
   if (variant === 'zonas-superpuesto') {
-    const zonasData = zonas || {};
-    const contenido = zonasData.contenido?.objetos ?? DEFAULT_ZONA_HERO_CONTENIDO;
-    const updateZona = (next) => onUpdateZonas?.({ ...zonasData, contenido: { objetos: next } });
+    const contenido = resolvedZonasData.contenido.objetos;
+    const updateZona = (next) => onUpdateZonas?.({ ...resolvedZonasData, contenido: { objetos: next } });
     const heroImg = heroImagen || galeria?.[0];
     return (
       <section className="relative overflow-hidden px-6 @lg:px-10 py-20 @lg:py-32 flex items-end min-h-[420px]">
@@ -5729,6 +5917,8 @@ function SeccionHero({
         )}
         <div className="relative max-w-2xl">
           <ZoneRenderer
+            zonaKey="contenido"
+            dnd={dnd}
             objetos={contenido}
             onChange={updateZona}
             allowedTypes={['badge', 'titulo', 'texto', 'boton']}
