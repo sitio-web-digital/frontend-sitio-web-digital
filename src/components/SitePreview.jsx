@@ -568,6 +568,8 @@ export default function SitePreview({
                 onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
                 firma={sec.firma}
                 onUpdateFirma={(v) => onSetSectionStyle?.(sec.id, { firma: v })}
+                zonas={sec.zonas}
+                onUpdateZonas={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
               />
             )}
             {sec.type === 'footer' && (
@@ -6619,6 +6621,13 @@ function SeccionHeroBarberia({
 // "Sobre nosotros" en el nuevo lenguaje editorial es foto + frase distintiva
 // (quote en serif itálica) + texto de cuerpo — los datos de horarios/dirección/
 // teléfono ya no viven acá, son responsabilidad exclusiva de Contacto.
+const DEFAULT_ZONA_SOBRENOSOTROS_CONTENIDO = [
+  { id: 'zona-sn-1', tipo: 'badge', texto: 'Sobre nosotros' },
+  { id: 'zona-sn-2', tipo: 'titulo', texto: 'Una frase corta que resuma cómo trabajás' },
+  { id: 'zona-sn-3', tipo: 'texto', texto: 'Contá de qué se trata tu negocio.' },
+];
+const DEFAULT_ZONA_SOBRENOSOTROS_IMAGEN = [{ id: 'zona-sn-4', tipo: 'imagen', src: '' }];
+
 function SeccionSobreNosotros({
   variant = 'split',
   titulo,
@@ -6638,12 +6647,36 @@ function SeccionSobreNosotros({
   onUpdateImagen,
   firma,
   onUpdateFirma,
+  zonas,
+  onUpdateZonas,
 }) {
   const fondo = variant === 'fondo';
   // Si esta sección tiene su propia foto puesta a mano, esa gana — si no,
   // sigue mostrando la primera de la galería como hacía siempre (así ningún
   // sitio ya armado cambia por este agregado).
   const heroImg = imagen || galeria?.[0];
+
+  // Mismo mecanismo que SeccionHero: useZonasDragDrop se llama siempre (nunca
+  // adentro de un `if (variant === ...)`), la config depende de cuál de las 3
+  // distribuciones nuevas esté activa.
+  const ZONAS_CONFIG_BY_VARIANT_SN = {
+    zonas: [
+      { key: 'imagen', allowedTypes: ['imagen'], maxObjetos: 1 },
+      { key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 },
+    ],
+    'zonas-centrado': [{ key: 'centro', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
+    'zonas-superpuesto': [{ key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
+  };
+  const ZONAS_DEFAULTS_BY_VARIANT_SN = {
+    zonas: { imagen: DEFAULT_ZONA_SOBRENOSOTROS_IMAGEN, contenido: DEFAULT_ZONA_SOBRENOSOTROS_CONTENIDO },
+    'zonas-centrado': { centro: DEFAULT_ZONA_SOBRENOSOTROS_CONTENIDO },
+    'zonas-superpuesto': { contenido: DEFAULT_ZONA_SOBRENOSOTROS_CONTENIDO },
+  };
+  const zonasDefaultsSN = ZONAS_DEFAULTS_BY_VARIANT_SN[variant] ?? {};
+  const resolvedZonasDataSN = Object.fromEntries(
+    Object.keys(zonasDefaultsSN).map((key) => [key, { objetos: zonas?.[key]?.objetos ?? zonasDefaultsSN[key] }])
+  );
+  const dndSN = useZonasDragDrop(ZONAS_CONFIG_BY_VARIANT_SN[variant] ?? [], resolvedZonasDataSN, onUpdateZonas);
   const handleImagen = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -6710,6 +6743,109 @@ function SeccionSobreNosotros({
         maxLength={40}
       />
     );
+
+  // "Armá el tuyo" — imagen a un lado, zona de contenido al otro (mismo
+  // espíritu que "split", pero con objetos armables en vez de campos fijos).
+  if (variant === 'zonas') {
+    const imagenObjetos = resolvedZonasDataSN.imagen.objetos;
+    const contenidoObjetos = resolvedZonasDataSN.contenido.objetos;
+    const updateZona = (key, next) => onUpdateZonas?.({ ...resolvedZonasDataSN, [key]: { objetos: next } });
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-6xl mx-auto grid @lg:grid-cols-[0.85fr_1.15fr] gap-10 @lg:gap-16 items-center">
+          <ZoneRenderer
+            zonaKey="imagen"
+            dnd={dndSN}
+            objetos={imagenObjetos}
+            onChange={(next) => updateZona('imagen', next)}
+            allowedTypes={['imagen']}
+            maxObjetos={1}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+          />
+          <ZoneRenderer
+            zonaKey="contenido"
+            dnd={dndSN}
+            objetos={contenidoObjetos}
+            onChange={(next) => updateZona('contenido', next)}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor={headingColor}
+            textColor={textColor}
+          />
+        </div>
+      </section>
+    );
+  }
+
+  // "Armá el tuyo" centrado — una sola zona, todo apilado y centrado.
+  if (variant === 'zonas-centrado') {
+    const centroObjetos = resolvedZonasDataSN.centro.objetos;
+    const updateZona = (next) => onUpdateZonas?.({ ...resolvedZonasDataSN, centro: { objetos: next } });
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-2xl mx-auto text-center">
+          <ZoneRenderer
+            zonaKey="centro"
+            dnd={dndSN}
+            objetos={centroObjetos}
+            onChange={updateZona}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor={headingColor}
+            textColor={textColor}
+          />
+        </div>
+      </section>
+    );
+  }
+
+  // "Armá el tuyo" con foto de fondo — misma foto (`imagen`/`handleImagen`,
+  // ya definidos arriba) que usa "fondo", pero con una zona de contenido
+  // armable en vez de campos fijos.
+  if (variant === 'zonas-superpuesto') {
+    const contenidoObjetos = resolvedZonasDataSN.contenido.objetos;
+    const updateZona = (next) => onUpdateZonas?.({ ...resolvedZonasDataSN, contenido: { objetos: next } });
+    const fondoStyleZonas = heroImg
+      ? {
+          backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.75), rgba(0,0,0,.35)), url(${heroImg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }
+      : { background: palette.ink };
+    return (
+      <section className="relative px-6 @lg:px-10 py-16 @lg:py-24 overflow-hidden" style={fondoStyleZonas}>
+        <div className="relative max-w-2xl mx-auto text-center">
+          <ZoneRenderer
+            zonaKey="contenido"
+            dnd={dndSN}
+            objetos={contenidoObjetos}
+            onChange={updateZona}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor="#ffffff"
+            textColor="rgba(255,255,255,0.82)"
+          />
+          {editable && (
+            <label className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer">
+              <ImageIcon className="w-3.5 h-3.5" /> {heroImg ? 'Cambiar fondo' : 'Agregar foto de fondo'}
+              <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+            </label>
+          )}
+        </div>
+      </section>
+    );
+  }
 
   if (fondo) {
     const fondoStyle = heroImg

@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.29.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Sobre Nosotros: sus 3 distribuciones (Texto + datos, Centrado, Imagen de fondo) ahora también existen en versión "Armá el tuyo" — contenido armable con objetos que se pueden agregar, duplicar, ocultar y arrastrar, igual que en el Hero. Las viejas fijas siguen disponibles debajo, sin cambios.' },
+      { type: 'mejora', text: 'Selector de distribución del Hero: las 3 opciones de "Armá el tuyo" ahora aparecen arriba, agrupadas como "Distribuciones", y las 9 de siempre quedan abajo agrupadas como "Distribuciones fijas" — mismo criterio que se va a usar en el resto de las secciones.' },
+    ],
+  },
+  {
     version: '1.28.0',
     date: '2026-08-01',
     changes: [
