@@ -1151,6 +1151,7 @@ export const SECTION_VARIANTS = {
     { id: 'destacado', label: 'Foto + producto destacado', skeleton: 'heroVidriera' },
     { id: 'duo', label: 'Dos fotos', skeleton: 'heroDuo' },
     { id: 'centro', label: 'Todo centrado, sin foto', skeleton: 'heroCentro' },
+    { id: 'zonas', label: 'Armá el tuyo (Beta)', skeleton: 'split' },
   ],
   galeria: [
     { id: 'grid', label: 'Grilla', skeleton: 'grid4' },
@@ -1245,6 +1246,20 @@ export const SECTION_VARIANTS = {
     { id: 'grid', label: 'Grilla', skeleton: 'grid3' },
     { id: 'lista', label: 'Lista', skeleton: 'centered' },
   ],
+};
+
+// Catálogo de "objetos" que se pueden agregar dentro de una Zona (ver
+// variante "zonas" de Hero) — primer paso del sistema de Zonas + Objetos:
+// en vez de una distribución fija por sección, el usuario arma el
+// contenido eligiendo qué objetos van y en qué orden, dentro de límites
+// por zona (ver `allowedTypes`/`maxObjetos` en SeccionHero). El ícono se
+// resuelve por nombre en SitePreview.jsx (mismo patrón que ICON_LIBRARY).
+export const OBJECT_TYPES = {
+  titulo: { label: 'Título', icon: 'TypeIcon' },
+  texto: { label: 'Texto', icon: 'AlignLeftIcon' },
+  boton: { label: 'Botón', icon: 'LinkIcon' },
+  imagen: { label: 'Imagen', icon: 'ImageIcon' },
+  badge: { label: 'Etiqueta', icon: 'TagIcon' },
 };
 
 // Contenido de ejemplo con el que arranca cada tipo de sección con lista propia

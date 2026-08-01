@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.26.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Portada (Hero): nueva distribución "Armá el tuyo (Beta)" — en vez de una portada con campos fijos, se arma agregando, duplicando, reordenando y ocultando bloques sueltos (título, texto, botón, etiqueta, imagen) dentro de dos zonas con límites propios. Primer paso del sistema de Zonas y Objetos.' },
+    ],
+  },
+  {
     version: '1.25.0',
     date: '2026-08-01',
     changes: [

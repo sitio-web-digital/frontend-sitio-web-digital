@@ -238,6 +238,14 @@ export function TypeIcon({ className = 'w-4 h-4' }) {
   );
 }
 
+export function AlignLeftIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="M4 6h16M4 12h10M4 18h13" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function WidgetsIcon({ className = 'w-4 h-4' }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">

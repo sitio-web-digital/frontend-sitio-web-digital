@@ -50,11 +50,14 @@ import {
   EyeIcon,
   EyeOffIcon,
   CopyIcon,
+  TypeIcon,
+  AlignLeftIcon,
 } from './icons';
 import {
   SECCIONES_CATALOGO,
   SECCIONES_UNICAS,
   SECTION_VARIANTS,
+  OBJECT_TYPES,
   FONT_OPTIONS,
   ICON_LIBRARY,
   BUTTON_FUNCTIONS,
@@ -503,6 +506,8 @@ export default function SitePreview({
                 onUpdateDestacado={(v) => onSetSectionStyle?.(sec.id, { destacado: v })}
                 destacadoEtiqueta={sec.destacadoEtiqueta}
                 onUpdateDestacadoEtiqueta={(v) => onSetSectionStyle?.(sec.id, { destacadoEtiqueta: v })}
+                zonas={sec.zonas}
+                onUpdateZonas={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -2344,6 +2349,272 @@ function ItemToolbar({
           <XIcon className="w-3 h-3" />
         </button>
       )}
+    </div>
+  );
+}
+
+// Resuelve por nombre el ícono de cada tipo de objeto (ver OBJECT_TYPES en
+// mockData.js) — mismo patrón que ICON_COMPONENTS, pero con las claves en
+// PascalCase porque acá no son elegibles por el usuario, solo decoran el
+// menú de "Agregar objeto".
+const OBJECT_TYPE_ICON_COMPONENTS = { TypeIcon, AlignLeftIcon, LinkIcon, ImageIcon, TagIcon };
+
+function defaultObjetoData(tipo) {
+  switch (tipo) {
+    case 'titulo':
+      return { texto: 'Título' };
+    case 'texto':
+      return { texto: 'Escribí un texto breve.' };
+    case 'badge':
+      return { texto: 'Etiqueta' };
+    case 'boton':
+      return { label: 'Botón', funcion: 'whatsapp' };
+    case 'imagen':
+      return { src: '' };
+    default:
+      return {};
+  }
+}
+
+// Un objeto individual dentro de una Zona — cada `tipo` envuelve un
+// componente que YA existe (Editable, ButtonObject, el mismo flujo de
+// subida de foto que usa el Hero clásico) en vez de reinventar el campo:
+// la ganancia de Zonas+Objetos es la composición, no un editor de texto
+// nuevo.
+function ObjectRenderer({
+  objeto,
+  editable,
+  onUpdate,
+  palette = {},
+  accent,
+  headingColor,
+  textColor,
+  seccionesDisponibles = [],
+  nombreNegocio,
+  whatsapp,
+  telefono,
+}) {
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdate({ src: await uploadImage(file) });
+  };
+
+  if (objeto.tipo === 'titulo') {
+    return (
+      <Editable
+        editable={editable}
+        value={objeto.texto}
+        onChange={(v) => onUpdate({ texto: v })}
+        tag="h1"
+        block
+        multiline
+        styleKey={`objeto.${objeto.id}.texto`}
+        placeholder="Título"
+        style={{ color: headingColor || palette.ink }}
+        className="font-serif text-4xl @lg:text-5xl leading-[1.05] tracking-tight"
+        maxLength={80}
+      />
+    );
+  }
+  if (objeto.tipo === 'texto') {
+    return (
+      <Editable
+        editable={editable}
+        value={objeto.texto}
+        onChange={(v) => onUpdate({ texto: v })}
+        tag="p"
+        block
+        multiline
+        styleKey={`objeto.${objeto.id}.texto`}
+        placeholder="Texto"
+        style={{ color: textColor || palette.inkSoft }}
+        className="text-base leading-relaxed"
+        maxLength={220}
+      />
+    );
+  }
+  if (objeto.tipo === 'badge') {
+    return (
+      <Editable
+        editable={editable}
+        value={objeto.texto}
+        onChange={(v) => onUpdate({ texto: v })}
+        tag="span"
+        block
+        styleKey={`objeto.${objeto.id}.texto`}
+        placeholder="Etiqueta"
+        style={{ color: accent }}
+        className="font-mono text-xs uppercase tracking-[0.16em]"
+        maxLength={40}
+      />
+    );
+  }
+  if (objeto.tipo === 'boton') {
+    return (
+      <ButtonObject
+        value={objeto}
+        onChange={onUpdate}
+        editable={editable}
+        seccionesDisponibles={seccionesDisponibles}
+        nombreNegocio={nombreNegocio}
+        defaultColor={palette.inkHex || '#171717'}
+        defaultLabel="Botón"
+        defaultFuncion="whatsapp"
+        defaultTarget={whatsapp || telefono}
+      />
+    );
+  }
+  if (objeto.tipo === 'imagen') {
+    return (
+      <label
+        className={`relative block w-full aspect-[4/5] bg-black/5 overflow-hidden group/imgobj ${editable ? 'cursor-pointer' : ''}`}
+        title={editable ? 'Cambiar foto' : undefined}
+      >
+        {objeto.src ? (
+          <img src={objeto.src} alt="" className="w-full h-full object-cover" style={{ filter: 'grayscale(0.15) contrast(1.05)' }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+            {editable ? 'Subí una foto' : ''}
+          </div>
+        )}
+        {editable && (
+          <>
+            <span className="absolute inset-0 bg-black/0 group-hover/imgobj:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/imgobj:opacity-100">
+              <span className="text-white text-xs font-semibold">Cambiar foto</span>
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+          </>
+        )}
+      </label>
+    );
+  }
+  return null;
+}
+
+// Botón "+ Agregar objeto" con menú de tipos permitidos — mismo patrón que
+// AgregarRutaButton (botón punteado + popover que se cierra clickeando afuera).
+function AddObjectButton({ allowedTypes = [], onAdd, fullWidth = true }) {
+  const [open, setOpen] = useState(false);
+  const options = allowedTypes.map((tipo) => ({ tipo, ...OBJECT_TYPES[tipo] })).filter((o) => o.label);
+  if (options.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-dashed border-black/20 text-neutral-500 hover:border-gold-500 hover:text-gold-600 px-3.5 py-2 text-sm font-semibold transition-colors ${
+          fullWidth ? 'w-full' : ''
+        }`}
+      >
+        <PlusIcon className="w-3.5 h-3.5" /> Agregar objeto
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute z-40 mt-1 left-0 w-48 rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5">
+            {options.map((o) => {
+              const Icon = OBJECT_TYPE_ICON_COMPONENTS[o.icon];
+              return (
+                <button
+                  key={o.tipo}
+                  type="button"
+                  onClick={() => {
+                    onAdd(o.tipo);
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-2 text-sm text-neutral-700 hover:bg-neutral-50 rounded-lg transition-colors"
+                >
+                  {Icon && <Icon className="w-4 h-4 text-neutral-400 shrink-0" />}
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Una Zona: lista ordenable de Objetos con límites propios (qué tipos entran
+// y cuántos como máximo) — nunca posicionamiento libre. Este componente es
+// el que evita la duplicación de código a futuro: cualquier sección que
+// adopte Zonas reusa el mismo renderer, solo cambian `allowedTypes`/`maxObjetos`.
+function ZoneRenderer({
+  objetos = [],
+  onChange,
+  allowedTypes = [],
+  maxObjetos = 8,
+  editable,
+  palette = {},
+  accent,
+  headingColor,
+  textColor,
+  seccionesDisponibles = [],
+  nombreNegocio,
+  whatsapp,
+  telefono,
+  className = '',
+}) {
+  const update = (id, patch) => onChange(objetos.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+  const remove = (id) => onChange(objetos.filter((o) => o.id !== id));
+  const duplicate = (id) => {
+    const idx = objetos.findIndex((o) => o.id === id);
+    if (idx === -1) return;
+    const copy = { ...objetos[idx], id: `objeto-${Date.now()}` };
+    onChange([...objetos.slice(0, idx + 1), copy, ...objetos.slice(idx + 1)]);
+  };
+  const move = (id, direction) => {
+    const idx = objetos.findIndex((o) => o.id === id);
+    const swapIdx = idx + direction;
+    if (idx === -1 || swapIdx < 0 || swapIdx >= objetos.length) return;
+    const next = [...objetos];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    onChange(next);
+  };
+  const toggleOculto = (id) => update(id, { oculto: !objetos.find((o) => o.id === id)?.oculto });
+  const add = (tipo) => onChange([...objetos, { id: `objeto-${Date.now()}`, tipo, ...defaultObjetoData(tipo) }]);
+
+  const visibles = editable ? objetos : objetos.filter((o) => !o.oculto);
+
+  return (
+    <div className={`flex flex-col gap-4 ${className}`}>
+      {visibles.map((o, i, arr) => (
+        <div key={o.id} className={`relative group/objeto ${o.oculto ? 'opacity-40' : ''}`}>
+          <ObjectRenderer
+            objeto={o}
+            editable={editable}
+            onUpdate={(patch) => update(o.id, patch)}
+            palette={palette}
+            accent={accent}
+            headingColor={headingColor}
+            textColor={textColor}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
+          />
+          {editable && (
+            <div className="absolute -top-2 -right-2 opacity-0 group-hover/objeto:opacity-100 transition-opacity">
+              <ItemToolbar
+                variant="overlay"
+                oculto={o.oculto}
+                canMoveUp={i > 0}
+                canMoveDown={i < arr.length - 1}
+                onMoveUp={() => move(o.id, -1)}
+                onMoveDown={() => move(o.id, 1)}
+                onDuplicate={() => duplicate(o.id)}
+                onToggleOculto={() => toggleOculto(o.id)}
+                onRemove={() => remove(o.id)}
+                removeLabel={`Quitar ${OBJECT_TYPES[o.tipo]?.label?.toLowerCase() || 'objeto'}`}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+      {editable && objetos.length < maxObjetos && <AddObjectButton allowedTypes={allowedTypes} onAdd={add} />}
     </div>
   );
 }
@@ -5151,6 +5422,18 @@ function CountdownBoxes({ fechaEvento, accent, palette = {} }) {
   );
 }
 
+// Set inicial de la variante "zonas" — nunca una zona vacía la primera vez
+// que se elige esta distribución. Los ids son fijos (no `Date.now()`) porque
+// se usan una sola vez, al armar el default; una vez guardados en la sección
+// pasan a vivir en `sec.zonas` como cualquier otro objeto.
+const DEFAULT_ZONA_HERO_IZQUIERDA = [
+  { id: 'zona-hero-1', tipo: 'badge', texto: 'Categoría · desde cuándo' },
+  { id: 'zona-hero-2', tipo: 'titulo', texto: 'Título grande de tu negocio' },
+  { id: 'zona-hero-3', tipo: 'texto', texto: 'Una descripción breve de lo que ofrecés.' },
+  { id: 'zona-hero-4', tipo: 'boton', label: 'Escribinos', funcion: 'whatsapp' },
+];
+const DEFAULT_ZONA_HERO_DERECHA = [{ id: 'zona-hero-5', tipo: 'imagen', src: '' }];
+
 function SeccionHero({
   variant = 'centrado',
   nombreNegocio,
@@ -5191,6 +5474,8 @@ function SeccionHero({
   onUpdateDestacado,
   destacadoEtiqueta,
   onUpdateDestacadoEtiqueta,
+  zonas,
+  onUpdateZonas,
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
   const inkHex = palette.inkHex || '#171717';
@@ -5318,6 +5603,47 @@ function SeccionHero({
       {captionBox()}
     </div>
   );
+
+  // "Armá el tuyo" — primera sección con Zonas + Objetos (ver ZoneRenderer):
+  // en vez de campos fijos, cada mitad es una lista de objetos que el usuario
+  // arma y ordena, dentro de límites por zona. Arranca con un set default la
+  // primera vez que se elige esta distribución (nunca una zona vacía).
+  if (variant === 'zonas') {
+    const zonasData = zonas || {};
+    const izquierda = zonasData.izquierda?.objetos ?? DEFAULT_ZONA_HERO_IZQUIERDA;
+    const derecha = zonasData.derecha?.objetos ?? DEFAULT_ZONA_HERO_DERECHA;
+    const updateZona = (key, objetos) => onUpdateZonas?.({ ...zonasData, [key]: { objetos } });
+    return (
+      <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1.15fr_0.85fr] gap-10 @lg:gap-16 items-center">
+          <ZoneRenderer
+            objetos={izquierda}
+            onChange={(next) => updateZona('izquierda', next)}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor={headingColor}
+            textColor={textColor}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
+          />
+          <ZoneRenderer
+            objetos={derecha}
+            onChange={(next) => updateZona('derecha', next)}
+            allowedTypes={['imagen']}
+            maxObjetos={1}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+          />
+        </div>
+      </section>
+    );
+  }
 
   // Dos fotos — texto a la izquierda, dos fotos fijas lado a lado a la
   // derecha (las dos primeras de la galería) en vez de una sola imagen
