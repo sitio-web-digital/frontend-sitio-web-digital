@@ -4040,15 +4040,22 @@ function HoverFlyout({ trigger, children, align = 'left', panelClassName = 'w-44
 // de aviso) no había aire arriba del campo, y el menú quedaba recortado por
 // el `overflow-hidden` del marco del editor — acá se mide el alto ya
 // renderizado y, si no entra arriba, se abre hacia abajo.
-function TextStyleToolbar({ styleKey, anchorRef }) {
+function TextStyleToolbar({ styleKey, anchorEl }) {
   const { textStyles, onSetTextStyle } = useContext(TextStyleCtx);
   const current = textStyles[styleKey] || {};
   const [iconOpen, setIconOpen] = useState(false);
   const toolbarRef = useRef(null);
   const [posStyle, setPosStyle] = useState({ position: 'fixed', top: -9999, left: -9999, visibility: 'hidden' });
 
+  // `anchorEl` es un nodo del DOM en estado (no un ref "crudo"): el span
+  // ancla es PADRE de esta toolbar en el árbol, y React comita refs/layout
+  // effects de abajo hacia arriba (hijos antes que padres) — con un ref
+  // crudo, este efecto corría antes de que el ref del padre se asignara y
+  // nunca se repetía (la dependencia era el objeto ref, que nunca cambia de
+  // identidad). Al recibir el nodo ya resuelto como prop, la dependencia sí
+  // cambia de null al nodo real y el efecto se vuelve a correr.
   useLayoutEffect(() => {
-    const anchor = anchorRef?.current;
+    const anchor = anchorEl;
     const panel = toolbarRef.current;
     if (!anchor || !panel) return;
     const anchorRect = anchor.getBoundingClientRect();
@@ -4059,7 +4066,7 @@ function TextStyleToolbar({ styleKey, anchorRef }) {
     const top = openBelow ? anchorRect.bottom + gap : Math.max(8, anchorRect.top - rect.height - gap);
     const left = Math.min(Math.max(anchorRect.left, 8), Math.max(8, window.innerWidth - rect.width - 8));
     setPosStyle({ position: 'fixed', top, left, visibility: 'visible' });
-  }, [anchorRef]);
+  }, [anchorEl]);
   const hasOverride = !!(
     current.fontFamily ||
     current.color ||
@@ -4309,7 +4316,7 @@ function Editable({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? '');
-  const editAnchorRef = useRef(null);
+  const [editAnchorEl, setEditAnchorEl] = useState(null);
   // Todo texto editable tiene un tope de caracteres — si el que llama no pasó
   // uno puntual, se usa un default razonable según sea de una línea o un
   // párrafo, así ninguna sección se puede llenar de texto interminable.
@@ -4382,8 +4389,8 @@ function Editable({
     // inline) — evita que el input, con w-full, quede adentro de un contenedor
     // que se encoge a su contenido y termine con un ancho circular/impredecible.
     return (
-      <span ref={editAnchorRef} className="relative block w-full">
-        {styleKey && <TextStyleToolbar styleKey={styleKey} anchorRef={editAnchorRef} />}
+      <span ref={setEditAnchorEl} className="relative block w-full">
+        {styleKey && <TextStyleToolbar styleKey={styleKey} anchorEl={editAnchorEl} />}
         {multiline ? <textarea rows={3} {...commonProps} /> : <input type={type} {...commonProps} />}
       </span>
     );

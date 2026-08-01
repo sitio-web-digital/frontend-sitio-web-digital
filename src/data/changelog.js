@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.24.1',
+    date: '2026-08-01',
+    changes: [
+      { type: 'fix', text: 'El menú de formato de texto (fuente, color, negrita, link, ícono) había dejado de aparecer al tocar cualquier texto editable. Era un bug de orden de montaje de React: el ancla del menú es un elemento padre, y su referencia todavía no estaba lista cuando el menú calculaba dónde ubicarse.' },
+    ],
+  },
+  {
     version: '1.24.0',
     date: '2026-07-31',
     changes: [
