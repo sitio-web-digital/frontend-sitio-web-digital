@@ -53,6 +53,7 @@ export default function Editor() {
     sections,
     addSection,
     removeSection,
+    duplicateSection,
     moveSection,
     reorderSection,
     setSectionStyle,
@@ -399,6 +400,7 @@ export default function Editor() {
             onShuffleGallery={shuffleGallery}
             onAddSection={addSection}
             onRemoveSection={removeSection}
+            onDuplicateSection={duplicateSection}
             onMoveSection={moveSection}
             onReorderSection={reorderSection}
             onSetSectionStyle={setSectionStyle}

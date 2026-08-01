@@ -245,6 +245,7 @@ export default function SitePreview({
   onLogoChange,
   onAddSection,
   onRemoveSection,
+  onDuplicateSection,
   onMoveSection,
   onAddProducto,
   onRemoveProducto,
@@ -432,6 +433,7 @@ export default function SitePreview({
             onMoveUp={() => onMoveSection?.(sec.id, -1)}
             onMoveDown={() => onMoveSection?.(sec.id, 1)}
             onRemove={() => onRemoveSection?.(sec.id)}
+            onDuplicate={SECCIONES_UNICAS.includes(sec.type) ? undefined : () => onDuplicateSection?.(sec.id)}
             onDragStart={startDrag(sec.id)}
             type={sec.type}
             variant={sec.variant}
@@ -2138,6 +2140,7 @@ function SectionShell({
   onMoveUp,
   onMoveDown,
   onRemove,
+  onDuplicate,
   onDragStart,
   type,
   variant,
@@ -2238,6 +2241,20 @@ function SectionShell({
         >
           <PaletteIcon className="w-3.5 h-3.5" />
         </button>
+        {onDuplicate && (
+          <>
+            <div className="w-px h-4 bg-white/15" />
+            <button
+              type="button"
+              onClick={onDuplicate}
+              aria-label="Duplicar sección"
+              title="Duplicar sección"
+              className="text-white/70 hover:text-white transition-colors p-1.5"
+            >
+              <CopyIcon className="w-3.5 h-3.5" />
+            </button>
+          </>
+        )}
         <div className="w-px h-4 bg-white/15" />
         <button
           type="button"
@@ -5433,6 +5450,18 @@ const DEFAULT_ZONA_HERO_IZQUIERDA = [
   { id: 'zona-hero-4', tipo: 'boton', label: 'Escribinos', funcion: 'whatsapp' },
 ];
 const DEFAULT_ZONA_HERO_DERECHA = [{ id: 'zona-hero-5', tipo: 'imagen', src: '' }];
+const DEFAULT_ZONA_HERO_CENTRO = [
+  { id: 'zona-hero-centro-1', tipo: 'badge', texto: 'Categoría · desde cuándo' },
+  { id: 'zona-hero-centro-2', tipo: 'titulo', texto: 'Título grande de tu negocio' },
+  { id: 'zona-hero-centro-3', tipo: 'texto', texto: 'Una descripción breve de lo que ofrecés.' },
+  { id: 'zona-hero-centro-4', tipo: 'boton', label: 'Escribinos', funcion: 'whatsapp' },
+];
+const DEFAULT_ZONA_HERO_CONTENIDO = [
+  { id: 'zona-hero-contenido-1', tipo: 'badge', texto: 'Categoría · desde cuándo' },
+  { id: 'zona-hero-contenido-2', tipo: 'titulo', texto: 'Título grande de tu negocio' },
+  { id: 'zona-hero-contenido-3', tipo: 'texto', texto: 'Una descripción breve de lo que ofrecés.' },
+  { id: 'zona-hero-contenido-4', tipo: 'boton', label: 'Escribinos', funcion: 'whatsapp' },
+];
 
 function SeccionHero({
   variant = 'centrado',
@@ -5640,6 +5669,86 @@ function SeccionHero({
             palette={palette}
             accent={accent}
           />
+        </div>
+      </section>
+    );
+  }
+
+  // "Armá el tuyo" centrado — una sola zona, todo apilado y centrado (mismo
+  // espíritu que la variante "centro", pero armable con objetos).
+  if (variant === 'zonas-centrado') {
+    const zonasData = zonas || {};
+    const centro = zonasData.centro?.objetos ?? DEFAULT_ZONA_HERO_CENTRO;
+    const updateZona = (next) => onUpdateZonas?.({ ...zonasData, centro: { objetos: next } });
+    return (
+      <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-2xl mx-auto text-center">
+          <ZoneRenderer
+            objetos={centro}
+            onChange={updateZona}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor={headingColor}
+            textColor={textColor}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
+          />
+        </div>
+      </section>
+    );
+  }
+
+  // "Armá el tuyo" con foto de fondo — una sola zona superpuesta a una foto
+  // a pantalla completa (mismo patrón de foto que la variante "fondo": se
+  // sube desde `heroImagen`/`handleHeroImagen`, ya definidos arriba — la
+  // foto de fondo no es un objeto de zona, es una propiedad de la sección,
+  // igual que en el resto de las variantes con foto de fondo).
+  if (variant === 'zonas-superpuesto') {
+    const zonasData = zonas || {};
+    const contenido = zonasData.contenido?.objetos ?? DEFAULT_ZONA_HERO_CONTENIDO;
+    const updateZona = (next) => onUpdateZonas?.({ ...zonasData, contenido: { objetos: next } });
+    const heroImg = heroImagen || galeria?.[0];
+    return (
+      <section className="relative overflow-hidden px-6 @lg:px-10 py-20 @lg:py-32 flex items-end min-h-[420px]">
+        {heroImg ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.4) 60%, rgba(0,0,0,.15) 100%), url(${heroImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0" style={{ background: palette.ink }} />
+        )}
+        <div className="relative max-w-2xl">
+          <ZoneRenderer
+            objetos={contenido}
+            onChange={updateZona}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor="#ffffff"
+            textColor="rgba(255,255,255,0.82)"
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
+          />
+          {editable && (
+            <label className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer">
+              <ImageIcon className="w-3.5 h-3.5" /> {heroImg ? 'Cambiar fondo' : 'Agregar foto de fondo'}
+              <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+            </label>
+          )}
         </div>
       </section>
     );

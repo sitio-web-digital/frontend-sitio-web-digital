@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.27.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Cualquier sección se puede duplicar (ícono nuevo en su barra de controles) — útil para armar variantes rápido, ej. dos "Productos" con distinta distribución.' },
+      { type: 'nuevo', text: 'Portada (Hero) "Armá el tuyo": ahora tiene 3 distribuciones (imagen + texto, centrado, foto de fondo) en vez de una sola, todas armables con los mismos objetos.' },
+    ],
+  },
+  {
     version: '1.26.0',
     date: '2026-08-01',
     changes: [

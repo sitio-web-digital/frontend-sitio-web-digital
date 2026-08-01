@@ -510,6 +510,40 @@ export function AppProvider({ children }) {
     setSections((prev) => prev.filter((s) => s.id !== id));
   };
 
+  // Regenera recursivamente cualquier campo `id` en objetos anidados (pasos,
+  // beneficios, zonas.objetos, etc. — todo lo que viva como array de
+  // {id, ...} adentro de una sección) para que la copia no comparta esos ids
+  // con el original: los estilos de texto por ítem (negrita/color/fuente) se
+  // guardan en textStyles bajo una clave `tipo.<id>.campo`, y si dos secciones
+  // comparten el mismo id ahí, tocar el estilo de una tocaría la otra.
+  const regenerateNestedIds = (value) => {
+    if (Array.isArray(value)) return value.map(regenerateNestedIds);
+    if (value && typeof value === 'object') {
+      const next = {};
+      for (const [k, v] of Object.entries(value)) next[k] = regenerateNestedIds(v);
+      if (typeof next.id === 'string') next.id = `${next.id}-${Math.random().toString(36).slice(2, 8)}`;
+      return next;
+    }
+    return value;
+  };
+
+  // Duplicar toda una sección (no un ítem suelto de sus listas, ver
+  // duplicateListItem) — la copia queda justo después de la original, ya
+  // seleccionable para editar. Header/footer quedan afuera por la misma
+  // razón que no se pueden agregar dos veces (ver SECCIONES_UNICAS).
+  const duplicateSection = (id) => {
+    setSections((prev) => {
+      const idx = prev.findIndex((s) => s.id === id);
+      if (idx === -1) return prev;
+      const original = prev[idx];
+      if (SECCIONES_UNICAS.includes(original.type)) return prev;
+      const copy = { ...regenerateNestedIds(original), id: `${original.type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+      const next = [...prev];
+      next.splice(idx + 1, 0, copy);
+      return next;
+    });
+  };
+
   const moveSection = (id, direction) => {
     setSections((prev) => {
       const idx = prev.findIndex((s) => s.id === id);
@@ -1053,6 +1087,7 @@ export function AppProvider({ children }) {
     sections,
     addSection,
     removeSection,
+    duplicateSection,
     moveSection,
     reorderSection,
     setSectionStyle,

@@ -1151,7 +1151,9 @@ export const SECTION_VARIANTS = {
     { id: 'destacado', label: 'Foto + producto destacado', skeleton: 'heroVidriera' },
     { id: 'duo', label: 'Dos fotos', skeleton: 'heroDuo' },
     { id: 'centro', label: 'Todo centrado, sin foto', skeleton: 'heroCentro' },
-    { id: 'zonas', label: 'Armá el tuyo (Beta)', skeleton: 'split' },
+    { id: 'zonas', label: 'Imagen + texto', skeleton: 'split', group: 'Armá el tuyo (Beta)' },
+    { id: 'zonas-centrado', label: 'Centrado', skeleton: 'heroCentro', group: 'Armá el tuyo (Beta)' },
+    { id: 'zonas-superpuesto', label: 'Foto de fondo', skeleton: 'heroFondo', group: 'Armá el tuyo (Beta)' },
   ],
   galeria: [
     { id: 'grid', label: 'Grilla', skeleton: 'grid4' },
