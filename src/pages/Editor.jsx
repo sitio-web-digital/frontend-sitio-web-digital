@@ -79,6 +79,9 @@ export default function Editor() {
     addListItem,
     removeListItem,
     updateListItem,
+    duplicateListItem,
+    moveListItem,
+    toggleListItemOculto,
     widgets,
     toggleWidget,
     setWidgetOption,
@@ -421,6 +424,9 @@ export default function Editor() {
             onAddListItem={addListItem}
             onRemoveListItem={removeListItem}
             onUpdateListItem={updateListItem}
+            onDuplicateListItem={duplicateListItem}
+            onMoveListItem={moveListItem}
+            onToggleListItemOculto={toggleListItemOculto}
             widgets={widgets}
             textStyles={textStyles}
             onSetTextStyle={setTextStyle}

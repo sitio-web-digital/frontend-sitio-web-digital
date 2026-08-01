@@ -90,6 +90,15 @@ export function EyeOffIcon({ className = 'w-4 h-4' }) {
   );
 }
 
+export function CopyIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden="true">
+      <rect x="8" y="8" width="13" height="13" rx="1.5" />
+      <path d="M16 8V5.5A1.5 1.5 0 0014.5 4H4.5A1.5 1.5 0 003 5.5v10A1.5 1.5 0 004.5 17H8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function TrashIcon({ className = 'w-4 h-4' }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">

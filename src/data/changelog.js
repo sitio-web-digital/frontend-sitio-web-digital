@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.25.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Editor: los ítems de listas (productos, testimonios, precios, equipo, menú, marcas, preguntas frecuentes y novedades) ahora se pueden duplicar, subir/bajar de orden y ocultar sin borrarlos — antes solo se podían quitar. Primer paso hacia un editor menos rígido.' },
+    ],
+  },
+  {
     version: '1.24.1',
     date: '2026-08-01',
     changes: [

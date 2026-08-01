@@ -47,6 +47,9 @@ import {
   ClipboardIcon,
   LightbulbIcon,
   UrgentBoltIcon,
+  EyeIcon,
+  EyeOffIcon,
+  CopyIcon,
 } from './icons';
 import {
   SECCIONES_CATALOGO,
@@ -261,6 +264,9 @@ export default function SitePreview({
   onAddListItem,
   onRemoveListItem,
   onUpdateListItem,
+  onDuplicateListItem,
+  onMoveListItem,
+  onToggleListItemOculto,
   onShuffleGallery,
   onReorderSection,
   onSetSectionStyle,
@@ -618,6 +624,9 @@ export default function SitePreview({
                 onUpdateProducto={onUpdateProducto}
                 onAddProductoImagen={onAddProductoImagen}
                 onRemoveProductoImagen={onRemoveProductoImagen}
+                onDuplicateProducto={(id) => onDuplicateListItem?.('productos', id)}
+                onMoveProducto={(id, dir) => onMoveListItem?.('productos', id, dir)}
+                onToggleOcultoProducto={(id) => onToggleListItemOculto?.('productos', id)}
                 nombreNegocio={nombreNegocio}
                 whatsapp={whatsapp}
                 seccionesDisponibles={sections
@@ -664,6 +673,9 @@ export default function SitePreview({
                 onAddTestimonio={onAddTestimonio}
                 onRemoveTestimonio={onRemoveTestimonio}
                 onUpdateTestimonio={onUpdateTestimonio}
+                onDuplicateTestimonio={(id) => onDuplicateListItem?.('testimonios', id)}
+                onMoveTestimonio={(id, dir) => onMoveListItem?.('testimonios', id, dir)}
+                onToggleOcultoTestimonio={(id) => onToggleListItemOculto?.('testimonios', id)}
                 onConnectVerifiedReviews={onConnectVerifiedReviews}
               />
             )}
@@ -682,6 +694,9 @@ export default function SitePreview({
                 onAddFAQ={onAddFAQ}
                 onRemoveFAQ={onRemoveFAQ}
                 onUpdateFAQ={onUpdateFAQ}
+                onDuplicateFAQ={(id) => onDuplicateListItem?.('faqs', id)}
+                onMoveFAQ={(id, dir) => onMoveListItem?.('faqs', id, dir)}
+                onToggleOcultoFAQ={(id) => onToggleListItemOculto?.('faqs', id)}
                 onAddFaqImagenes={(urls) => onSetSectionStyle?.(sec.id, { faqImagenes: [...(sec.faqImagenes ?? []), ...urls] })}
                 onRemoveFaqImagen={(i) =>
                   onSetSectionStyle?.(sec.id, { faqImagenes: (sec.faqImagenes ?? []).filter((_, idx) => idx !== i) })
@@ -1450,6 +1465,9 @@ export default function SitePreview({
                 onAddPlan={(item) => onAddListItem?.('planes', item)}
                 onRemovePlan={(id) => onRemoveListItem?.('planes', id)}
                 onUpdatePlan={(id, patch) => onUpdateListItem?.('planes', id, patch)}
+                onDuplicatePlan={(id) => onDuplicateListItem?.('planes', id)}
+                onMovePlan={(id, dir) => onMoveListItem?.('planes', id, dir)}
+                onToggleOcultoPlan={(id) => onToggleListItemOculto?.('planes', id)}
                 nombreNegocio={nombreNegocio}
                 whatsapp={whatsapp}
                 seccionesDisponibles={sections
@@ -1471,6 +1489,9 @@ export default function SitePreview({
                 onAddMember={(item) => onAddListItem?.('equipo', item)}
                 onRemoveMember={(id) => onRemoveListItem?.('equipo', id)}
                 onUpdateMember={(id, patch) => onUpdateListItem?.('equipo', id, patch)}
+                onDuplicateMember={(id) => onDuplicateListItem?.('equipo', id)}
+                onMoveMember={(id, dir) => onMoveListItem?.('equipo', id, dir)}
+                onToggleOcultoMember={(id) => onToggleListItemOculto?.('equipo', id)}
               />
             )}
             {sec.type === 'cta' && (
@@ -1513,6 +1534,8 @@ export default function SitePreview({
                 onAddItem={(item) => onAddListItem?.('menuItems', item)}
                 onRemoveItem={(id) => onRemoveListItem?.('menuItems', id)}
                 onUpdateItem={(id, patch) => onUpdateListItem?.('menuItems', id, patch)}
+                onDuplicateItem={(id) => onDuplicateListItem?.('menuItems', id)}
+                onToggleOcultoItem={(id) => onToggleListItemOculto?.('menuItems', id)}
               />
             )}
             {sec.type === 'marcas' && (
@@ -1526,6 +1549,8 @@ export default function SitePreview({
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 onAddLogos={(urls) => urls.forEach((url) => onAddListItem?.('marcas', { imagen: url }))}
                 onRemoveLogo={(id) => onRemoveListItem?.('marcas', id)}
+                onDuplicateLogo={(id) => onDuplicateListItem?.('marcas', id)}
+                onToggleOcultoLogo={(id) => onToggleListItemOculto?.('marcas', id)}
               />
             )}
             {sec.type === 'mapa' && (
@@ -1554,6 +1579,9 @@ export default function SitePreview({
                 onAddPost={(item) => onAddListItem?.('posts', item)}
                 onRemovePost={(id) => onRemoveListItem?.('posts', id)}
                 onUpdatePost={(id, patch) => onUpdateListItem?.('posts', id, patch)}
+                onDuplicatePost={(id) => onDuplicateListItem?.('posts', id)}
+                onMovePost={(id, dir) => onMoveListItem?.('posts', id, dir)}
+                onToggleOcultoPost={(id) => onToggleListItemOculto?.('posts', id)}
               />
             )}
             {sec.type === 'categorias' && (
@@ -2245,6 +2273,76 @@ function SectionShell({
       )}
       {openPanel === 'help' && (
         <SectionHelpPopover type={type} anchorRef={toolbarRef} align={compact ? 'center' : 'end'} onClose={closePanel} />
+      )}
+    </div>
+  );
+}
+
+// Barra de acciones para UN ítem dentro de una lista (producto, testimonio,
+// integrante del equipo, etc.) — subir, bajar, duplicar, ocultar y quitar.
+// `variant="overlay"` es una píldora oscura semitransparente para tarjetas
+// con foto de fondo (mismo lenguaje que la barra de SectionShell, pero a
+// escala de ítem); `variant="inline"` es una fila de íconos sueltos sin
+// fondo, para tarjetas de solo texto que ya usan `opacity-40 hover:opacity-100`.
+function ItemToolbar({
+  variant = 'overlay',
+  oculto,
+  canMoveUp = true,
+  canMoveDown = true,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onToggleOculto,
+  onRemove,
+  removeLabel = 'Quitar',
+  color,
+  className = '',
+}) {
+  const isOverlay = variant === 'overlay';
+  const btnClass = isOverlay
+    ? 'w-6 h-6 flex items-center justify-center text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none'
+    : 'w-6 h-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity disabled:opacity-10 disabled:pointer-events-none';
+  return (
+    <div
+      className={`flex items-center shrink-0 ${isOverlay ? 'gap-0.5 rounded-full bg-navy-950/80 backdrop-blur px-1 py-0.5' : 'gap-0.5'} ${className}`}
+      style={isOverlay ? undefined : { color: color || 'currentColor' }}
+    >
+      {onMoveUp && (
+        <button type="button" onClick={onMoveUp} disabled={!canMoveUp} aria-label="Mover arriba" title="Mover arriba" className={btnClass}>
+          <ChevronUpIcon className="w-3 h-3" />
+        </button>
+      )}
+      {onMoveDown && (
+        <button type="button" onClick={onMoveDown} disabled={!canMoveDown} aria-label="Mover abajo" title="Mover abajo" className={btnClass}>
+          <ChevronDownIcon className="w-3 h-3" />
+        </button>
+      )}
+      {onDuplicate && (
+        <button type="button" onClick={onDuplicate} aria-label="Duplicar" title="Duplicar" className={btnClass}>
+          <CopyIcon className="w-3 h-3" />
+        </button>
+      )}
+      {onToggleOculto && (
+        <button
+          type="button"
+          onClick={onToggleOculto}
+          aria-label={oculto ? 'Mostrar en la página' : 'Ocultar de la página'}
+          title={oculto ? 'Mostrar en la página' : 'Ocultar de la página'}
+          className={btnClass}
+        >
+          {oculto ? <EyeOffIcon className="w-3 h-3" /> : <EyeIcon className="w-3 h-3" />}
+        </button>
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={removeLabel}
+          title={removeLabel}
+          className={`${btnClass} hover:text-red-400`}
+        >
+          <XIcon className="w-3 h-3" />
+        </button>
       )}
     </div>
   );
@@ -6894,6 +6992,9 @@ function SeccionProductos({
   onUpdateProducto,
   onAddProductoImagen,
   onRemoveProductoImagen,
+  onDuplicateProducto,
+  onMoveProducto,
+  onToggleOcultoProducto,
   nombreNegocio,
   whatsapp,
   seccionesDisponibles = [],
@@ -6922,8 +7023,9 @@ function SeccionProductos({
   };
 
   const categorias = Array.from(new Set(productos.map((p) => p.categoria).filter(Boolean)));
+  const productosVisibles = editable ? productos : productos.filter((p) => !p.oculto);
   const productosFiltrados =
-    categoriaFiltro === 'Todos' ? productos : productos.filter((p) => p.categoria === categoriaFiltro);
+    categoriaFiltro === 'Todos' ? productosVisibles : productosVisibles.filter((p) => p.categoria === categoriaFiltro);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -6962,11 +7064,11 @@ function SeccionProductos({
         </p>
       ) : variant === 'bento' ? (
         <div className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-3 auto-rows-[140px] @lg:auto-rows-[180px] gap-3 @lg:gap-4">
-          {productos.map((p, i) => (
+          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
             <div
               key={p.id}
-              className={`relative overflow-hidden group/bento ${
-                i === 0 ? 'col-span-2 row-span-2' : ''
+              className={`relative overflow-hidden group/bento ${i === 0 ? 'col-span-2 row-span-2' : ''} ${
+                p.oculto ? 'opacity-40' : ''
               }`}
               style={{ background: 'rgba(0,0,0,0.05)' }}
             >
@@ -7027,14 +7129,20 @@ function SeccionProductos({
                 />
               </div>
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveProducto?.(p.id)}
-                  aria-label={`Quitar ${p.nombre}`}
-                  className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/bento:opacity-100 transition-opacity"
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2 opacity-0 group-hover/bento:opacity-100 transition-opacity">
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                    onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                    onDuplicate={() => onDuplicateProducto?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                    onRemove={() => onRemoveProducto?.(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
+                </div>
               )}
             </div>
           ))}
@@ -7072,8 +7180,12 @@ function SeccionProductos({
         </div>
       ) : variant === 'fila' ? (
         <div className="max-w-3xl mx-auto flex flex-col">
-          {productos.map((p) => (
-            <div key={p.id} className="flex items-center gap-5 py-5 border-b" style={{ borderColor: palette.line }}>
+          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
+            <div
+              key={p.id}
+              className={`flex items-center gap-5 py-5 border-b ${p.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: palette.line }}
+            >
               <label
                 className={`relative shrink-0 w-24 h-24 @lg:w-28 @lg:h-28 bg-black/5 flex items-center justify-center ${
                   editable ? 'cursor-pointer' : ''
@@ -7145,15 +7257,19 @@ function SeccionProductos({
                   className="font-mono font-bold text-base @lg:text-lg whitespace-nowrap"
                 />
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => onRemoveProducto?.(p.id)}
-                    aria-label={`Quitar ${p.nombre}`}
-                    className="opacity-40 hover:opacity-100 transition-opacity"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </button>
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                    onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                    onDuplicate={() => onDuplicateProducto?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                    onRemove={() => onRemoveProducto?.(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
                 )}
               </div>
             </div>
@@ -7192,18 +7308,28 @@ function SeccionProductos({
         </div>
       ) : variant === 'lista' ? (
         <div className="max-w-5xl mx-auto grid @lg:grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-0">
-          {productos.map((p) => (
-            <div key={p.id} className="relative border-r border-b pr-7 pb-7 mr-7 mb-7" style={{ borderColor: palette.line }}>
+          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
+            <div
+              key={p.id}
+              className={`relative border-r border-b pr-7 pb-7 mr-7 mb-7 ${p.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: palette.line }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveProducto?.(p.id)}
-                  aria-label={`Quitar ${p.nombre}`}
-                  className="absolute top-0 right-0 opacity-40 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                <div className="absolute top-0 right-0">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                    onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                    onDuplicate={() => onDuplicateProducto?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                    onRemove={() => onRemoveProducto?.(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
+                </div>
               )}
               <label
                 className={`relative block w-full aspect-square bg-black/5 mb-4 flex items-center justify-center ${
@@ -7308,18 +7434,28 @@ function SeccionProductos({
         </div>
       ) : variant === 'servicios' ? (
         <div className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-4 gap-4">
-          {productos.map((p) => (
-            <div key={p.id} className="relative border p-5 flex flex-col gap-1" style={{ borderColor: palette.line }}>
+          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
+            <div
+              key={p.id}
+              className={`relative border p-5 flex flex-col gap-1 ${p.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: palette.line }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveProducto?.(p.id)}
-                  aria-label={`Quitar ${p.nombre}`}
-                  className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                    onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                    onDuplicate={() => onDuplicateProducto?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                    onRemove={() => onRemoveProducto?.(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
+                </div>
               )}
               <Editable
                 editable={editable}
@@ -7468,15 +7604,17 @@ function SeccionProductos({
                   </label>
                   <div className="pt-4 relative">
                     {editable && (
-                      <button
-                        type="button"
-                        onClick={() => onRemoveProducto?.(featured.id)}
-                        aria-label={`Quitar ${featured.nombre}`}
-                        className="absolute top-3 right-0 opacity-50 hover:opacity-100 transition-opacity"
-                        style={{ color: palette.ink }}
-                      >
-                        <XIcon className="w-4 h-4" />
-                      </button>
+                      <div className="absolute top-3 right-0">
+                        <ItemToolbar
+                          variant="inline"
+                          color={palette.ink}
+                          oculto={featured.oculto}
+                          onDuplicate={() => onDuplicateProducto?.(featured.id)}
+                          onToggleOculto={() => onToggleOcultoProducto?.(featured.id)}
+                          onRemove={() => onRemoveProducto?.(featured.id)}
+                          removeLabel={`Quitar ${featured.nombre}`}
+                        />
+                      </div>
                     )}
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <span className="font-mono text-[10px] uppercase tracking-wide" style={{ color: accent }}>
@@ -7545,14 +7683,16 @@ function SeccionProductos({
                 {rest.map((p) => (
                   <div key={p.id} className="relative flex flex-col">
                     {editable && (
-                      <button
-                        type="button"
-                        onClick={() => onRemoveProducto?.(p.id)}
-                        aria-label={`Quitar ${p.nombre}`}
-                        className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-                      >
-                        <XIcon className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="absolute top-2 right-2 z-10">
+                        <ItemToolbar
+                          variant="overlay"
+                          oculto={p.oculto}
+                          onDuplicate={() => onDuplicateProducto?.(p.id)}
+                          onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                          onRemove={() => onRemoveProducto?.(p.id)}
+                          removeLabel={`Quitar ${p.nombre}`}
+                        />
+                      </div>
                     )}
                     <label
                       className={`relative block w-full aspect-square bg-black/5 mb-3 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
@@ -7677,17 +7817,23 @@ function SeccionProductos({
             </div>
           )}
           <div className="grid grid-cols-2 @lg:grid-cols-4 gap-x-5 gap-y-8">
-            {productosFiltrados.map((p) => (
-              <div key={p.id} className="relative flex flex-col text-left">
+            {productosFiltrados.map((p, i, arr) => (
+              <div key={p.id} className={`relative flex flex-col text-left ${p.oculto ? 'opacity-40' : ''}`}>
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => onRemoveProducto?.(p.id)}
-                    aria-label={`Quitar ${p.nombre}`}
-                    className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="absolute top-2 right-2 z-10">
+                    <ItemToolbar
+                      variant="overlay"
+                      oculto={p.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                      onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                      onDuplicate={() => onDuplicateProducto?.(p.id)}
+                      onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                      onRemove={() => onRemoveProducto?.(p.id)}
+                      removeLabel={`Quitar ${p.nombre}`}
+                    />
+                  </div>
                 )}
                 <label
                   className={`relative block w-full aspect-square bg-black/5 mb-3 flex items-center justify-center overflow-hidden ${
@@ -7877,7 +8023,7 @@ function SeccionProductos({
       ) : variant === 'tarifario' ? (
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-col">
-            {productos.map((p) => {
+            {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => {
               // En modo lectura (página ya publicada), tocar la fila manda al
               // WhatsApp del negocio con el nombre del servicio ya cargado en
               // el mensaje — así se sigue la charla puntual por ese ítem, sin
@@ -7899,7 +8045,7 @@ function SeccionProductos({
                   {...rowLinkProps}
                   className={`relative flex items-baseline justify-between gap-4 py-3.5 px-2 -mx-2 border-b no-underline transition-colors ${
                     !editable && whatsapp ? 'hover:bg-current/[0.04]' : ''
-                  }`}
+                  } ${p.oculto ? 'opacity-40' : ''}`}
                   style={{ borderColor: palette.line, color: palette.ink }}
                 >
                   <Editable
@@ -7937,15 +8083,19 @@ function SeccionProductos({
                       className="font-mono font-bold text-sm @lg:text-base"
                     />
                     {editable && (
-                      <button
-                        type="button"
-                        onClick={() => onRemoveProducto?.(p.id)}
-                        aria-label={`Quitar ${p.nombre}`}
-                        className="opacity-40 hover:opacity-100 transition-opacity"
-                        style={{ color: palette.ink }}
-                      >
-                        <XIcon className="w-3.5 h-3.5" />
-                      </button>
+                      <ItemToolbar
+                        variant="inline"
+                        color={palette.ink}
+                        oculto={p.oculto}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                        onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                        onDuplicate={() => onDuplicateProducto?.(p.id)}
+                        onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                        onRemove={() => onRemoveProducto?.(p.id)}
+                        removeLabel={`Quitar ${p.nombre}`}
+                      />
                     )}
                   </div>
                 </RowTag>
@@ -8002,17 +8152,27 @@ function SeccionProductos({
         </div>
       ) : (
         <div className={`max-w-5xl mx-auto grid ${PRODUCTOS_GRID_COLS[variant] || PRODUCTOS_GRID_COLS['grid-3']} gap-5`}>
-          {productos.map((p) => (
-            <div key={p.id} className="relative border flex flex-col text-left" style={{ borderColor: palette.line }}>
+          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
+            <div
+              key={p.id}
+              className={`relative border flex flex-col text-left ${p.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: palette.line }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveProducto?.(p.id)}
-                  aria-label={`Quitar ${p.nombre}`}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2 z-10">
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                    onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                    onDuplicate={() => onDuplicateProducto?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                    onRemove={() => onRemoveProducto?.(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
+                </div>
               )}
               <MediaCarousel
                 images={p.imagenes}
@@ -8394,19 +8554,41 @@ function SeccionCatalogoLibros({
 // badge de "verificada" cuando vino de la conexión con Google/Facebook.
 // Iniciales en badge cuadrado (nunca foto de avatar) — coherente con el resto
 // del sistema (logo, equipo): la marca no muestra fotos de perfil de terceros.
-function TestimonioCard({ t, editable, onUpdate, onRemove, accent, palette = {} }) {
+function TestimonioCard({
+  t,
+  editable,
+  onUpdate,
+  onRemove,
+  onDuplicate,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
+  onToggleOculto,
+  accent,
+  palette = {},
+}) {
   return (
-    <div className="relative border p-6 text-left h-full flex flex-col" style={{ borderColor: palette.line }}>
+    <div
+      className={`relative border p-6 text-left h-full flex flex-col ${t.oculto ? 'opacity-40' : ''}`}
+      style={{ borderColor: palette.line }}
+    >
       {editable && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Quitar testimonio de ${t.nombre}`}
-          className="absolute top-3 right-3 opacity-40 hover:opacity-100 transition-opacity"
-          style={{ color: palette.ink }}
-        >
-          <XIcon className="w-4 h-4" />
-        </button>
+        <div className="absolute top-3 right-3">
+          <ItemToolbar
+            variant="inline"
+            color={palette.ink}
+            oculto={t.oculto}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onDuplicate={onDuplicate}
+            onToggleOculto={onToggleOculto}
+            onRemove={onRemove}
+            removeLabel={`Quitar testimonio de ${t.nombre}`}
+          />
+        </div>
       )}
       {t.metric && (
         <div className="font-serif font-bold text-2xl leading-none mb-3" style={{ color: accent }}>
@@ -9271,6 +9453,9 @@ function SeccionTestimonios({
   onAddTestimonio,
   onRemoveTestimonio,
   onUpdateTestimonio,
+  onDuplicateTestimonio,
+  onMoveTestimonio,
+  onToggleOcultoTestimonio,
   onConnectVerifiedReviews,
 }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -9316,6 +9501,8 @@ function SeccionTestimonios({
                 accent={accent}
                 palette={palette}
                 onUpdate={(patch) => onUpdateTestimonio?.(testimonios[current].id, patch)}
+                onDuplicate={() => onDuplicateTestimonio?.(testimonios[current].id)}
+                onToggleOculto={() => onToggleOcultoTestimonio?.(testimonios[current].id)}
                 onRemove={() => {
                   onRemoveTestimonio?.(testimonios[current].id);
                   setIdx(0);
@@ -9437,7 +9624,7 @@ function SeccionTestimonios({
       ) : variant === 'scroll' ? (
         <div className="max-w-6xl mx-auto -mx-6 @lg:mx-0 px-6 @lg:px-0">
           <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-3">
-            {testimonios.map((t) => (
+            {(editable ? testimonios : testimonios.filter((t) => !t.oculto)).map((t, i, arr) => (
               <div key={t.id} className="shrink-0 snap-start w-[280px]">
                 <TestimonioCard
                   t={t}
@@ -9445,6 +9632,12 @@ function SeccionTestimonios({
                   accent={accent}
                   palette={palette}
                   onUpdate={(patch) => onUpdateTestimonio?.(t.id, patch)}
+                  onDuplicate={() => onDuplicateTestimonio?.(t.id)}
+                  onMoveUp={() => onMoveTestimonio?.(t.id, -1)}
+                  onMoveDown={() => onMoveTestimonio?.(t.id, 1)}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onToggleOculto={() => onToggleOcultoTestimonio?.(t.id)}
                   onRemove={() => onRemoveTestimonio?.(t.id)}
                 />
               </div>
@@ -9458,7 +9651,7 @@ function SeccionTestimonios({
         </div>
       ) : (
         <div className="max-w-4xl mx-auto grid @lg:grid-cols-3 gap-5">
-          {testimonios.map((t) => (
+          {(editable ? testimonios : testimonios.filter((t) => !t.oculto)).map((t, i, arr) => (
             <TestimonioCard
               key={t.id}
               t={t}
@@ -9466,6 +9659,12 @@ function SeccionTestimonios({
               accent={accent}
               palette={palette}
               onUpdate={(patch) => onUpdateTestimonio?.(t.id, patch)}
+              onDuplicate={() => onDuplicateTestimonio?.(t.id)}
+              onMoveUp={() => onMoveTestimonio?.(t.id, -1)}
+              onMoveDown={() => onMoveTestimonio?.(t.id, 1)}
+              canMoveUp={i > 0}
+              canMoveDown={i < arr.length - 1}
+              onToggleOculto={() => onToggleOcultoTestimonio?.(t.id)}
               onRemove={() => onRemoveTestimonio?.(t.id)}
             />
           ))}
@@ -9481,7 +9680,18 @@ function SeccionTestimonios({
 }
 
 // La lista de preguntas en sí (acordeón), reutilizada por las dos disposiciones de FAQ.
-function FAQList({ faqs, accent, palette = {}, editable, onAddFAQ, onRemoveFAQ, onUpdateFAQ }) {
+function FAQList({
+  faqs,
+  accent,
+  palette = {},
+  editable,
+  onAddFAQ,
+  onRemoveFAQ,
+  onUpdateFAQ,
+  onDuplicateFAQ,
+  onMoveFAQ,
+  onToggleOcultoFAQ,
+}) {
   const [openId, setOpenId] = useState(faqs[0]?.id ?? null);
   const [draftQ, setDraftQ] = useState('');
   const [draftA, setDraftA] = useState('');
@@ -9502,11 +9712,15 @@ function FAQList({ faqs, accent, palette = {}, editable, onAddFAQ, onRemoveFAQ, 
             Todavía no cargaste preguntas frecuentes.
           </p>
         )}
-        {faqs.map((item) => {
+        {(editable ? faqs : faqs.filter((f) => !f.oculto)).map((item, i, arr) => {
           const isOpen = editable || openId === item.id;
           const Row = editable ? 'div' : 'button';
           return (
-            <div key={item.id} className="relative group/faq-item border-b" style={{ borderColor: palette.line }}>
+            <div
+              key={item.id}
+              className={`relative group/faq-item border-b ${item.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: palette.line }}
+            >
               <Row
                 type={editable ? undefined : 'button'}
                 onClick={editable ? undefined : () => setOpenId(openId === item.id ? null : item.id)}
@@ -9561,15 +9775,21 @@ function FAQList({ faqs, accent, palette = {}, editable, onAddFAQ, onRemoveFAQ, 
                 </div>
               )}
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveFAQ?.(item.id)}
-                  aria-label="Quitar pregunta"
-                  className="absolute top-4 right-0 opacity-0 group-hover/faq-item:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                <div className="absolute top-3 right-0 opacity-0 group-hover/faq-item:opacity-100 transition-opacity">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={item.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveFAQ?.(item.id, -1)}
+                    onMoveDown={() => onMoveFAQ?.(item.id, 1)}
+                    onDuplicate={() => onDuplicateFAQ?.(item.id)}
+                    onToggleOculto={() => onToggleOcultoFAQ?.(item.id)}
+                    onRemove={() => onRemoveFAQ?.(item.id)}
+                    removeLabel="Quitar pregunta"
+                  />
+                </div>
               )}
             </div>
           );
@@ -9795,13 +10015,27 @@ function SeccionFAQ({
   onAddFAQ,
   onRemoveFAQ,
   onUpdateFAQ,
+  onDuplicateFAQ,
+  onMoveFAQ,
+  onToggleOcultoFAQ,
   onAddFaqImagenes,
   onRemoveFaqImagen,
   onReplaceFaqImagen,
   mediaVariant,
   onChangeMediaVariant,
 }) {
-  const listProps = { faqs, accent, palette, editable, onAddFAQ, onRemoveFAQ, onUpdateFAQ };
+  const listProps = {
+    faqs,
+    accent,
+    palette,
+    editable,
+    onAddFAQ,
+    onRemoveFAQ,
+    onUpdateFAQ,
+    onDuplicateFAQ,
+    onMoveFAQ,
+    onToggleOcultoFAQ,
+  };
   const heading = (className) => (
     <Editable
       editable={editable}
@@ -14226,6 +14460,9 @@ function SeccionPrecios({
   onAddPlan,
   onRemovePlan,
   onUpdatePlan,
+  onDuplicatePlan,
+  onMovePlan,
+  onToggleOcultoPlan,
   nombreNegocio,
   whatsapp,
   seccionesDisponibles = [],
@@ -14268,10 +14505,10 @@ function SeccionPrecios({
         </p>
       ) : (
         <div className="max-w-5xl mx-auto grid @lg:grid-cols-3 gap-6 items-stretch">
-          {planes.map((p) => (
+          {(editable ? planes : planes.filter((p) => !p.oculto)).map((p, i, arr) => (
             <div
               key={p.id}
-              className="relative border p-7 text-left flex flex-col gap-4"
+              className={`relative border p-7 text-left flex flex-col gap-4 ${p.oculto ? 'opacity-40' : ''}`}
               style={{ borderColor: palette.line }}
             >
               {editable && (
@@ -14286,15 +14523,19 @@ function SeccionPrecios({
                   >
                     <StarIcon className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onRemovePlan?.(p.id)}
-                    aria-label={`Quitar ${p.nombre}`}
-                    className="w-6 h-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMovePlan?.(p.id, -1)}
+                    onMoveDown={() => onMovePlan?.(p.id, 1)}
+                    onDuplicate={() => onDuplicatePlan?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoPlan?.(p.id)}
+                    onRemove={() => onRemovePlan?.(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
                 </div>
               )}
               {p.destacado && (
@@ -14608,6 +14849,9 @@ function SeccionEquipo({
   onAddMember,
   onRemoveMember,
   onUpdateMember,
+  onDuplicateMember,
+  onMoveMember,
+  onToggleOcultoMember,
 }) {
   const [idx, setIdx] = useState(0);
   const current = Math.min(idx, Math.max(equipo.length - 1, 0));
@@ -14627,18 +14871,24 @@ function SeccionEquipo({
     setNombre('');
   };
 
-  const Card = ({ m }) => (
-    <div className="relative text-left border-t-2 pt-4" style={{ borderColor: accent }}>
+  const Card = ({ m, canMoveUp, canMoveDown }) => (
+    <div className={`relative text-left border-t-2 pt-4 ${m.oculto ? 'opacity-40' : ''}`} style={{ borderColor: accent }}>
       {editable && (
-        <button
-          type="button"
-          onClick={() => onRemoveMember?.(m.id)}
-          aria-label={`Quitar ${m.nombre}`}
-          className="absolute top-4 right-0 opacity-40 hover:opacity-100 transition-opacity"
-          style={{ color: palette.ink }}
-        >
-          <XIcon className="w-4 h-4" />
-        </button>
+        <div className="absolute top-4 right-0">
+          <ItemToolbar
+            variant="inline"
+            color={palette.ink}
+            oculto={m.oculto}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
+            onMoveUp={() => onMoveMember?.(m.id, -1)}
+            onMoveDown={() => onMoveMember?.(m.id, 1)}
+            onDuplicate={() => onDuplicateMember?.(m.id)}
+            onToggleOculto={() => onToggleOcultoMember?.(m.id)}
+            onRemove={() => onRemoveMember?.(m.id)}
+            removeLabel={`Quitar ${m.nombre}`}
+          />
+        </div>
       )}
       <label
         className={`group/foto relative w-13 h-13 overflow-hidden mb-4 flex items-center justify-center ${
@@ -14747,18 +14997,28 @@ function SeccionEquipo({
         </div>
       ) : variant === 'retrato' ? (
         <div className="max-w-4xl mx-auto grid grid-cols-2 @lg:grid-cols-3 gap-6">
-          {equipo.map((m) => (
-            <div key={m.id} className="relative text-left border-t-2 pt-4" style={{ borderColor: accent }}>
+          {(editable ? equipo : equipo.filter((m) => !m.oculto)).map((m, i, arr) => (
+            <div
+              key={m.id}
+              className={`relative text-left border-t-2 pt-4 ${m.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: accent }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveMember?.(m.id)}
-                  aria-label={`Quitar ${m.nombre}`}
-                  className="absolute top-4 right-0 opacity-40 hover:opacity-100 transition-opacity z-10"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                <div className="absolute top-4 right-0 z-10">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={m.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveMember?.(m.id, -1)}
+                    onMoveDown={() => onMoveMember?.(m.id, 1)}
+                    onDuplicate={() => onDuplicateMember?.(m.id)}
+                    onToggleOculto={() => onToggleOcultoMember?.(m.id)}
+                    onRemove={() => onRemoveMember?.(m.id)}
+                    removeLabel={`Quitar ${m.nombre}`}
+                  />
+                </div>
               )}
               <label
                 className={`group/foto relative block w-full aspect-[3/4] overflow-hidden mb-4 ${editable ? 'cursor-pointer' : ''}`}
@@ -14882,8 +15142,8 @@ function SeccionEquipo({
         </div>
       ) : (
         <div className="max-w-4xl mx-auto grid grid-cols-2 @lg:grid-cols-4 gap-4">
-          {equipo.map((m) => (
-            <Card key={m.id} m={m} />
+          {(editable ? equipo : equipo.filter((m) => !m.oculto)).map((m, i, arr) => (
+            <Card key={m.id} m={m} canMoveUp={i > 0} canMoveDown={i < arr.length - 1} />
           ))}
           {editable && (
             <form
@@ -19745,6 +20005,8 @@ function SeccionMenu({
   onAddItem,
   onRemoveItem,
   onUpdateItem,
+  onDuplicateItem,
+  onToggleOcultoItem,
 }) {
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
@@ -19789,8 +20051,12 @@ function SeccionMenu({
               <div className="space-y-4">
                 {menuItems
                   .filter((i) => (i.categoria || 'General') === cat)
+                  .filter((i) => editable || !i.oculto)
                   .map((item) => (
-                    <div key={item.id} className="flex items-start justify-between gap-3">
+                    <div
+                      key={item.id}
+                      className={`flex items-start justify-between gap-3 ${item.oculto ? 'opacity-40' : ''}`}
+                    >
                       <div className="flex-1 min-w-0">
                         <Editable
                           editable={editable}
@@ -19831,15 +20097,15 @@ function SeccionMenu({
                           className="font-mono font-bold"
                         />
                         {editable && (
-                          <button
-                            type="button"
-                            onClick={() => onRemoveItem?.(item.id)}
-                            aria-label={`Quitar ${item.nombre}`}
-                            className="opacity-40 hover:opacity-100 transition-opacity"
-                            style={{ color: palette.ink }}
-                          >
-                            <XIcon className="w-3.5 h-3.5" />
-                          </button>
+                          <ItemToolbar
+                            variant="inline"
+                            color={palette.ink}
+                            oculto={item.oculto}
+                            onDuplicate={() => onDuplicateItem?.(item.id)}
+                            onToggleOculto={() => onToggleOcultoItem?.(item.id)}
+                            onRemove={() => onRemoveItem?.(item.id)}
+                            removeLabel={`Quitar ${item.nombre}`}
+                          />
                         )}
                       </div>
                     </div>
@@ -19882,7 +20148,19 @@ function SeccionMenu({
   );
 }
 
-function SeccionMarcas({ marcas = [], editable = false, bgColor, headingColor, palette = {}, titulo, onUpdateTitulo, onAddLogos, onRemoveLogo }) {
+function SeccionMarcas({
+  marcas = [],
+  editable = false,
+  bgColor,
+  headingColor,
+  palette = {},
+  titulo,
+  onUpdateTitulo,
+  onAddLogos,
+  onRemoveLogo,
+  onDuplicateLogo,
+  onToggleOcultoLogo,
+}) {
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
@@ -19905,22 +20183,24 @@ function SeccionMarcas({ marcas = [], editable = false, bgColor, headingColor, p
       />
       {marcas.length === 0 && !editable ? null : (
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-6 @lg:gap-10">
-          {marcas.map((m) => (
-            <div key={m.id} className="relative group/logo">
+          {(editable ? marcas : marcas.filter((m) => !m.oculto)).map((m) => (
+            <div key={m.id} className={`relative group/logo ${m.oculto ? 'opacity-40' : ''}`}>
               <img
                 src={m.imagen}
                 alt=""
                 className="h-10 @lg:h-12 w-auto object-contain grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all"
               />
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveLogo?.(m.id)}
-                  aria-label="Quitar logo"
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity"
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
+                <div className="absolute -top-2 -right-2 opacity-0 group-hover/logo:opacity-100 transition-opacity">
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={m.oculto}
+                    onDuplicate={() => onDuplicateLogo?.(m.id)}
+                    onToggleOculto={() => onToggleOcultoLogo?.(m.id)}
+                    onRemove={() => onRemoveLogo?.(m.id)}
+                    removeLabel="Quitar logo"
+                  />
+                </div>
               )}
             </div>
           ))}
@@ -20171,6 +20451,9 @@ function SeccionBlog({
   onAddPost,
   onRemovePost,
   onUpdatePost,
+  onDuplicatePost,
+  onMovePost,
+  onToggleOcultoPost,
 }) {
   const [tituloDraft, setTituloDraft] = useState('');
 
@@ -20188,19 +20471,25 @@ function SeccionBlog({
     setTituloDraft('');
   };
 
-  const Card = ({ post }) => {
+  const Card = ({ post, canMoveUp, canMoveDown }) => {
     const embed = toEmbedUrl(post.videoUrl);
     return (
-      <div className="relative flex flex-col text-left">
+      <div className={`relative flex flex-col text-left ${post.oculto ? 'opacity-40' : ''}`}>
         {editable && (
-          <button
-            type="button"
-            onClick={() => onRemovePost?.(post.id)}
-            aria-label={`Quitar ${post.titulo}`}
-            className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-          >
-            <XIcon className="w-3.5 h-3.5" />
-          </button>
+          <div className="absolute top-2 right-2 z-10">
+            <ItemToolbar
+              variant="overlay"
+              oculto={post.oculto}
+              canMoveUp={canMoveUp}
+              canMoveDown={canMoveDown}
+              onMoveUp={() => onMovePost?.(post.id, -1)}
+              onMoveDown={() => onMovePost?.(post.id, 1)}
+              onDuplicate={() => onDuplicatePost?.(post.id)}
+              onToggleOculto={() => onToggleOcultoPost?.(post.id)}
+              onRemove={() => onRemovePost?.(post.id)}
+              removeLabel={`Quitar ${post.titulo}`}
+            />
+          </div>
         )}
         <div className="relative aspect-video bg-black/5">
           {embed ? (
@@ -20287,8 +20576,8 @@ function SeccionBlog({
         </p>
       ) : (
         <div className={`max-w-5xl mx-auto grid gap-8 ${variant === 'lista' ? 'grid-cols-1 max-w-2xl' : '@lg:grid-cols-3'}`}>
-          {posts.map((post) => (
-            <Card key={post.id} post={post} />
+          {(editable ? posts : posts.filter((p) => !p.oculto)).map((post, i, arr) => (
+            <Card key={post.id} post={post} canMoveUp={i > 0} canMoveDown={i < arr.length - 1} />
           ))}
         </div>
       )}

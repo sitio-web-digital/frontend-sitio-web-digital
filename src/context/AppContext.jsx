@@ -635,6 +635,47 @@ export function AppProvider({ children }) {
     LIST_SETTERS[key]?.((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   };
 
+  // Duplicar/reordenar/ocultar son genéricos para las 8 secciones con lista
+  // propia (las 3 "viejas" con CRUD bespoke — productos/faqs/testimonios — y
+  // las 5 que ya usan LIST_SETTERS) porque no necesitan la validación
+  // puntual que sí tienen addProducto/addFAQ/addTestimonio (trim, defaults,
+  // etc.) — clonar, reordenar u ocultar un item existente es la misma
+  // operación sin importar la forma de sus campos.
+  const ALL_LIST_SETTERS = {
+    productos: setProductos,
+    faqs: setFaqs,
+    testimonios: setTestimonios,
+    ...LIST_SETTERS,
+  };
+
+  const duplicateListItem = (key, id) => {
+    ALL_LIST_SETTERS[key]?.((prev) => {
+      const idx = prev.findIndex((it) => it.id === id);
+      if (idx === -1) return prev;
+      const copy = { ...prev[idx], id: `${key}-${Date.now()}` };
+      return [...prev.slice(0, idx + 1), copy, ...prev.slice(idx + 1)];
+    });
+  };
+
+  // `direction` es -1 (subir) o 1 (bajar) — mismo lenguaje que moveSection.
+  const moveListItem = (key, id, direction) => {
+    ALL_LIST_SETTERS[key]?.((prev) => {
+      const idx = prev.findIndex((it) => it.id === id);
+      const swapIdx = idx + direction;
+      if (idx === -1 || swapIdx < 0 || swapIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+      return next;
+    });
+  };
+
+  // "oculto" no saca el item de la lista (no se pierden datos ni hay que
+  // confirmar nada) — solo lo saltea al renderizar en modo lectura. En el
+  // editor sigue visible, atenuado, para poder reactivarlo.
+  const toggleListItemOculto = (key, id) => {
+    ALL_LIST_SETTERS[key]?.((prev) => prev.map((it) => (it.id === id ? { ...it, oculto: !it.oculto } : it)));
+  };
+
   // MOCK: acá se simula la conexión con Google/Facebook Reviews — en producción esto
   // llamaría a la API real (Google Places API, Facebook Graph API) con OAuth de por medio.
   // Como no hay backend en este prototipo, "traemos" un lote fijo de reseñas de ejemplo
@@ -1038,6 +1079,9 @@ export function AppProvider({ children }) {
     addListItem,
     removeListItem,
     updateListItem,
+    duplicateListItem,
+    moveListItem,
+    toggleListItemOculto,
     widgets,
     toggleWidget,
     setWidgetOption,
