@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.32.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Llamado a la acción: sus 2 distribuciones (Centrado, Con imagen de fondo) ahora también existen en versión "Armá el tuyo" — mismo sistema de objetos armables que Hero y Sobre Nosotros. Las 2 fijas de siempre siguen disponibles debajo.' },
+    ],
+  },
+  {
     version: '1.31.0',
     date: '2026-08-01',
     changes: [

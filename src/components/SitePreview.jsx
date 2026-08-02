@@ -1540,6 +1540,8 @@ export default function SitePreview({
                 whatsapp={whatsapp}
                 imagenFondo={sec.imagenFondo}
                 onUpdateImagenFondo={(url) => onSetSectionStyle?.(sec.id, { imagenFondo: url })}
+                zonas={sec.zonas}
+                onUpdateZonas={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
               />
             )}
             {sec.type === 'menu' && (
@@ -16126,6 +16128,8 @@ function SeccionCTA({
   whatsapp,
   imagenFondo,
   onUpdateImagenFondo,
+  zonas,
+  onUpdateZonas,
 }) {
   const handleFondo = async (e) => {
     const file = e.target.files?.[0];
@@ -16133,6 +16137,91 @@ function SeccionCTA({
     if (!file) return;
     if (await validateImageFile(file, 'galeria')) onUpdateImagenFondo?.(await uploadImage(file));
   };
+
+  // Mismo mecanismo que SeccionHero/SeccionSobreNosotros: se llama siempre
+  // (nunca adentro de un `if (variant === ...)`), la config depende de cuál
+  // de las 2 distribuciones nuevas esté activa.
+  const ZONAS_CONFIG_BY_VARIANT_CTA = {
+    zonas: [{ key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
+    'zonas-superpuesto': [{ key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
+  };
+  const DEFAULT_ZONA_CTA_CONTENIDO = [
+    { id: 'zona-cta-1', tipo: 'badge', texto: 'Escribinos hoy' },
+    { id: 'zona-cta-2', tipo: 'titulo', texto: '¿Listo para empezar?' },
+    { id: 'zona-cta-3', tipo: 'texto', texto: 'Escribinos hoy y arrancamos.' },
+    { id: 'zona-cta-4', tipo: 'boton', label: 'Escribinos', funcion: 'whatsapp' },
+  ];
+  const zonasDataCTA = zonas?.contenido?.objetos ?? DEFAULT_ZONA_CTA_CONTENIDO;
+  const resolvedZonasDataCTA = { contenido: { objetos: zonasDataCTA } };
+  const dndCTA = useZonasDragDrop(ZONAS_CONFIG_BY_VARIANT_CTA[variant] ?? [], resolvedZonasDataCTA, onUpdateZonas);
+  const updateZonaCTA = (next) => onUpdateZonas?.({ contenido: { objetos: next } });
+
+  // "Armá el tuyo" centrado — equivalente a "Centrado", pero armable con objetos.
+  if (variant === 'zonas') {
+    return (
+      <section className="px-6 @lg:px-10 py-14 @lg:py-16" style={{ background: bgColor || palette.ink }}>
+        <div className="max-w-2xl mx-auto text-center">
+          <ZoneRenderer
+            zonaKey="contenido"
+            dnd={dndCTA}
+            objetos={zonasDataCTA}
+            onChange={updateZonaCTA}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor={textColor || '#ffffff'}
+            textColor={textColor || 'rgba(255,255,255,0.75)'}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+          />
+        </div>
+      </section>
+    );
+  }
+
+  // "Armá el tuyo" con foto de fondo — equivalente a "Con imagen de fondo",
+  // misma foto (`imagenFondo`/`handleFondo`, ya definidos arriba) pero con
+  // una zona de contenido armable en vez de campos fijos.
+  if (variant === 'zonas-superpuesto') {
+    const fondoStyleZonas = imagenFondo
+      ? {
+          backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.8) 0%, rgba(0,0,0,.55) 100%), url(${imagenFondo})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }
+      : { background: bgColor || palette.ink };
+    return (
+      <section className="relative px-6 @lg:px-10 py-14 @lg:py-16 overflow-hidden" style={fondoStyleZonas}>
+        {editable && (
+          <label className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 bg-black/40 text-white text-xs font-semibold px-3 py-1.5 cursor-pointer hover:bg-black/60 transition-colors">
+            <ImageIcon className="w-3.5 h-3.5" /> {imagenFondo ? 'Cambiar fondo' : 'Agregar foto de fondo'}
+            <input type="file" accept="image/*" className="hidden" onChange={handleFondo} />
+          </label>
+        )}
+        <div className="relative max-w-2xl mx-auto text-center">
+          <ZoneRenderer
+            zonaKey="contenido"
+            dnd={dndCTA}
+            objetos={zonasDataCTA}
+            onChange={updateZonaCTA}
+            allowedTypes={['badge', 'titulo', 'texto', 'boton']}
+            maxObjetos={6}
+            editable={editable}
+            palette={palette}
+            accent={accent}
+            headingColor="#ffffff"
+            textColor="rgba(255,255,255,0.82)"
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+          />
+        </div>
+      </section>
+    );
+  }
 
   const bgStyle =
     variant === 'fondo'

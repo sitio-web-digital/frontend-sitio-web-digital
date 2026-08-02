@@ -1241,8 +1241,10 @@ export const SECTION_VARIANTS = {
     { id: 'retrato', label: 'Fotos grandes', skeleton: 'equipoRetrato' },
   ],
   cta: [
-    { id: 'centrado', label: 'Centrado', skeleton: 'ctaCentered' },
-    { id: 'fondo', label: 'Con imagen de fondo', skeleton: 'ctaImage' },
+    { id: 'zonas', label: 'Centrado', skeleton: 'ctaCentered', group: 'Distribuciones' },
+    { id: 'zonas-superpuesto', label: 'Con imagen de fondo', skeleton: 'ctaImage', group: 'Distribuciones' },
+    { id: 'centrado', label: 'Centrado', skeleton: 'ctaCentered', group: 'Distribuciones fijas' },
+    { id: 'fondo', label: 'Con imagen de fondo', skeleton: 'ctaImage', group: 'Distribuciones fijas' },
   ],
   menu: [{ id: 'lista', label: 'Lista por categoría', skeleton: 'menuList' }],
   marcas: [{ id: 'fila', label: 'Fila de logos', skeleton: 'marcasRow' }],
