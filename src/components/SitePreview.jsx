@@ -2770,10 +2770,19 @@ function useZonasDragDrop(zonasConfig, zonasData, onUpdateZonas) {
 
   const startDrag = (fromZona, objeto) => (e) => {
     e.preventDefault();
-    const initial = { objetoId: objeto.id, tipo: objeto.tipo, fromZona, overZona: fromZona };
+    const initial = {
+      objetoId: objeto.id,
+      tipo: objeto.tipo,
+      objeto,
+      fromZona,
+      overZona: fromZona,
+      x: e.clientX,
+      y: e.clientY,
+    };
     dragRef.current = initial;
     setDrag(initial);
     document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
 
     const onMove = (ev) => {
       const hoveredEl = document.elementFromPoint(ev.clientX, ev.clientY);
@@ -2783,13 +2792,14 @@ function useZonasDragDrop(zonasConfig, zonasData, onUpdateZonas) {
       const hovered = rawInstance === instanceIdRef.current ? rawKey : undefined;
       if (!dragRef.current) return;
       const overZona = hovered && isValidZona(hovered, dragRef.current.tipo, dragRef.current.fromZona) ? hovered : null;
-      dragRef.current = { ...dragRef.current, overZona };
+      dragRef.current = { ...dragRef.current, overZona, x: ev.clientX, y: ev.clientY };
       setDrag(dragRef.current);
     };
     const onUp = (ev) => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
       const current = dragRef.current;
       dragRef.current = null;
       setDrag(null);
@@ -2805,6 +2815,9 @@ function useZonasDragDrop(zonasConfig, zonasData, onUpdateZonas) {
     instanceId: instanceIdRef.current,
     dragging: !!drag,
     dragObjetoId: drag?.objetoId,
+    dragObjeto: drag?.objeto,
+    dragFromZona: drag?.fromZona,
+    pointer: drag ? { x: drag.x, y: drag.y } : null,
     overZona: drag?.overZona,
     isValidZona: (key) => (drag ? isValidZona(key, drag.tipo, drag.fromZona) : false),
     registerItemRef: (zonaKey, id) => (el) => {
@@ -2812,6 +2825,45 @@ function useZonasDragDrop(zonasConfig, zonasData, onUpdateZonas) {
     },
     startDrag,
   };
+}
+
+// Texto corto para identificar el objeto dentro del fantasma de arrastre —
+// cada tipo guarda su contenido principal en un campo distinto (texto/label/imagenes).
+function objetoPreviewLabel(o) {
+  switch (o?.tipo) {
+    case 'titulo':
+    case 'texto':
+    case 'badge':
+      return o.texto || OBJECT_TYPES[o.tipo]?.label;
+    case 'boton':
+      return o.label || OBJECT_TYPES.boton.label;
+    case 'carrusel':
+      return o.imagenes?.length ? `Carrusel (${o.imagenes.length} fotos)` : 'Carrusel';
+    default:
+      return OBJECT_TYPES[o?.tipo]?.label || 'Objeto';
+  }
+}
+
+// Fantasma que sigue al puntero mientras se arrastra un objeto entre zonas —
+// antes el único indicio era el objeto original atenuándose en su lugar, sin
+// ninguna pista de qué se estaba agarrando ni dónde. Se posiciona `fixed`
+// (no importa en qué zona del árbol se monte) y se renderiza una sola vez
+// por sección, desde la zona donde arrancó el arrastre (ver `dragFromZona`).
+function ZonaDragGhost({ objeto, pointer }) {
+  if (!objeto || !pointer) return null;
+  const Icon = OBJECT_TYPE_ICON_COMPONENTS[OBJECT_TYPES[objeto.tipo]?.icon] || TypeIcon;
+  const label = objetoPreviewLabel(objeto);
+  return (
+    <div
+      className="fixed z-50 pointer-events-none flex items-center gap-2 rounded-lg bg-navy-950 text-white shadow-2xl pl-2.5 pr-3.5 py-2 border border-white/10"
+      style={{ left: pointer.x, top: pointer.y, transform: 'translate(-50%, -130%) rotate(-2deg)' }}
+    >
+      <span className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center shrink-0">
+        <Icon className="w-3.5 h-3.5" />
+      </span>
+      <span className="text-xs font-semibold max-w-[160px] truncate">{label}</span>
+    </div>
+  );
 }
 
 function ZoneRenderer({
@@ -2914,6 +2966,7 @@ function ZoneRenderer({
         </div>
       ))}
       {editable && objetos.length < maxObjetos && <AddObjectButton allowedTypes={allowedTypes} onAdd={add} />}
+      {isDragActive && dnd.dragFromZona === zonaKey && <ZonaDragGhost objeto={dnd.dragObjeto} pointer={dnd.pointer} />}
     </div>
   );
 }

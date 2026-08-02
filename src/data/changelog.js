@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.34.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'mejora', text: 'Arrastrar un objeto entre zonas de "Armá el tuyo" ahora muestra un fantasma con su ícono y contenido siguiendo al puntero, para que se vea claro qué objeto agarraste — antes solo se atenuaba en su lugar sin ninguna otra pista.' },
+    ],
+  },
+  {
     version: '1.33.0',
     date: '2026-08-01',
     changes: [
