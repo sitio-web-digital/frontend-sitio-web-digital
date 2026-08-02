@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   PencilIcon,
@@ -3087,7 +3087,10 @@ function ColorRow({ label, value, swatches, logoSwatches = [], defaultValue, onP
 // la página, como el footer) se abre hacia arriba automáticamente — se mide
 // su propio alto ya renderizado antes de decidir, con `useLayoutEffect` para
 // que no haya parpadeo.
-function FixedPopover({ anchorRef, align = 'end', gap = 8, className = '', onClose, children }) {
+const FixedPopover = forwardRef(function FixedPopover(
+  { anchorRef, align = 'end', gap = 8, className = '', onClose, children },
+  forwardedRef
+) {
   const panelRef = useRef(null);
   const [style, setStyle] = useState({ position: 'fixed', top: -9999, left: -9999, visibility: 'hidden' });
 
@@ -3115,10 +3118,58 @@ function FixedPopover({ anchorRef, align = 'end', gap = 8, className = '', onClo
   return (
     <>
       <div className="fixed inset-0 z-30" onClick={onClose} />
-      <div ref={panelRef} style={style} className={`z-40 overflow-y-auto ${className}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={(el) => {
+          panelRef.current = el;
+          if (typeof forwardedRef === 'function') forwardedRef(el);
+          else if (forwardedRef) forwardedRef.current = el;
+        }}
+        style={style}
+        className={`z-40 overflow-y-auto ${className}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {children}
       </div>
     </>
+  );
+});
+
+// Ventanita de vista previa aparte del popover principal (no adentro del
+// mismo recuadro) — se ancla al popover YA POSICIONADO (no al botón que lo
+// abrió) y se acomoda a la derecha, o a la izquierda si no entra, siempre a
+// la misma altura. Solo se monta mientras hay algo que mostrar.
+function SidePreviewPanel({ panelRef, gap = 10, width = 300, height = 260, children }) {
+  const [style, setStyle] = useState({ position: 'fixed', top: -9999, left: -9999, visibility: 'hidden' });
+
+  // El popover al que se ancla recalcula SU propia posición en su propio
+  // efecto (un commit después del primero) — se mide acá una vez al montar
+  // y una vez más un frame después (ya con esa posición asentada), en vez de
+  // remedir en cada render (eso sí podría volverse un loop infinito).
+  useEffect(() => {
+    const measure = () => {
+      const anchor = panelRef?.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const fitsRight = rect.right + gap + width <= vw - 8;
+      const left = fitsRight ? rect.right + gap : Math.max(8, rect.left - gap - width);
+      const top = Math.min(Math.max(rect.top, 8), Math.max(8, vh - height - 8));
+      setStyle({ position: 'fixed', top, left, width, height, visibility: 'visible' });
+    };
+    measure();
+    const raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [panelRef, gap, width, height]);
+
+  return (
+    <div
+      style={style}
+      className="z-40 rounded-xl border border-neutral-200 bg-white shadow-xl p-2 pointer-events-none flex flex-col"
+    >
+      <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">Vista previa</p>
+      <div className="flex-1 rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">{children}</div>
+    </div>
   );
 }
 
@@ -3129,28 +3180,27 @@ function FixedPopover({ anchorRef, align = 'end', gap = 8, className = '', onClo
 function SectionVariantPicker({ type, variant, onChange, onClose, anchorRef, align }) {
   const variantes = SECTION_VARIANTS[type] ?? [];
   const [hovered, setHovered] = useState(null);
+  const popoverRef = useRef(null);
   const previewVariant = variantes.some((v) => v.id === hovered) ? hovered : (variant ?? variantes[0]?.id);
 
   return (
-    <FixedPopover
-      anchorRef={anchorRef}
-      align={align}
-      onClose={onClose}
-      className="rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left flex gap-3 w-[560px]"
-    >
-      <div className="w-56 shrink-0 min-w-0" onMouseLeave={() => setHovered(null)}>
+    <>
+      <FixedPopover
+        ref={popoverRef}
+        anchorRef={anchorRef}
+        align={align}
+        onClose={onClose}
+        className="w-64 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left"
+      >
         <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2 px-1">Distribución</p>
-        <div className="max-h-72 overflow-y-auto">
+        <div onMouseLeave={() => setHovered(null)}>
           <VariantGrid items={variantes} selected={variant} onSelect={onChange} onHover={setHovered} previewHeight="h-12" />
         </div>
-      </div>
-      <div className="w-[280px] shrink-0 border-l border-neutral-100 pl-2 flex flex-col">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">Vista previa</p>
-        <div className="flex-1 min-h-[200px] rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">
-          <SectionLivePreview type={type} variant={previewVariant} />
-        </div>
-      </div>
-    </FixedPopover>
+      </FixedPopover>
+      <SidePreviewPanel panelRef={popoverRef}>
+        <SectionLivePreview type={type} variant={previewVariant} />
+      </SidePreviewPanel>
+    </>
   );
 }
 
@@ -4596,6 +4646,8 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
   const pickedMeta = disponibles.find((c) => c.id === pickedType);
   const pickedVariantes = pickedType ? SECTION_VARIANTS[pickedType] ?? [] : [];
   const previewVariant = pickedVariantes.some((v) => v.id === hoveredVariant) ? hoveredVariant : pickedVariantes[0]?.id;
+  const typePopoverRef = useRef(null);
+  const variantPopoverRef = useRef(null);
 
   return (
     <div className={prominent ? 'relative flex justify-center py-16 px-6 bg-neutral-50' : 'relative group/insert py-2 -my-2 z-10'}>
@@ -4639,12 +4691,18 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
         </button>
       )}
       {open && !pickedType && (
-        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5 text-left flex w-[600px]">
-          {disponibles.length === 0 ? (
-            <p className="text-xs text-neutral-400 px-3 py-2.5">Ya agregaste todas las secciones.</p>
-          ) : (
-            <>
-              <div className="w-64 shrink-0 flex flex-col min-w-0">
+        <>
+          <FixedPopover
+            ref={typePopoverRef}
+            anchorRef={btnRef}
+            align="center"
+            onClose={close}
+            className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5 text-left"
+          >
+            {disponibles.length === 0 ? (
+              <p className="text-xs text-neutral-400 px-3 py-2.5">Ya agregaste todas las secciones.</p>
+            ) : (
+              <>
                 <div className="px-1.5 pt-1 pb-1.5">
                   <input
                     autoFocus
@@ -4679,52 +4737,55 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
                     ))
                   )}
                 </div>
-              </div>
-              <div className="w-[300px] shrink-0 border-l border-neutral-100 pl-2 ml-1 flex flex-col">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">
-                  Vista previa
-                </p>
-                <div className="flex-1 min-h-[220px] rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">
-                  <SectionLivePreview type={previewType} />
-                </div>
-              </div>
-            </>
+              </>
+            )}
+          </FixedPopover>
+          {disponibles.length > 0 && (
+            <SidePreviewPanel panelRef={typePopoverRef}>
+              <SectionLivePreview type={previewType} />
+            </SidePreviewPanel>
           )}
-        </FixedPopover>
+        </>
       )}
       {open && pickedType && (
-        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left flex gap-3 w-[600px]">
-          <div className="w-64 shrink-0 min-w-0" onMouseLeave={() => setHoveredVariant(null)}>
-            <div className="flex items-center gap-2 mb-2.5">
-              <button
-                type="button"
-                onClick={() => setPickedType(null)}
-                aria-label="Volver"
-                className="text-neutral-400 hover:text-neutral-700 transition-colors"
-              >
-                <ChevronLeftIcon className="w-4 h-4" />
-              </button>
-              <p className="text-xs font-bold uppercase tracking-wide text-neutral-500">
-                {pickedMeta?.label} · elegí la disposición
-              </p>
-            </div>
-            {showVariantHint && (
-              <div className="mb-2.5 rounded-lg bg-gold-500/10 border border-gold-500/25 px-2.5 py-2 flex items-start gap-2">
-                <p className="text-[11px] text-neutral-600 leading-snug flex-1">
-                  Esta es la <strong>distribución</strong>: cómo se acomoda el contenido por dentro. Elegí la que
-                  más te guste — después la podés cambiar sacando y volviendo a agregar la sección.
-                </p>
+        <>
+          <FixedPopover
+            ref={variantPopoverRef}
+            anchorRef={btnRef}
+            align="center"
+            onClose={close}
+            className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left"
+          >
+            <div onMouseLeave={() => setHoveredVariant(null)}>
+              <div className="flex items-center gap-2 mb-2.5">
                 <button
                   type="button"
-                  onClick={dismissVariantHint}
-                  aria-label="Cerrar"
-                  className="text-neutral-400 hover:text-neutral-700 transition-colors shrink-0"
+                  onClick={() => setPickedType(null)}
+                  aria-label="Volver"
+                  className="text-neutral-400 hover:text-neutral-700 transition-colors"
                 >
-                  <XIcon className="w-3 h-3" />
+                  <ChevronLeftIcon className="w-4 h-4" />
                 </button>
+                <p className="text-xs font-bold uppercase tracking-wide text-neutral-500">
+                  {pickedMeta?.label} · elegí la disposición
+                </p>
               </div>
-            )}
-            <div className="max-h-72 overflow-y-auto">
+              {showVariantHint && (
+                <div className="mb-2.5 rounded-lg bg-gold-500/10 border border-gold-500/25 px-2.5 py-2 flex items-start gap-2">
+                  <p className="text-[11px] text-neutral-600 leading-snug flex-1">
+                    Esta es la <strong>distribución</strong>: cómo se acomoda el contenido por dentro. Elegí la que
+                    más te guste — después la podés cambiar sacando y volviendo a agregar la sección.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={dismissVariantHint}
+                    aria-label="Cerrar"
+                    className="text-neutral-400 hover:text-neutral-700 transition-colors shrink-0"
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
               <VariantGrid
                 items={pickedVariantes}
                 selected={null}
@@ -4737,16 +4798,11 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
                 previewHeight="h-14"
               />
             </div>
-          </div>
-          <div className="w-[300px] shrink-0 border-l border-neutral-100 pl-2 flex flex-col">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">
-              Vista previa
-            </p>
-            <div className="flex-1 min-h-[220px] rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">
-              <SectionLivePreview type={pickedType} variant={previewVariant} />
-            </div>
-          </div>
-        </FixedPopover>
+          </FixedPopover>
+          <SidePreviewPanel panelRef={variantPopoverRef}>
+            <SectionLivePreview type={pickedType} variant={previewVariant} />
+          </SidePreviewPanel>
+        </>
       )}
     </div>
   );

@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.39.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'mejora', text: 'La vista previa en vivo del menú de secciones ahora aparece en una ventanita separada al costado, en vez de compartir el mismo recuadro que la lista de secciones o distribuciones — se entiende mejor cuál es el menú y cuál la muestra.' },
+    ],
+  },
+  {
     version: '1.38.0',
     date: '2026-08-02',
     changes: [
