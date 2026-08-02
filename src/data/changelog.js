@@ -5,6 +5,33 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.41.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'fix', text: 'Sobre Nosotros: la distribución "Centrado" no hacía nada al elegirla (se veía igual que "Texto + foto") — ahora es un layout propio, con todo centrado y la foto debajo del texto.' },
+      { type: 'fix', text: 'Catálogo de libros: el contador "X de Y" contaba también los libros ocultos — ahora muestra solo los que un visitante puede llegar a ver.' },
+      { type: 'nuevo', text: 'Se destrabaron 3 distribuciones que ya estaban armadas en el código pero no aparecían en el menú: Hero "Foto a cada lado", Productos "Pieza destacada + categorías" y Footer "Nombre gigante".' },
+      { type: 'nuevo', text: 'Menú: los platos de una misma categoría ahora se pueden reordenar con las flechas, no solo borrar y volver a cargar en otro orden.' },
+      { type: 'nuevo', text: 'Marcas: además de arrastrar, ahora hay flechas para subir/bajar cada logo — más fácil en celular.' },
+      { type: 'nuevo', text: 'Header: los links del menú de navegación ahora se pueden duplicar y reordenar, no solo agregar y quitar.' },
+      { type: 'nuevo', text: 'Canje y Comparador: sus listas de beneficios/campos ahora se pueden duplicar y reordenar.' },
+      { type: 'nuevo', text: 'Tabla de resultados (Ensayos): ahora se pueden agregar o quitar columnas, no solo renombrarlas.' },
+      { type: 'fix', text: 'Hero Barbería: los datos destacados (ej. "+500 cortes") no se podían editar ni agregar/quitar — ahora sí.' },
+      { type: 'nuevo', text: 'Confirmación de asistencia (RSVP): "modo acompañante" y una pregunta extra sí/no ahora se activan desde el editor — antes solo se podían cargar escribiendo directo en la base de datos.' },
+      { type: 'fix', text: 'Reseñas con estrellas (Barbería): la calificación estaba fija en 5 estrellas — ahora se puede elegir de 1 a 5, igual que en Testimonios.' },
+      { type: 'mejora', text: 'Las plantillas "Bella Rosa Estudio", "Vidriera Once" y "Manos a la Obra" ahora incluyen, respectivamente, reserva de turnos, vidriera rotativa y zonas de cobertura con contenido real — antes ninguna las traía de fábrica.' },
+      { type: 'fix', text: 'Más de 20 secciones (Beneficios, Cronograma, Hospedaje, Historia, Lugares, Playlist, Barberos, Estadísticas, Vidriera y otras) ya no quedan en blanco para el visitante cuando todavía no se cargó ningún ítem — ahora muestran un mensaje corto avisando que falta contenido.' },
+      { type: 'fix', text: '"Formas de pago" y "Texto en movimiento" ahora se pueden reordenar con las flechas del editor, no solo arrastrando.' },
+      { type: 'fix', text: 'Series, distribución "Lista vertical": la miniatura de vista previa mostraba el mismo dibujo que "Tabs" aunque el diseño real es distinto — ahora tiene su propia miniatura.' },
+      { type: 'mejora', text: 'Las fotos de productos, galería, antes/después y los logos de marcas ahora llevan un texto alternativo descriptivo (accesibilidad y SEO) en vez de ir vacíos.' },
+      { type: 'mejora', text: 'Ferias: la etiqueta de estado ("Próxima" / "Confirmada") ahora se ve clickeable al editar, con cursor y efecto al pasar el mouse.' },
+      { type: 'nuevo', text: 'Hospedaje: cada hotel puede llevar una dirección y un link "Cómo llegar" a Google Maps, igual que en Lugares.' },
+      { type: 'mejora', text: 'RSVP: los mensajes de confirmación y de "no puedo ir" ahora se editan directo desde la vista inicial del editor, sin tener que simular todo el formulario como invitado.' },
+      { type: 'fix', text: 'Testimonios, variante "Destacado": ahora se puede duplicar y ocultar el testimonio, igual que en el resto de las variantes — antes solo se podía quitar.' },
+      { type: 'fix', text: 'La plantilla "Todo en Uno" traía dos widgets de mapa seguidos (uno suelto y otro dentro de Contacto) — se sacó el duplicado.' },
+    ],
+  },
+  {
     version: '1.40.0',
     date: '2026-08-02',
     changes: [

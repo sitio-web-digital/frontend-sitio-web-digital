@@ -483,6 +483,15 @@ export const TEMPLATES = [
       { type: 'hero', heroCaption: 'Agenda abierta — turnos esta semana' },
       { type: 'galeria', variant: 'masonry' },
       { type: 'precios' },
+      {
+        type: 'reservas',
+        servicios: [
+          { id: 'resv-corte', nombre: 'Corte' },
+          { id: 'resv-color', nombre: 'Color completo' },
+          { id: 'resv-brushing', nombre: 'Brushing' },
+          { id: 'resv-novias', nombre: 'Combo novias' },
+        ],
+      },
       { type: 'testimonios', variant: 'grid' },
       { type: 'contacto', variant: 'mapa' },
       { type: 'footer', variant: 'columnas' },
@@ -528,6 +537,19 @@ export const TEMPLATES = [
       { type: 'hero' },
       { type: 'testimonios', variant: 'grid' },
       { type: 'faq', variant: 'lista' },
+      {
+        type: 'zonas',
+        variant: 'lista',
+        zonas: [
+          { id: 'zona-norte', nombre: 'Zona Norte' },
+          { id: 'zona-cerro', nombre: 'Cerro de las Rosas' },
+          { id: 'zona-belgrano', nombre: 'Villa Belgrano' },
+          { id: 'zona-alta-cba', nombre: 'Alta Córdoba' },
+          { id: 'zona-alberdi', nombre: 'Alberdi' },
+          { id: 'zona-general-paz', nombre: 'General Paz' },
+          { id: 'zona-guemes', nombre: 'Güemes' },
+        ],
+      },
       { type: 'contacto', variant: 'centrado' },
       { type: 'sobre-nosotros' },
       { type: 'footer' },
@@ -559,6 +581,16 @@ export const TEMPLATES = [
     sections: [
       { type: 'header' },
       { type: 'hero', heroCaption: 'Nueva colección — invierno 2026' },
+      {
+        type: 'vidriera',
+        variant: 'rotativa',
+        items: [
+          { id: 'vid-campera', nombre: 'Campera de jean oversize', precio: 'Desde $42.000', imagen: photo('denimjacket', 521) },
+          { id: 'vid-zapatillas', nombre: 'Zapatillas urbanas', precio: 'Desde $58.000', imagen: photo('sneakers', 522) },
+          { id: 'vid-bandolera', nombre: 'Bandolera de cuero', precio: 'Desde $31.000', imagen: photo('leatherbag', 523) },
+          { id: 'vid-remera', nombre: 'Remera básica premium', precio: 'Desde $15.000', imagen: photo('tshirt', 524) },
+        ],
+      },
       { type: 'productos', variant: 'lista' },
       { type: 'cta', eyebrow: 'Envíos a todo el país', titulo: 'Comprá desde tu celular, recibilo en tu casa', subtitulo: 'Despachos en 48 hs a todo el país, con cambios sin cargo dentro de los 15 días.' },
       { type: 'sobre-nosotros', variant: 'split', quote: 'Elegimos cada prenda como si fuera para nuestro propio placard.' },
@@ -650,7 +682,6 @@ export const TEMPLATES = [
       { type: 'header' },
       { type: 'hero', heroCaption: 'Proyectos en curso — 2026' },
       { type: 'sobre-nosotros', variant: 'split', quote: 'Cada obra empieza escuchando cómo se va a vivir ese espacio.' },
-      { type: 'mapa' },
       { type: 'cta', eyebrow: 'Primera reunión sin cargo', titulo: '¿Tenés un proyecto en mente?', subtitulo: 'Contanos tu idea y te asesoramos sin cargo en la primera reunión.' },
       { type: 'contacto', variant: 'mapa' },
       { type: 'footer', variant: 'columnas' },
@@ -1168,6 +1199,7 @@ export const SECTION_VARIANTS = {
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'destacado', label: 'Foto + producto destacado', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'duo', label: 'Dos fotos', skeleton: 'heroDuo', group: 'Distribuciones fijas' },
+    { id: 'flanqueada', label: 'Foto a cada lado', skeleton: 'heroDuo', group: 'Distribuciones fijas' },
     { id: 'centro', label: 'Todo centrado, sin foto', skeleton: 'heroCentro', group: 'Distribuciones fijas' },
   ],
   galeria: [
@@ -1200,6 +1232,7 @@ export const SECTION_VARIANTS = {
     { id: 'lista', label: 'Lista', skeleton: 'productosLista', group: 'Productos' },
     { id: 'fila', label: 'Fila con foto', skeleton: 'productosFila', group: 'Productos' },
     { id: 'bento', label: 'Destacado + grilla', skeleton: 'productosBento', group: 'Productos' },
+    { id: 'destacada', label: 'Pieza destacada + categorías', skeleton: 'productosBento', group: 'Productos' },
     { id: 'catalogo', label: 'Catálogo con filtro', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
@@ -1219,6 +1252,7 @@ export const SECTION_VARIANTS = {
     { id: 'newsletter', label: 'Con newsletter', skeleton: 'footerNewsletter' },
     { id: 'tienda', label: 'Con medios de pago y contacto', skeleton: 'footerMinimal' },
     { id: 'evento', label: 'Cierre de evento con hashtag', skeleton: 'centered' },
+    { id: 'gigante', label: 'Nombre gigante', skeleton: 'centered' },
   ],
   categorias: [{ id: 'scroll', label: 'Fila con scroll', skeleton: 'categoriasScroll' }],
   pasos: [
@@ -1237,7 +1271,7 @@ export const SECTION_VARIANTS = {
   marquee: [{ id: 'scroll', label: 'Texto en movimiento', skeleton: 'marqueeScroll' }],
   series: [
     { id: 'tabs', label: 'Tabs con imagen', skeleton: 'seriesTabs' },
-    { id: 'lista', label: 'Lista vertical con imagen', skeleton: 'seriesTabs' },
+    { id: 'lista', label: 'Lista vertical con imagen', skeleton: 'seriesLista' },
   ],
   archivo: [{ id: 'bento', label: 'Grilla con lightbox', skeleton: 'archivoBento' }],
   estadisticas: [{ id: 'fila', label: 'Fila de números', skeleton: 'estadisticasFila' }],

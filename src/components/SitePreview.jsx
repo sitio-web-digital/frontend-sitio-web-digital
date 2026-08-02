@@ -541,6 +541,7 @@ export default function SitePreview({
                 caption={sec.caption}
                 onUpdateCaption={(v) => onSetSectionStyle?.(sec.id, { caption: v })}
                 stats={sec.stats ?? []}
+                onUpdateStats={(stats) => onSetSectionStyle?.(sec.id, { stats })}
                 botones={sec.botones ?? {}}
                 onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
                 whatsapp={whatsapp}
@@ -873,7 +874,9 @@ export default function SitePreview({
                 mensajeDeclinado={sec.mensajeDeclinado}
                 onUpdateMensajeDeclinado={(v) => onSetSectionStyle?.(sec.id, { mensajeDeclinado: v })}
                 companionMode={sec.companionMode}
+                onUpdateCompanionMode={(v) => onSetSectionStyle?.(sec.id, { companionMode: v })}
                 extraPregunta={sec.extraPregunta}
+                onUpdateExtraPregunta={(v) => onSetSectionStyle?.(sec.id, { extraPregunta: v })}
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
@@ -1584,6 +1587,7 @@ export default function SitePreview({
                 onUpdateItem={(id, patch) => onUpdateListItem?.('menuItems', id, patch)}
                 onDuplicateItem={(id) => onDuplicateListItem?.('menuItems', id)}
                 onToggleOcultoItem={(id) => onToggleListItemOculto?.('menuItems', id)}
+                onReorderItem={(id, idx) => onReorderListItem?.('menuItems', id, idx)}
               />
             )}
             {sec.type === 'marcas' && (
@@ -1600,6 +1604,7 @@ export default function SitePreview({
                 onDuplicateLogo={(id) => onDuplicateListItem?.('marcas', id)}
                 onToggleOcultoLogo={(id) => onToggleListItemOculto?.('marcas', id)}
                 onReorderLogo={(id, idx) => onReorderListItem?.('marcas', id, idx)}
+                onMoveLogo={(id, dir) => onMoveListItem?.('marcas', id, dir)}
               />
             )}
             {sec.type === 'mapa' && (
@@ -4286,6 +4291,24 @@ function VariantSkeleton({ kind }) {
       </div>
     );
   }
+  if (kind === 'seriesLista') {
+    // Filas apiladas (foto chica + dos líneas de texto) — a diferencia de
+    // seriesTabs (una fila de tabs arriba + una sola imagen grande al lado),
+    // acá cada serie es su propia fila horizontal, sin selector.
+    return (
+      <div className="flex flex-col gap-1 w-full h-full justify-center">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="grid grid-cols-[0.7fr_1.6fr] gap-1 items-center">
+            <div className={`${box} h-3.5`} />
+            <div className="flex flex-col gap-1">
+              <div className={`${bar} h-1 w-full`} />
+              <div className={`${bar} h-1 w-2/3`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   if (kind === 'archivoBento') {
     return (
       <div className="grid grid-cols-3 grid-rows-2 gap-1 w-full h-full">
@@ -5446,7 +5469,7 @@ function Editable({
 
 // Una ruta del menú, ya sea ancla a una sección o (a futuro) a una página
 // nueva — texto plano, nunca un botón/pill, siguiendo el lenguaje editorial.
-function RutaPill({ r, editable, onGoTo, onRemove, palette }) {
+function RutaPill({ r, editable, onGoTo, onRemove, onDuplicate, onMoveUp, onMoveDown, canMoveUp, canMoveDown, palette }) {
   return (
     <div className="relative group/ruta">
       <button
@@ -5459,15 +5482,18 @@ function RutaPill({ r, editable, onGoTo, onRemove, palette }) {
         {r.tipo === 'url' && <span className="text-xs opacity-60">↗</span>}
       </button>
       {editable && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Quitar ${r.label}`}
-          className="absolute -top-1.5 -right-2.5 w-3.5 h-3.5 text-white flex items-center justify-center opacity-0 group-hover/ruta:opacity-100 transition-opacity"
-          style={{ background: palette?.ink }}
-        >
-          <XIcon className="w-2.5 h-2.5" />
-        </button>
+        <div className="absolute -top-2 -right-2 opacity-0 group-hover/ruta:opacity-100 transition-opacity">
+          <ItemToolbar
+            variant="overlay"
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onDuplicate={onDuplicate}
+            onRemove={onRemove}
+            removeLabel={`Quitar ${r.label}`}
+          />
+        </div>
       )}
     </div>
   );
@@ -5614,6 +5640,20 @@ function SeccionHeader({
 
   const addRuta = (nueva) => onUpdateRutas([...list, nueva]);
   const removeRuta = (id) => onUpdateRutas(list.filter((r) => r.id !== id));
+  const duplicateRuta = (id) => {
+    const idx = list.findIndex((r) => r.id === id);
+    if (idx === -1) return;
+    const copy = { ...list[idx], id: `ruta-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+    onUpdateRutas([...list.slice(0, idx + 1), copy, ...list.slice(idx + 1)]);
+  };
+  const moveRuta = (id, direction) => {
+    const idx = list.findIndex((r) => r.id === id);
+    const swapIdx = idx + direction;
+    if (idx === -1 || swapIdx < 0 || swapIdx >= list.length) return;
+    const next = [...list];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    onUpdateRutas(next);
+  };
   const goTo = (r) => {
     if (r.tipo === 'seccion') {
       document.getElementById(r.targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5668,9 +5708,24 @@ function SeccionHeader({
 
   const pills = (items, extra) => (
     <>
-      {items.map((r) => (
-        <RutaPill key={r.id} r={r} editable={editable} onGoTo={() => goTo(r)} onRemove={() => removeRuta(r.id)} palette={palette} />
-      ))}
+      {items.map((r) => {
+        const idx = list.findIndex((x) => x.id === r.id);
+        return (
+          <RutaPill
+            key={r.id}
+            r={r}
+            editable={editable}
+            onGoTo={() => goTo(r)}
+            onRemove={() => removeRuta(r.id)}
+            onDuplicate={() => duplicateRuta(r.id)}
+            canMoveUp={idx > 0}
+            canMoveDown={idx > -1 && idx < list.length - 1}
+            onMoveUp={() => moveRuta(r.id, -1)}
+            onMoveDown={() => moveRuta(r.id, 1)}
+            palette={palette}
+          />
+        );
+      })}
       {extra}
     </>
   );
@@ -5699,7 +5754,7 @@ function SeccionHeader({
                 Todavía no hay botones de menú.
               </p>
             )}
-            {list.map((r) => (
+            {list.map((r, i, arr) => (
               <div key={r.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
                 <button
                   type="button"
@@ -5711,15 +5766,17 @@ function SeccionHeader({
                   {r.tipo === 'url' && <span className="text-xs opacity-60">↗</span>}
                 </button>
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removeRuta(r.id)}
-                    aria-label={`Quitar ${r.label}`}
-                    className="transition-colors shrink-0 opacity-40 hover:opacity-100"
-                    style={{ color: palette?.ink }}
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette?.ink}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => moveRuta(r.id, -1)}
+                    onMoveDown={() => moveRuta(r.id, 1)}
+                    onDuplicate={() => duplicateRuta(r.id)}
+                    onRemove={() => removeRuta(r.id)}
+                    removeLabel={`Quitar ${r.label}`}
+                  />
                 )}
               </div>
             ))}
@@ -6955,6 +7012,7 @@ function SeccionHeroBarberia({
   caption,
   onUpdateCaption,
   stats = [],
+  onUpdateStats,
   botones: botonesData = {},
   onUpdateBotones,
   whatsapp,
@@ -6973,6 +7031,10 @@ function SeccionHeroBarberia({
     e.target.value = '';
     if (file && (await validateImageFile(file, 'galeria'))) onUpdateHeroImagen?.(await uploadImage(file));
   };
+
+  const updateStat = (i, patch) => onUpdateStats?.(stats.map((s, si) => (si === i ? { ...s, ...patch } : s)));
+  const removeStat = (i) => onUpdateStats?.(stats.filter((_, si) => si !== i));
+  const addStat = () => onUpdateStats?.([...stats, { value: '10+', label: 'Nuevo dato' }]);
 
   return (
     <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
@@ -7041,17 +7103,55 @@ function SeccionHeroBarberia({
             />
           </div>
           {(stats.length > 0 || editable) && (
-            <div className="flex gap-8 border-t pt-5" style={{ borderColor: palette.line }}>
+            <div className="flex flex-wrap gap-8 border-t pt-5" style={{ borderColor: palette.line }}>
               {stats.map((s, i) => (
-                <div key={i}>
-                  <div className="font-serif text-2xl leading-none" style={{ color: accent }}>
-                    {s.value}
-                  </div>
-                  <div className="font-mono text-[0.65rem] uppercase tracking-wide mt-1.5" style={{ color: palette.inkSoft }}>
-                    {s.label}
-                  </div>
+                <div key={i} className="relative group/stat">
+                  <Editable
+                    editable={editable}
+                    value={s.value}
+                    onChange={(v) => updateStat(i, { value: v })}
+                    tag="div"
+                    placeholder="10+"
+                    style={{ color: accent }}
+                    className="font-serif text-2xl leading-none"
+                    maxLength={12}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={s.label}
+                    onChange={(v) => updateStat(i, { label: v })}
+                    tag="div"
+                    placeholder="Dato"
+                    style={{ color: palette.inkSoft }}
+                    className="font-mono text-[0.65rem] uppercase tracking-wide mt-1.5"
+                    maxLength={30}
+                  />
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => removeStat(i)}
+                      aria-label={`Quitar dato ${s.label || i + 1}`}
+                      title="Quitar dato"
+                      className="absolute -top-2 -right-3 opacity-0 group-hover/stat:opacity-100 transition-opacity"
+                      style={{ color: palette.inkSoft }}
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addStat}
+                  aria-label="Agregar dato"
+                  title="Agregar dato"
+                  className="self-start inline-flex items-center gap-1 font-mono text-[0.65rem] uppercase tracking-wide opacity-60 hover:opacity-100"
+                  style={{ color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-3 h-3" /> Agregar dato
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -8033,7 +8133,7 @@ function SeccionGaleria({
           <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-3">
             {images.map((img, i) => (
               <div key={i} className="relative shrink-0 snap-center w-[230px] @lg:w-[300px] aspect-[3/4] bg-black/5 overflow-hidden group/scrollimg">
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt={`Foto ${i + 1} de la galería`} className="w-full h-full object-cover" />
                 {editable && (
                   <>
                     <label className="absolute inset-0 bg-black/0 group-hover/scrollimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/scrollimg:opacity-100 cursor-pointer">
@@ -8071,7 +8171,7 @@ function SeccionGaleria({
             >
               <img
                 src={src}
-                alt=""
+                alt={`Foto ${i + 1} de la galería`}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 style={{ filter: 'grayscale(0.15) contrast(1.05)' }}
@@ -8117,7 +8217,7 @@ function SeccionGaleria({
             >
               <img
                 src={src}
-                alt=""
+                alt={`Foto ${i + 1} de la galería`}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 style={{ filter: 'grayscale(0.15) contrast(1.05)' }}
@@ -8160,7 +8260,7 @@ function SeccionGaleria({
             <div key={i} className="relative aspect-square overflow-hidden bg-black/5 group/gitem">
               <img
                 src={src}
-                alt=""
+                alt={`Foto ${i + 1} de la galería`}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 style={{ filter: 'grayscale(0.15) contrast(1.05)' }}
@@ -8319,7 +8419,7 @@ function SeccionProductos({
                 {p.imagenes?.[0] ? (
                   <img
                     src={p.imagenes[0]}
-                    alt=""
+                    alt={p.nombre || 'Foto de producto'}
                     className="w-full h-full object-cover"
                     style={{ filter: 'grayscale(0.1) contrast(1.05)' }}
                   />
@@ -8442,7 +8542,7 @@ function SeccionProductos({
                 {p.imagenes?.[0] ? (
                   <img
                     src={p.imagenes[0]}
-                    alt=""
+                    alt={p.nombre || 'Foto de producto'}
                     className="w-full h-full object-cover"
                     style={{ filter: 'grayscale(0.15) contrast(1.05)' }}
                   />
@@ -8589,7 +8689,7 @@ function SeccionProductos({
                 {p.imagenes?.[0] ? (
                   <img
                     src={p.imagenes[0]}
-                    alt=""
+                    alt={p.nombre || 'Foto de producto'}
                     className="w-full h-full object-cover"
                     style={{ filter: 'grayscale(0.15) contrast(1.05)' }}
                   />
@@ -8828,7 +8928,7 @@ function SeccionProductos({
                     {featured.imagenes?.[0] ? (
                       <img
                         src={featured.imagenes[0]}
-                        alt=""
+                        alt={featured.nombre || 'Foto de producto'}
                         className="w-full h-full object-cover"
                         style={{ filter: 'grayscale(0.1) contrast(1.03)' }}
                       />
@@ -8951,7 +9051,7 @@ function SeccionProductos({
                       {p.imagenes?.[0] ? (
                         <img
                           src={p.imagenes[0]}
-                          alt=""
+                          alt={p.nombre || 'Foto de producto'}
                           className="w-full h-full object-cover"
                           style={{ filter: 'grayscale(0.1) contrast(1.03)' }}
                         />
@@ -9101,7 +9201,7 @@ function SeccionProductos({
                   {p.imagenes?.[0] ? (
                     <img
                       src={p.imagenes[0]}
-                      alt=""
+                      alt={p.nombre || 'Foto de producto'}
                       className="w-full h-full object-cover"
                       style={{ filter: 'grayscale(0.15) contrast(1.05)' }}
                     />
@@ -10901,14 +11001,17 @@ function SeccionTestimonios({
                 />
               </div>
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveTestimonio?.(testimonios[current].id)}
-                  aria-label="Quitar testimonio"
-                  className="absolute -top-2 right-0 text-neutral-300 hover:text-red-500 transition-colors"
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                <div className="absolute -top-2 right-0">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.inkSoft}
+                    oculto={testimonios[current].oculto}
+                    onDuplicate={() => onDuplicateTestimonio?.(testimonios[current].id)}
+                    onToggleOculto={() => onToggleOcultoTestimonio?.(testimonios[current].id)}
+                    onRemove={() => onRemoveTestimonio?.(testimonios[current].id)}
+                    removeLabel="Quitar testimonio"
+                  />
+                </div>
               )}
               {testimonios.length > 1 && (
                 <div className="flex items-center justify-center gap-4 mt-6">
@@ -11934,6 +12037,17 @@ function SeccionComparador({
     onUpdateCampos?.([...campos, { key, label: label.trim() }]);
   };
   const removeCampo = (key) => onUpdateCampos?.(campos.filter((c) => c.key !== key));
+  const duplicateCampo = (idx) => {
+    const copy = { ...campos[idx], key: `campo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+    onUpdateCampos?.([...campos.slice(0, idx + 1), copy, ...campos.slice(idx + 1)]);
+  };
+  const moveCampo = (idx, direction) => {
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= campos.length) return;
+    const next = [...campos];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    onUpdateCampos?.(next);
+  };
 
   const a = modelos[Math.min(idxA, modelos.length - 1)];
   const b = modelos[Math.min(idxB, modelos.length - 1)];
@@ -12037,14 +12151,45 @@ function SeccionComparador({
                         c.label
                       )}
                       {editable && (
-                        <button
-                          type="button"
-                          onClick={() => removeCampo(c.key)}
-                          aria-label={`Quitar ${c.label}`}
-                          className="absolute top-1/2 right-2 -translate-y-1/2 opacity-40 hover:opacity-100"
-                        >
-                          <XIcon className="w-3 h-3" />
-                        </button>
+                        <div className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveCampo(i, -1)}
+                            disabled={i === 0}
+                            aria-label="Mover arriba"
+                            title="Mover arriba"
+                            className="opacity-40 hover:opacity-100 disabled:opacity-10 disabled:pointer-events-none"
+                          >
+                            <ChevronUpIcon className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveCampo(i, 1)}
+                            disabled={i === campos.length - 1}
+                            aria-label="Mover abajo"
+                            title="Mover abajo"
+                            className="opacity-40 hover:opacity-100 disabled:opacity-10 disabled:pointer-events-none"
+                          >
+                            <ChevronDownIcon className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => duplicateCampo(i)}
+                            aria-label="Duplicar"
+                            title="Duplicar"
+                            className="opacity-40 hover:opacity-100"
+                          >
+                            <CopyIcon className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeCampo(c.key)}
+                            aria-label={`Quitar ${c.label}`}
+                            className="opacity-40 hover:opacity-100"
+                          >
+                            <XIcon className="w-3 h-3" />
+                          </button>
+                        </div>
                       )}
                     </div>
                     {[
@@ -12597,6 +12742,14 @@ function SeccionCanje({
   const updatePerk = (i, v) => onUpdatePerks?.(perks.map((p, pi) => (pi === i ? v : p)));
   const addPerk = () => onUpdatePerks?.([...perks, 'Nuevo beneficio']);
   const removePerk = (i) => onUpdatePerks?.(perks.filter((_, pi) => pi !== i));
+  const duplicatePerk = (i) => onUpdatePerks?.([...perks.slice(0, i + 1), perks[i], ...perks.slice(i + 1)]);
+  const movePerk = (i, direction) => {
+    const swapIdx = i + direction;
+    if (swapIdx < 0 || swapIdx >= perks.length) return;
+    const next = [...perks];
+    [next[i], next[swapIdx]] = [next[swapIdx], next[i]];
+    onUpdatePerks?.(next);
+  };
 
   // Sin ocultar en ninguna de las dos: modeloIdx/condIdx son índices activos
   // del cotizador de canje, igual que en Comparador/Cotizador hermanos.
@@ -12658,9 +12811,34 @@ function SeccionCanje({
                   maxLength={100}
                 />
                 {editable && (
-                  <button type="button" onClick={() => removePerk(i)} aria-label="Quitar" className="opacity-40 hover:opacity-100 shrink-0">
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => movePerk(i, -1)}
+                      disabled={i === 0}
+                      aria-label="Mover arriba"
+                      title="Mover arriba"
+                      className="opacity-40 hover:opacity-100 disabled:opacity-10 disabled:pointer-events-none"
+                    >
+                      <ChevronUpIcon className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => movePerk(i, 1)}
+                      disabled={i === perks.length - 1}
+                      aria-label="Mover abajo"
+                      title="Mover abajo"
+                      className="opacity-40 hover:opacity-100 disabled:opacity-10 disabled:pointer-events-none"
+                    >
+                      <ChevronDownIcon className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" onClick={() => duplicatePerk(i)} aria-label="Duplicar" title="Duplicar" className="opacity-40 hover:opacity-100">
+                      <CopyIcon className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" onClick={() => removePerk(i)} aria-label="Quitar" className="opacity-40 hover:opacity-100">
+                      <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
@@ -13094,6 +13272,18 @@ function SeccionEnsayos({
   };
   const removeRow = (id) => onRemove?.(id);
   const addRow = () => onAdd?.({ id: `fila-${Date.now()}`, cells: columnas.map(() => '—') });
+  // Columnas y filas tienen que quedar sincronizadas: cada fila trae un
+  // `cells` con una entrada por columna en el mismo orden — agregar/quitar
+  // una columna sin tocar `cells` de cada fila las desalinearía.
+  const addCol = () => {
+    onUpdateColumnas?.([...columnas, 'Columna']);
+    onUpdate?.(filas.map((r) => ({ ...r, cells: [...r.cells, '—'] })));
+  };
+  const removeCol = (idx) => {
+    if (columnas.length <= 1) return;
+    onUpdateColumnas?.(columnas.filter((_, i) => i !== idx));
+    onUpdate?.(filas.map((r) => ({ ...r, cells: r.cells.filter((_, i) => i !== idx) })));
+  };
   const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(filas, onUpdate);
   const filasVisibles = editable ? filas : filas.filter((r) => !r.oculto);
 
@@ -13145,16 +13335,28 @@ function SeccionEnsayos({
               style={{ gridTemplateColumns: `repeat(${Math.max(columnas.length, 1)}, 1fr)`, background: palette.ink, color: palette.bg }}
             >
               {columnas.map((c, idx) => (
-                <Editable
-                  key={idx}
-                  editable={editable}
-                  value={c}
-                  onChange={(v) => updateCol(idx, v)}
-                  tag="div"
-                  placeholder="Columna"
-                  className="font-mono text-[11px] uppercase tracking-wide px-4 py-3"
-                  maxLength={30}
-                />
+                <div key={idx} className="relative group/col">
+                  <Editable
+                    editable={editable}
+                    value={c}
+                    onChange={(v) => updateCol(idx, v)}
+                    tag="div"
+                    placeholder="Columna"
+                    className={`font-mono text-[11px] uppercase tracking-wide px-4 py-3 ${editable && columnas.length > 1 ? 'pr-7' : ''}`}
+                    maxLength={30}
+                  />
+                  {editable && columnas.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeCol(idx)}
+                      aria-label={`Quitar columna ${c || idx + 1}`}
+                      title="Quitar columna"
+                      className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
             {filasVisibles.map((row, i, arr) => (
@@ -13201,14 +13403,24 @@ function SeccionEnsayos({
           </div>
         </Reveal>
         {editable && (
-          <button
-            type="button"
-            onClick={addRow}
-            className="mt-4 inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
-            style={{ borderColor: palette.line, color: palette.inkSoft }}
-          >
-            <PlusIcon className="w-3 h-3" /> Agregar fila
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={addRow}
+              className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-3 h-3" /> Agregar fila
+            </button>
+            <button
+              type="button"
+              onClick={addCol}
+              className="inline-flex items-center gap-1.5 font-mono text-xs uppercase px-3 py-2.5 border-2 border-dashed"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-3 h-3" /> Agregar columna
+            </button>
+          </div>
         )}
       </div>
     </section>
@@ -13318,6 +13530,11 @@ function SeccionLogisticaZonas({
               <div className="px-4 py-3 text-right">Mínimo</div>
               <div className="px-4 py-3 text-right">Flete</div>
             </div>
+            {visibles.length === 0 && !editable ? (
+              <p className="text-sm px-4 py-4" style={{ color: palette.inkSoft }}>
+                Todavía no cargaste zonas de reparto.
+              </p>
+            ) : null}
             {visibles.map((z, i, arr) => (
               <div
                 key={z.id}
@@ -13748,6 +13965,11 @@ function SeccionZonasTecnicas({
           </div>
         </Reveal>
         <Reveal delay={0.12} className="flex flex-col gap-5">
+          {!zona && !editable && (
+            <p className="text-sm" style={{ color: palette.inkSoft }}>
+              Todavía no cargaste zonas técnicas.
+            </p>
+          )}
           {zona && (
             <div className="relative border p-6 grid grid-cols-[auto_1fr] gap-5 items-start" style={{ borderColor: palette.line, background: palette.bg }}>
               <div
@@ -13883,6 +14105,11 @@ function SeccionCronograma({
 
   const rows = (withDots) => (
     <>
+      {itemsVisibles.length === 0 && !editable ? (
+        <p className="text-sm" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste el cronograma.
+        </p>
+      ) : null}
       {itemsVisibles.map((it, i, arr) => (
         <Reveal
           key={it.id}
@@ -14136,6 +14363,11 @@ function SeccionLugares({
           maxLength={70}
         />
       </Reveal>
+      {visibles.length === 0 && !editable ? (
+        <p className="text-sm text-center" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste lugares.
+        </p>
+      ) : (
       <div className="max-w-4xl mx-auto grid @lg:grid-cols-2 gap-6">
         {visibles.map((it, i, arr) => (
           <Reveal
@@ -14257,6 +14489,7 @@ function SeccionLugares({
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -14489,7 +14722,9 @@ function SeccionRSVP({
   mensajeDeclinado,
   onUpdateMensajeDeclinado,
   companionMode = false,
+  onUpdateCompanionMode,
   extraPregunta,
+  onUpdateExtraPregunta,
   editable,
   bgColor,
   headingColor,
@@ -14583,6 +14818,59 @@ function SeccionRSVP({
           maxLength={160}
         />
       </Reveal>
+
+      {editable && (
+        <Reveal delay={0.06} className="max-w-md mx-auto border p-5 @lg:p-6 mb-6 text-left" style={{ borderColor: palette.line, background: palette.bg }}>
+          <p className="text-[11px] font-mono uppercase tracking-wide mb-3" style={{ color: palette.inkSoft }}>
+            Configuración del formulario
+          </p>
+          <label className="flex items-center gap-2 text-sm mb-4" style={{ color: palette.ink }}>
+            <input
+              type="checkbox"
+              checked={!!companionMode}
+              onChange={(e) => onUpdateCompanionMode?.(e.target.checked)}
+            />
+            Permitir marcar acompañante
+          </label>
+          <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+            Pregunta extra (opcional, sí/no)
+          </label>
+          <input
+            value={extraPregunta?.label || ''}
+            onChange={(e) => {
+              const label = e.target.value;
+              onUpdateExtraPregunta?.(label.trim() ? { ...(extraPregunta || { opciones: ['Sí', 'No'] }), label } : null);
+            }}
+            placeholder='Ej: "¿Necesitás menú vegetariano?"'
+            maxLength={80}
+            className="w-full box-border border px-3 py-2 text-sm outline-none mb-4"
+            style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+          />
+          <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+            Mensaje si confirma (usá {'{nombre}'}, {companionMode ? '{acompanante}' : '{invitados}'}, {'{menu}'}
+            {extraPregunta ? ', {extra}' : ''})
+          </label>
+          <textarea
+            value={mensajeConfirmado || ''}
+            onChange={(e) => onUpdateMensajeConfirmado?.(e.target.value)}
+            rows={2}
+            placeholder="Tu lugar está confirmado. Te vamos a escribir unos días antes con los últimos detalles."
+            className="w-full box-border border px-2.5 py-2 text-xs mb-3 outline-none"
+            style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+          />
+          <label className="block text-[11px] font-mono uppercase tracking-wide mb-1.5" style={{ color: palette.inkSoft }}>
+            Mensaje si no puede venir
+          </label>
+          <textarea
+            value={mensajeDeclinado || ''}
+            onChange={(e) => onUpdateMensajeDeclinado?.(e.target.value)}
+            rows={2}
+            placeholder="Nos vas a hacer falta, pero gracias por avisar. ¡Nos vemos pronto!"
+            className="w-full box-border border px-2.5 py-2 text-xs outline-none"
+            style={{ borderColor: palette.line, background: palette.bg, color: palette.ink }}
+          />
+        </Reveal>
+      )}
 
       <Reveal delay={0.12} className="max-w-md mx-auto border p-7 @lg:p-9" style={{ borderColor: palette.line, background: palette.bg }}>
         {done !== null ? (
@@ -14993,6 +15281,11 @@ function SeccionPlaylist({
             Ya pidieron
           </div>
           <div className="flex flex-col">
+            {cancionesVisibles.length === 0 && extra.length === 0 && !editable && (
+              <p className="text-sm py-3" style={{ color: palette.inkSoft }}>
+                Todavía no cargaste canciones.
+              </p>
+            )}
             {cancionesVisibles.map((s, i, arr) => (
               <div
                 key={s.id}
@@ -15133,6 +15426,11 @@ function SeccionRegalos({
           maxLength={160}
         />
       </Reveal>
+      {visibles.length === 0 && !editable ? (
+        <p className="text-sm text-center" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste opciones de regalo.
+        </p>
+      ) : (
       <div className="max-w-4xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
         {visibles.map((it, i, arr) => (
           <Reveal
@@ -15215,6 +15513,7 @@ function SeccionRegalos({
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -15269,6 +15568,11 @@ function SeccionHistoria({
           maxLength={70}
         />
       </Reveal>
+      {visibles.length === 0 && !editable ? (
+        <p className="text-sm text-center" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste la historia.
+        </p>
+      ) : (
       <div
         className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-3"
         style={{ borderTop: `1px solid ${palette.line}`, borderLeft: `1px solid ${palette.line}` }}
@@ -15345,6 +15649,7 @@ function SeccionHistoria({
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -15406,6 +15711,11 @@ function SeccionCondiciones({
             maxLength={70}
           />
         </Reveal>
+        {visibles.length === 0 && !editable ? (
+          <p className="text-sm" style={{ color: suave }}>
+            Todavía no cargaste condiciones.
+          </p>
+        ) : (
         <div
           className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4"
           style={{ borderTop: '1px solid rgba(244,245,247,0.2)', borderLeft: '1px solid rgba(244,245,247,0.2)' }}
@@ -15471,6 +15781,7 @@ function SeccionCondiciones({
             </button>
           )}
         </div>
+        )}
       </div>
     </section>
   );
@@ -15498,7 +15809,7 @@ function SeccionHospedaje({
   const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
   const add = () =>
-    onUpdate?.([...items, { id: `hotel-${Date.now()}`, nombre: 'Nuevo hotel', distancia: '', desc: '', precio: '', codigo: '' }]);
+    onUpdate?.([...items, { id: `hotel-${Date.now()}`, nombre: 'Nuevo hotel', distancia: '', desc: '', precio: '', codigo: '', direccion: '' }]);
   const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
   const visibles = editable ? items : items.filter((it) => !it.oculto);
 
@@ -15541,6 +15852,11 @@ function SeccionHospedaje({
           maxLength={140}
         />
       </Reveal>
+      {visibles.length === 0 && !editable ? (
+        <p className="text-sm text-center" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste opciones de hospedaje.
+        </p>
+      ) : (
       <div className="max-w-5xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-5">
         {visibles.map((it, i, arr) => (
           <Reveal
@@ -15601,6 +15917,19 @@ function SeccionHospedaje({
               className="text-sm leading-relaxed mb-4"
               maxLength={140}
             />
+            {(editable || it.direccion) && (
+              <Editable
+                editable={editable}
+                value={it.direccion}
+                onChange={(v) => update(it.id, { direccion: v })}
+                tag="p"
+                block
+                placeholder="Dirección (opcional)"
+                style={{ color: palette.inkSoft }}
+                className="text-xs mb-3"
+                maxLength={100}
+              />
+            )}
             <div className="flex items-center justify-between gap-3 pt-3 border-t" style={{ borderColor: palette.line }}>
               <Editable
                 editable={editable}
@@ -15623,6 +15952,17 @@ function SeccionHospedaje({
                 maxLength={30}
               />
             </div>
+            {it.direccion && !editable && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(it.direccion)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-3 font-mono text-xs uppercase tracking-wide border-b w-fit"
+                style={{ color: accent, borderColor: palette.line }}
+              >
+                Cómo llegar
+              </a>
+            )}
           </Reveal>
         ))}
         {editable && (
@@ -15636,6 +15976,7 @@ function SeccionHospedaje({
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -15744,6 +16085,11 @@ function SeccionLibroDeMensajes({
           )}
         </Reveal>
         <Reveal delay={0.12} className="flex flex-col gap-4 @lg:max-h-[420px] @lg:overflow-y-auto scrollbar-hide">
+          {mensajesVisibles.length === 0 && extra.length === 0 && !editable && (
+            <p className="text-sm" style={{ color: palette.inkSoft }}>
+              Todavía no cargaste mensajes.
+            </p>
+          )}
           {mensajesVisibles.map((m, i, arr) => (
             <div
               key={m.id}
@@ -17155,6 +17501,11 @@ function SeccionCicloTrabajo({
             maxLength={80}
           />
         </Reveal>
+        {visibles.length === 0 && !editable ? (
+          <p className="text-sm" style={{ color: palette.inkSoft }}>
+            Todavía no cargaste el ciclo de trabajo.
+          </p>
+        ) : (
         <div
           className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4"
           style={{ borderTop: `2px solid ${palette.ink}` }}
@@ -17272,6 +17623,7 @@ function SeccionCicloTrabajo({
             </Reveal>
           ))}
         </div>
+        )}
         {editable && (
           <button
             type="button"
@@ -18708,6 +19060,11 @@ function SeccionBeneficios({
     return (
       <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
         {heading}
+        {visibles.length === 0 && !editable ? (
+          <p className="max-w-5xl mx-auto text-sm" style={{ color: palette.inkSoft }}>
+            Todavía no cargaste beneficios.
+          </p>
+        ) : (
         <div className="max-w-5xl mx-auto grid grid-cols-2 @lg:grid-cols-4 gap-4">
           {visibles.map((it, i, arr) => (
             <div
@@ -18775,6 +19132,7 @@ function SeccionBeneficios({
             </button>
           )}
         </div>
+        )}
       </section>
     );
   }
@@ -18784,6 +19142,11 @@ function SeccionBeneficios({
   return (
     <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
       {heading}
+      {visibles.length === 0 && !editable ? (
+        <p className="max-w-5xl mx-auto text-sm" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste beneficios.
+        </p>
+      ) : (
       <div className="max-w-5xl mx-auto flex flex-wrap @lg:flex-nowrap gap-8">
         {visibles.map((it, i, arr) => (
           <div
@@ -18851,6 +19214,7 @@ function SeccionBeneficios({
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -18892,6 +19256,11 @@ function SeccionEstadisticas({ items = [], onUpdate, editable, bgColor, textColo
 
   return (
     <section className="px-6 @lg:px-10 py-12 @lg:py-16" style={{ background: bgColor || palette.ink }}>
+      {visibles.length === 0 && !editable ? (
+        <p className="max-w-5xl mx-auto text-sm text-center" style={{ color: textColor || 'rgba(255,255,255,0.7)' }}>
+          Todavía no cargaste estadísticas.
+        </p>
+      ) : (
       <div className="max-w-5xl mx-auto flex flex-wrap justify-around gap-8 text-center">
         {visibles.map((it, i, arr) => (
           <div
@@ -18960,6 +19329,7 @@ function SeccionEstadisticas({ items = [], onUpdate, editable, bgColor, textColo
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -19048,7 +19418,7 @@ function SeccionVidriera({
       </div>
       <div className="max-w-xl mx-auto">
         {!editable ? (
-          items.length > 0 && (
+          items.length > 0 ? (
             <div className="relative aspect-[4/3] overflow-hidden">
               {items.map((it, i) => (
                 <div
@@ -19086,6 +19456,10 @@ function SeccionVidriera({
                 </div>
               )}
             </div>
+          ) : (
+            <p className="text-sm text-center" style={{ color: palette.inkSoft }}>
+              Todavía no cargaste productos en la vidriera.
+            </p>
           )
         ) : (
           <div>
@@ -19272,7 +19646,7 @@ function SeccionAntesDespues({
   const Slot = ({ img, label, onUpdateLabel, onUpload, side, styleKeyName }) => (
     <div className="relative aspect-[5/6] bg-black/5 overflow-hidden">
       {img ? (
-        <img src={img} alt="" className="w-full h-full object-cover" />
+        <img src={img} alt={label || (side === 'right' ? 'Después' : 'Antes')} className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full flex items-center justify-center" style={{ color: palette.inkSoft }}>
           <ImageIcon className="w-6 h-6" />
@@ -20039,6 +20413,11 @@ function SeccionPreciosBarberia({
           maxLength={80}
         />
       </div>
+      {visibles.length === 0 && !editable ? (
+        <p className="max-w-5xl mx-auto text-sm" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste servicios.
+        </p>
+      ) : (
       <div className="max-w-5xl mx-auto flex flex-col">
         {visibles.map((sv, i, arr) => (
           <div
@@ -20120,6 +20499,7 @@ function SeccionPreciosBarberia({
           </div>
         ))}
       </div>
+      )}
       {editable && (
         <div className="max-w-5xl mx-auto mt-5">
           <button
@@ -20195,6 +20575,11 @@ function SeccionBarberos({
           maxLength={70}
         />
       </div>
+      {visibles.length === 0 && !editable ? (
+        <p className="max-w-5xl mx-auto text-sm" style={{ color: palette.inkSoft }}>
+          Todavía no cargaste el equipo.
+        </p>
+      ) : (
       <div className="max-w-5xl mx-auto grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
         {visibles.map((b, i, arr) => (
           <div
@@ -20279,6 +20664,7 @@ function SeccionBarberos({
           </div>
         ))}
       </div>
+      )}
       {editable && (
         <div className="max-w-5xl mx-auto mt-6">
           <button
@@ -20347,8 +20733,16 @@ function SeccionReviewsBarberia({
                 />
               </div>
             )}
-            <div className="font-mono tracking-[0.2em] text-sm mb-4" style={{ color: accent }}>
-              ★★★★★
+            <div className="flex items-center gap-0.5 mb-4">
+              {[1, 2, 3, 4, 5].map((n) =>
+                editable ? (
+                  <button key={n} type="button" onClick={() => update(r.id, { rating: n })} aria-label={`${n} estrellas`}>
+                    <StarIcon className={`w-3.5 h-3.5 ${n <= (r.rating ?? 5) ? 'opacity-100' : 'opacity-20'}`} style={{ color: accent }} />
+                  </button>
+                ) : (
+                  <StarIcon key={n} className={`w-3.5 h-3.5 ${n <= (r.rating ?? 5) ? 'opacity-100' : 'opacity-20'}`} style={{ color: accent }} />
+                )
+              )}
             </div>
             <Editable
               editable={editable}
@@ -20894,7 +21288,10 @@ function SeccionFerias({
                 <button
                   type="button"
                   onClick={() => update(f.id, { destacada: !f.destacada })}
-                  className="font-mono text-[10px] uppercase tracking-wide px-2 py-1 transition-colors"
+                  title={editable ? 'Cambiar estado' : undefined}
+                  className={`font-mono text-[10px] uppercase tracking-wide px-2 py-1 transition-all ${
+                    editable ? 'cursor-pointer hover:scale-105 hover:opacity-80' : ''
+                  }`}
                   style={
                     f.destacada
                       ? { background: accent, color: palette.bg }
@@ -21184,6 +21581,11 @@ function SeccionVisitaTaller({
             </>
           )}
           <div className="flex flex-col gap-5">
+            {visibles.length === 0 && !editable && (
+              <p className="text-sm" style={{ color: palette.inkSoft }}>
+                Todavía no cargaste datos de la visita.
+              </p>
+            )}
             {visibles.map((f, i, arr) => (
               <div
                 key={f.id}
@@ -21786,6 +22188,11 @@ function SeccionArchivo({
           />
         </Reveal>
 
+        {visibles.length === 0 && !editable ? (
+          <p className="text-sm" style={{ color: palette.inkSoft }}>
+            Todavía no cargaste fotos.
+          </p>
+        ) : (
         <div className="grid grid-cols-2 @lg:grid-cols-4 auto-rows-[140px] @lg:auto-rows-[190px] gap-3">
           {visibles.map((it, idx, arr) => (
             <Reveal
@@ -21911,6 +22318,7 @@ function SeccionArchivo({
             </button>
           )}
         </div>
+        )}
       </div>
 
       {!editable && openIndex !== null && visibles[openIndex] && (
@@ -22264,6 +22672,7 @@ function SeccionMenu({
   onUpdateItem,
   onDuplicateItem,
   onToggleOcultoItem,
+  onReorderItem,
 }) {
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
@@ -22276,6 +22685,20 @@ function SeccionMenu({
   };
 
   const categorias = [...new Set(menuItems.map((i) => i.categoria || 'General'))];
+
+  // Los platos se agrupan y muestran por categoría (ver el .filter de abajo),
+  // pero viven en UN solo arreglo plano `menuItems` sin orden garantizado
+  // por categoría — así que "subir/bajar" tiene que mover el plato hasta la
+  // posición de su vecino de la MISMA categoría dentro de ese arreglo plano
+  // (no simplemente swapear índices adyacentes, que podrían ser de otra
+  // categoría y no mover nada visualmente).
+  const moveItemInCategory = (item, neighbor, direction) => {
+    if (!neighbor) return;
+    const idxNeighbor = menuItems.findIndex((i) => i.id === neighbor.id);
+    if (idxNeighbor === -1) return;
+    const toIndex = direction > 0 ? idxNeighbor + 1 : idxNeighbor;
+    onReorderItem?.(item.id, toIndex);
+  };
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -22309,7 +22732,7 @@ function SeccionMenu({
                 {menuItems
                   .filter((i) => (i.categoria || 'General') === cat)
                   .filter((i) => editable || !i.oculto)
-                  .map((item) => (
+                  .map((item, itemIdx, itemArr) => (
                     <div
                       key={item.id}
                       className={`flex items-start justify-between gap-3 ${item.oculto ? 'opacity-40' : ''}`}
@@ -22358,6 +22781,10 @@ function SeccionMenu({
                             variant="inline"
                             color={palette.ink}
                             oculto={item.oculto}
+                            canMoveUp={itemIdx > 0}
+                            canMoveDown={itemIdx < itemArr.length - 1}
+                            onMoveUp={() => moveItemInCategory(item, itemArr[itemIdx - 1], -1)}
+                            onMoveDown={() => moveItemInCategory(item, itemArr[itemIdx + 1], 1)}
                             onDuplicate={() => onDuplicateItem?.(item.id)}
                             onToggleOculto={() => onToggleOcultoItem?.(item.id)}
                             onRemove={() => onRemoveItem?.(item.id)}
@@ -22418,6 +22845,7 @@ function SeccionMarcas({
   onDuplicateLogo,
   onToggleOcultoLogo,
   onReorderLogo,
+  onMoveLogo,
 }) {
   const marcasDnd = useListDragReorder(marcas, (id, idx) => onReorderLogo?.(id, idx));
   const handleFiles = async (e) => {
@@ -22442,7 +22870,7 @@ function SeccionMarcas({
       />
       {marcas.length === 0 && !editable ? null : (
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-6 @lg:gap-10">
-          {(editable ? marcas : marcas.filter((m) => !m.oculto)).map((m) => (
+          {(editable ? marcas : marcas.filter((m) => !m.oculto)).map((m, i, arr) => (
             <div
               key={m.id}
               ref={marcasDnd.registerItemRef(m.id)}
@@ -22452,7 +22880,7 @@ function SeccionMarcas({
             >
               <img
                 src={m.imagen}
-                alt=""
+                alt={m.nombre || 'Logo de marca'}
                 className="h-10 @lg:h-12 w-auto object-contain grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all"
               />
               {editable && (
@@ -22460,6 +22888,10 @@ function SeccionMarcas({
                   <ItemToolbar
                     variant="overlay"
                     oculto={m.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveLogo?.(m.id, -1)}
+                    onMoveDown={() => onMoveLogo?.(m.id, 1)}
                     onDuplicate={() => onDuplicateLogo?.(m.id)}
                     onToggleOculto={() => onToggleOcultoLogo?.(m.id)}
                     onRemove={() => onRemoveLogo?.(m.id)}
