@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.35.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'nuevo', text: 'Duplicar, ocultar y arrastrar para reordenar ahora también funciona en las secciones específicas de cada rubro: librería, farmacia/insumos, mayorista, agro, bodas y XV, fotografía, alfarería y barbería — el mismo set de controles que ya tenían las secciones genéricas.' },
+    ],
+  },
+  {
     version: '1.34.0',
     date: '2026-08-01',
     changes: [

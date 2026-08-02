@@ -1246,6 +1246,7 @@ export default function SitePreview({
                 onUpdatePaso={(id, patch) =>
                   onSetSectionStyle?.(sec.id, { pasos: (sec.pasos ?? []).map((p) => (p.id === id ? { ...p, ...patch } : p)) })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { pasos: arr })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 eyebrow={sec.eyebrow}
@@ -1270,6 +1271,7 @@ export default function SitePreview({
                     artesanas: (sec.artesanas ?? []).map((a) => (a.id === id ? { ...a, ...patch } : a)),
                   })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { artesanas: arr })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 editable={editable}
@@ -1286,6 +1288,7 @@ export default function SitePreview({
                 onUpdateFeria={(id, patch) =>
                   onSetSectionStyle?.(sec.id, { ferias: (sec.ferias ?? []).map((f) => (f.id === id ? { ...f, ...patch } : f)) })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { ferias: arr })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 subtitulo={sec.subtitulo}
@@ -1309,6 +1312,7 @@ export default function SitePreview({
                     barberos: (sec.barberos ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
                   })
                 }
+                onUpdateBarberos={(arr) => onSetSectionStyle?.(sec.id, { barberos: arr })}
                 servicios={sec.servicios ?? []}
                 onAddServicio={(sv) => onSetSectionStyle?.(sec.id, { servicios: [...(sec.servicios ?? []), sv] })}
                 onRemoveServicio={(id) =>
@@ -1319,6 +1323,7 @@ export default function SitePreview({
                     servicios: (sec.servicios ?? []).map((sv) => (sv.id === id ? { ...sv, ...patch } : sv)),
                   })
                 }
+                onUpdateServicios={(arr) => onSetSectionStyle?.(sec.id, { servicios: arr })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 eyebrow={sec.eyebrow}
@@ -1347,6 +1352,7 @@ export default function SitePreview({
                     servicios: (sec.servicios ?? []).map((sv) => (sv.id === id ? { ...sv, ...patch } : sv)),
                   })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { servicios: arr })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 nota={sec.nota}
@@ -1370,6 +1376,7 @@ export default function SitePreview({
                     barberos: (sec.barberos ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
                   })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { barberos: arr })}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 eyebrow={sec.eyebrow}
@@ -1389,6 +1396,7 @@ export default function SitePreview({
                 onUpdateReview={(id, patch) =>
                   onSetSectionStyle?.(sec.id, { reviews: (sec.reviews ?? []).map((r) => (r.id === id ? { ...r, ...patch } : r)) })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { reviews: arr })}
                 editable={editable}
                 bgColor={sec.bgColor}
                 accent={accent}
@@ -1419,6 +1427,7 @@ export default function SitePreview({
                 onUpdateFila={(id, patch) =>
                   onSetSectionStyle?.(sec.id, { filas: (sec.filas ?? []).map((f) => (f.id === id ? { ...f, ...patch } : f)) })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { filas: arr })}
                 imagen={sec.imagen}
                 onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
                 mapaSimulado={sec.mapaSimulado}
@@ -9314,10 +9323,16 @@ function SeccionCatalogoLibros({
   const [query, setQuery] = useState('');
   const [genre, setGenre] = useState('Todos');
 
+  // Solo duplicar/ocultar ac\u00e1, sin arrastre \u2014 el orden visible depende del
+  // buscador y el filtro de g\u00e9nero, as\u00ed que una posici\u00f3n arrastrada dentro
+  // de `results` no tiene una posici\u00f3n equivalente clara en el array completo.
+  const { duplicate, toggleOculto } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((b) => !b.oculto);
+
   const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const genres = ['Todos', ...Array.from(new Set(items.map((b) => b.genero).filter(Boolean)))];
+  const genres = ['Todos', ...Array.from(new Set(visibles.map((b) => b.genero).filter(Boolean)))];
   const q = norm(query);
-  const results = items.filter((b) => {
+  const results = visibles.filter((b) => {
     const byGenre = genre === 'Todos' || b.genero === genre;
     const byQuery = q === '' || norm(b.titulo).includes(q) || norm(b.autor).includes(q) || norm(b.genero).includes(q);
     return byGenre && byQuery;
@@ -9401,16 +9416,23 @@ function SeccionCatalogoLibros({
         {results.length > 0 ? (
           <div className="grid grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-5 gap-5">
             {results.map((b, i) => (
-              <Reveal key={b.id} delay={Math.min(i * 0.06, 0.3)} className="relative" style={{ background: palette.bg, border: `1px solid ${palette.line}` }}>
+              <Reveal
+                key={b.id}
+                delay={Math.min(i * 0.06, 0.3)}
+                className={`relative ${b.oculto ? 'opacity-40' : ''}`}
+                style={{ background: palette.bg, border: `1px solid ${palette.line}` }}
+              >
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => remove(b.id)}
-                    aria-label={`Quitar ${b.titulo}`}
-                    className="absolute top-2 right-2 z-10 opacity-50 hover:opacity-100 bg-black/40 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+                  <div className="absolute top-2 right-2 z-10">
+                    <ItemToolbar
+                      variant="overlay"
+                      oculto={b.oculto}
+                      onDuplicate={() => duplicate(b.id)}
+                      onToggleOculto={() => toggleOculto(b.id)}
+                      onRemove={() => remove(b.id)}
+                      removeLabel={`Quitar ${b.titulo}`}
+                    />
+                  </div>
                 )}
                 <label className={`group/bimg relative block aspect-[2/3] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}>
                   {b.img ? (
@@ -9807,8 +9829,13 @@ function SeccionCatalogoInsumos({
 }) {
   const [tipo, setTipo] = useState('Todos');
 
-  const tipos = ['Todos', ...Array.from(new Set(items.map((p) => p.tipo).filter(Boolean)))];
-  const results = tipo === 'Todos' ? items : items.filter((p) => p.tipo === tipo);
+  // Solo duplicar/ocultar acá, sin arrastre — el filtro por tipo reordena
+  // visualmente `results` de forma independiente del array completo.
+  const { duplicate, toggleOculto } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((p) => !p.oculto);
+
+  const tipos = ['Todos', ...Array.from(new Set(visibles.map((p) => p.tipo).filter(Boolean)))];
+  const results = tipo === 'Todos' ? visibles : visibles.filter((p) => p.tipo === tipo);
 
   const update = (id, patch) => onUpdate?.(items.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const remove = (id) => onRemove?.(id);
@@ -9894,18 +9921,20 @@ function SeccionCatalogoInsumos({
             <Reveal
               key={p.id}
               delay={Math.min(i * 0.06, 0.3)}
-              className="relative flex flex-col"
+              className={`relative flex flex-col ${p.oculto ? 'opacity-40' : ''}`}
               style={{ background: palette.bg, border: `1px solid ${palette.line}` }}
             >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(p.id)}
-                  aria-label={`Quitar ${p.nombre}`}
-                  className="absolute top-2 right-2 z-10 opacity-50 hover:opacity-100 bg-black/40 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
+                <div className="absolute top-2 right-2 z-10">
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={p.oculto}
+                    onDuplicate={() => duplicate(p.id)}
+                    onToggleOculto={() => toggleOculto(p.id)}
+                    onRemove={() => remove(p.id)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
+                </div>
               )}
               <div className="flex items-center justify-between gap-2 px-4 py-3 border-b" style={{ borderColor: palette.line }}>
                 <Editable
@@ -10074,10 +10103,20 @@ function SeccionPedidoMayorista({
   const [cart, setCart] = useState({});
   const [orderSent, setOrderSent] = useState(false);
 
+  // Solo duplicar/ocultar en `items` (el buscador + filtro por categor\u00eda ya
+  // reordenan `shown` de forma independiente al array completo, no hay
+  // posici\u00f3n estable para arrastrar). Los niveles de descuento (`tiers`) se
+  // muestran siempre ordenados por umbral (`sortedTiers` m\u00e1s abajo), as\u00ed que
+  // tampoco tienen un orden manual que arrastrar \u2014 solo duplicar/ocultar.
+  const { duplicate: duplicateItem, toggleOculto: toggleItemOculto } = useLocalListCrud(items, onUpdate);
+  const { duplicate: duplicateTier, toggleOculto: toggleTierOculto } = useLocalListCrud(tiers, onUpdateTiers);
+  const itemsVisibles = editable ? items : items.filter((p) => !p.oculto);
+  const tiersVisibles = editable ? tiers : tiers.filter((t) => !t.oculto);
+
   const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const categorias = ['Todas', ...Array.from(new Set(items.map((p) => p.categoria).filter(Boolean)))];
+  const categorias = ['Todas', ...Array.from(new Set(itemsVisibles.map((p) => p.categoria).filter(Boolean)))];
   const q = norm(query);
-  const shown = items.filter((p) => {
+  const shown = itemsVisibles.filter((p) => {
     const byCat = categoria === 'Todas' || p.categoria === categoria;
     const byQ = q === '' || norm(p.nombre).includes(q) || norm(p.sku).includes(q);
     return byCat && byQ;
@@ -10107,7 +10146,11 @@ function SeccionPedidoMayorista({
     cartLines.push({ id, label: `${qty} × ${p.nombre}`, value: money(qty * (p.precio || 0)) });
   });
 
-  const sortedTiers = [...tiers].sort((a, b) => (a.umbral || 0) - (b.umbral || 0));
+  // El cálculo del descuento activo siempre ignora niveles ocultos, sea que
+  // se esté editando o no — lo que ve el comprador real nunca depende de si
+  // el dueño está mirando la vista de edición.
+  const sortedTiers = [...tiers.filter((t) => !t.oculto)].sort((a, b) => (a.umbral || 0) - (b.umbral || 0));
+  const sortedTiersDisplay = [...tiersVisibles].sort((a, b) => (a.umbral || 0) - (b.umbral || 0));
   let tier = null;
   for (const t of sortedTiers) {
     if (totalBultos >= (t.umbral || 0)) tier = t;
@@ -10206,7 +10249,7 @@ function SeccionPedidoMayorista({
                 return (
                   <div
                     key={p.id}
-                    className="relative grid items-center border-t"
+                    className={`relative grid items-center border-t ${p.oculto ? 'opacity-40' : ''}`}
                     style={{ gridTemplateColumns: '1.7fr 0.85fr 0.85fr 1.05fr', borderColor: palette.line, background: qty > 0 ? (palette.accentSoft ?? '#fff6f1') : palette.bg }}
                   >
                     <div className="px-4 py-3">
@@ -10268,15 +10311,17 @@ function SeccionPedidoMayorista({
                       </button>
                     </div>
                     {editable && (
-                      <button
-                        type="button"
-                        onClick={() => removeItem(p.id)}
-                        aria-label={`Quitar ${p.nombre}`}
-                        className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
-                        style={{ color: palette.ink }}
-                      >
-                        <XIcon className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="absolute -left-1 top-1/2 -translate-y-1/2">
+                        <ItemToolbar
+                          variant="inline"
+                          color={palette.ink}
+                          oculto={p.oculto}
+                          onDuplicate={() => duplicateItem(p.id)}
+                          onToggleOculto={() => toggleItemOculto(p.id)}
+                          onRemove={() => removeItem(p.id)}
+                          removeLabel={`Quitar ${p.nombre}`}
+                        />
+                      </div>
                     )}
                   </div>
                 );
@@ -10370,17 +10415,23 @@ function SeccionPedidoMayorista({
               Escalas de descuento (umbral en bultos totales del pedido)
             </div>
             <div className="flex flex-wrap gap-2 mb-3">
-              {sortedTiers.map((t) => (
-                <div key={t.id} className="relative border p-2.5 flex flex-col gap-1 min-w-[160px]" style={{ borderColor: palette.line }}>
-                  <button
-                    type="button"
-                    onClick={() => removeTier(t.id)}
-                    aria-label="Quitar nivel"
-                    className="absolute top-1 right-1 opacity-50 hover:opacity-100"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+              {sortedTiersDisplay.map((t) => (
+                <div
+                  key={t.id}
+                  className={`relative border p-2.5 flex flex-col gap-1 min-w-[160px] ${t.oculto ? 'opacity-40' : ''}`}
+                  style={{ borderColor: palette.line }}
+                >
+                  <div className="absolute top-1 right-1">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={t.oculto}
+                      onDuplicate={() => duplicateTier(t.id)}
+                      onToggleOculto={() => toggleTierOculto(t.id)}
+                      onRemove={() => removeTier(t.id)}
+                      removeLabel="Quitar nivel"
+                    />
+                  </div>
                   <Editable editable value={t.etiqueta} onChange={(v) => updateTier(t.id, { etiqueta: v })} tag="span" className="text-xs font-semibold pr-3" style={{ color: palette.ink }} maxLength={30} />
                   <div className="flex gap-1">
                     <input
@@ -10852,6 +10903,8 @@ function SeccionRecomendados({
   const remove = (id) => onRemove?.(id);
   const add = () =>
     onAdd?.({ id: `pick-${Date.now()}`, titulo: 'Título del libro', autor: 'Autor', nota: 'Por qué lo recomendamos.', staff: 'Nombre, rol', img: '' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   const handleImg = (id) => async (e) => {
     const file = e.target.files?.[0];
@@ -10900,18 +10953,31 @@ function SeccionRecomendados({
           />
         </Reveal>
         <div className="grid @sm:grid-cols-2 @lg:grid-cols-3 gap-7">
-          {items.map((it, i) => (
-            <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative grid gap-5" style={{ gridTemplateColumns: 'auto 1fr' }}>
+          {visibles.map((it, i, arr) => (
+            <Reveal
+              key={it.id}
+              ref={dnd.registerItemRef(it.id)}
+              delay={Math.min(i * 0.08, 0.4)}
+              className={`relative grid gap-5 ${it.oculto ? 'opacity-40' : ''} ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
+              style={{ gridTemplateColumns: 'auto 1fr' }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(it.id)}
-                  aria-label={`Quitar ${it.titulo}`}
-                  className="absolute top-0 right-0 opacity-40 hover:opacity-100"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-0 right-0">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={it.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(it.id, -1)}
+                    onMoveDown={() => move(it.id, 1)}
+                    onDuplicate={() => duplicate(it.id)}
+                    onToggleOculto={() => toggleOculto(it.id)}
+                    onRemove={() => remove(it.id)}
+                    onDragStart={dnd.startDrag(it)}
+                    removeLabel={`Quitar ${it.titulo}`}
+                  />
+                </div>
               )}
               <label className={`group/pimg relative block w-24 aspect-[2/3] bg-black/5 overflow-hidden shrink-0 ${editable ? 'cursor-pointer' : ''}`}>
                 {it.img ? (
@@ -11104,6 +11170,10 @@ function CampoFormulario({
   tipo,
   onTipoChange,
   onRemove,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
   styleKey,
 }) {
   return (
@@ -11131,6 +11201,28 @@ function CampoFormulario({
                 <option value="tel">Teléfono</option>
                 <option value="textarea">Párrafo</option>
               </select>
+              {onMoveUp && (
+                <button
+                  type="button"
+                  onClick={onMoveUp}
+                  disabled={!canMoveUp}
+                  aria-label="Mover arriba"
+                  className="text-neutral-300 hover:text-neutral-600 disabled:opacity-30 transition-colors shrink-0"
+                >
+                  <ChevronUpIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {onMoveDown && (
+                <button
+                  type="button"
+                  onClick={onMoveDown}
+                  disabled={!canMoveDown}
+                  aria-label="Mover abajo"
+                  className="text-neutral-300 hover:text-neutral-600 disabled:opacity-30 transition-colors shrink-0"
+                >
+                  <ChevronDownIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onRemove}
@@ -11243,6 +11335,17 @@ function ContactoForm({
   const removeCampoExtra = (id) => {
     onUpdateContacto?.({ contactoCamposExtra: camposExtra.filter((c) => c.id !== id) });
   };
+  // Solo reordenar acá (sin duplicar/ocultar): son filas de formulario, no
+  // tarjetas de contenido — duplicar un campo con el mismo nombre o "ocultar"
+  // un input activo no tiene un sentido claro en un formulario.
+  const moveCampoExtra = (id, direction) => {
+    const idx = camposExtra.findIndex((c) => c.id === id);
+    const swapIdx = idx + direction;
+    if (idx === -1 || swapIdx < 0 || swapIdx >= camposExtra.length) return;
+    const next = [...camposExtra];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    onUpdateContacto?.({ contactoCamposExtra: next });
+  };
 
   if (enviado) {
     return (
@@ -11290,7 +11393,7 @@ function ContactoForm({
         multiline
         styleKey="contacto.placeholderMensaje"
       />
-      {camposExtra.map((c) => (
+      {camposExtra.map((c, i) => (
         <CampoFormulario
           key={c.id}
           editable={editable}
@@ -11303,6 +11406,10 @@ function ContactoForm({
           tipo={c.tipo}
           onTipoChange={(t) => updateCampoExtra(c.id, { tipo: t })}
           onRemove={() => removeCampoExtra(c.id)}
+          canMoveUp={i > 0}
+          canMoveDown={i < camposExtra.length - 1}
+          onMoveUp={() => moveCampoExtra(c.id, -1)}
+          onMoveDown={() => moveCampoExtra(c.id, 1)}
           styleKey={`contacto.campoExtra.${c.id}`}
         />
       ))}
@@ -11363,6 +11470,8 @@ function SeccionClubLectura({
   const updateDato = (id, patch) => onUpdateDatos?.(datos.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   const removeDato = (id) => onUpdateDatos?.(datos.filter((d) => d.id !== id));
   const addDato = () => onUpdateDatos?.([...datos, { id: `dato-${Date.now()}`, label: 'Dato', valor: 'Valor' }]);
+  const { duplicate: duplicateDato, move: moveDato, toggleOculto: toggleDatoOculto, dnd: datoDnd } = useLocalListCrud(datos, onUpdateDatos);
+  const datosVisibles = editable ? datos : datos.filter((d) => !d.oculto);
 
   const suave = textColor || 'rgba(244,239,228,0.7)';
 
@@ -11424,20 +11533,30 @@ function SeccionClubLectura({
           />
           <div
             className="grid gap-4 mb-6 py-4"
-            style={{ gridTemplateColumns: `repeat(${Math.max(datos.length, 1)}, minmax(120px, 1fr))`, borderTop: '1px solid rgba(244,239,228,0.18)', borderBottom: '1px solid rgba(244,239,228,0.18)' }}
+            style={{ gridTemplateColumns: `repeat(${Math.max(datosVisibles.length, 1)}, minmax(120px, 1fr))`, borderTop: '1px solid rgba(244,239,228,0.18)', borderBottom: '1px solid rgba(244,239,228,0.18)' }}
           >
-            {datos.map((d) => (
-              <div key={d.id} className="relative">
+            {datosVisibles.map((d, i, arr) => (
+              <div
+                key={d.id}
+                ref={datoDnd.registerItemRef(d.id)}
+                className={`relative ${d.oculto ? 'opacity-40' : ''} ${datoDnd.dragId === d.id ? 'opacity-30' : ''}`}
+              >
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removeDato(d.id)}
-                    aria-label="Quitar"
-                    className="absolute -top-1 -right-1 opacity-50 hover:opacity-100"
-                    style={{ color: textColor || palette.bg }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+                  <div className="absolute -top-1 -right-1">
+                    <ItemToolbar
+                      variant="inline"
+                      color={textColor || palette.bg}
+                      oculto={d.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => moveDato(d.id, -1)}
+                      onMoveDown={() => moveDato(d.id, 1)}
+                      onDuplicate={() => duplicateDato(d.id)}
+                      onToggleOculto={() => toggleDatoOculto(d.id)}
+                      onRemove={() => removeDato(d.id)}
+                      onDragStart={datoDnd.startDrag(d)}
+                    />
+                  </div>
                 )}
                 <Editable
                   editable={editable}
@@ -11528,6 +11647,9 @@ function SeccionComparador({
   const removeModelo = (id) => onUpdate?.(modelos.filter((m) => m.id !== id));
   const addModelo = () =>
     onUpdate?.([...modelos, { id: `modelo-${Date.now()}`, nombre: 'Nuevo modelo', precioNum: 0, specs: {} }]);
+  // Sin ocultar: idxA/idxB son índices del selector de comparación — filtrar
+  // desalinearía cuál modelo está eligiendo cada columna.
+  const { duplicate: duplicateModelo, move: moveModelo, dnd: modeloDnd } = useLocalListCrud(modelos, onUpdate);
 
   const addCampo = () => {
     const label = window.prompt('Nombre de la especificación (ej: Batería)');
@@ -11689,17 +11811,29 @@ function SeccionComparador({
               + Agregar especificación
             </button>
             <div className="flex flex-wrap gap-2">
-              {modelos.map((m) => (
-                <div key={m.id} className="relative border p-3 flex flex-col gap-1.5 min-w-[160px]" style={{ borderColor: palette.line }}>
-                  <button
-                    type="button"
-                    onClick={() => removeModelo(m.id)}
-                    aria-label={`Quitar ${m.nombre}`}
-                    className="absolute top-1.5 right-1.5 opacity-40 hover:opacity-100"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+              {modelos.map((m, mi, marr) => (
+                <div
+                  key={m.id}
+                  ref={modeloDnd.registerItemRef(m.id)}
+                  className={`relative border p-3 flex flex-col gap-1.5 min-w-[160px] ${
+                    modeloDnd.dragId === m.id ? 'opacity-30' : ''
+                  }`}
+                  style={{ borderColor: palette.line }}
+                >
+                  <div className="absolute top-1.5 right-1.5">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      canMoveUp={mi > 0}
+                      canMoveDown={mi < marr.length - 1}
+                      onMoveUp={() => moveModelo(m.id, -1)}
+                      onMoveDown={() => moveModelo(m.id, 1)}
+                      onDuplicate={() => duplicateModelo(m.id)}
+                      onRemove={() => removeModelo(m.id)}
+                      onDragStart={modeloDnd.startDrag(m)}
+                      removeLabel={`Quitar ${m.nombre}`}
+                    />
+                  </div>
                   <Editable
                     editable
                     value={m.nombre}
@@ -11759,6 +11893,8 @@ function SeccionFirmasEventos({
   const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   const remove = (id) => onRemove?.(id);
   const add = () => onAdd?.({ id: `evt-${Date.now()}`, dia: '01', mes: 'Ene', titulo: 'Nuevo evento', detalle: '', hora: '19:00' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -11790,23 +11926,32 @@ function SeccionFirmasEventos({
           />
         </Reveal>
         <div>
-          {items.map((it, i) => (
+          {visibles.map((it, i, arr) => (
             <Reveal
               key={it.id}
+              ref={dnd.registerItemRef(it.id)}
               delay={Math.min(i * 0.08, 0.4)}
-              className="relative grid gap-5 items-center py-5 border-b"
+              className={`relative grid gap-5 items-center py-5 border-b ${it.oculto ? 'opacity-40' : ''} ${
+                dnd.dragId === it.id ? 'opacity-30' : ''
+              }`}
               style={{ gridTemplateColumns: 'auto 1fr auto', borderColor: palette.line }}
             >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(it.id)}
-                  aria-label="Quitar"
-                  className="absolute top-2 right-0 opacity-40 hover:opacity-100"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-0">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={it.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(it.id, -1)}
+                    onMoveDown={() => move(it.id, 1)}
+                    onDuplicate={() => duplicate(it.id)}
+                    onToggleOculto={() => toggleOculto(it.id)}
+                    onRemove={() => remove(it.id)}
+                    onDragStart={dnd.startDrag(it)}
+                  />
+                </div>
               )}
               <div className="text-center min-w-[3.6rem]">
                 <Editable
@@ -11920,6 +12065,9 @@ function SeccionCotizador({
   const remove = (id) => onRemove?.(id);
   const add = () =>
     onAdd?.({ id: `opt-${Date.now()}`, label: 'Nueva opción', dosis: 1, dosisUnidad: 'kg/ha', producto: 'Producto sugerido', precioUnitario: 0, precioUnidad: 'kg', extra: 0 });
+  // Sin ocultar: `optIdx` es el índice elegido en el selector público — igual
+  // que Materiales/Cotizador hermanos, filtrar rompería ese índice.
+  const { duplicate, move, dnd } = useLocalListCrud(opciones, onUpdate);
 
   const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
 
@@ -11966,18 +12114,28 @@ function SeccionCotizador({
             <div>
               {editable ? (
                 <div className="flex flex-wrap gap-2 mb-1">
-                  {opciones.map((o) => (
-                    <div key={o.id} className="relative border p-2.5 flex flex-col gap-1 min-w-[140px]" style={{ borderColor: palette.line }}>
+                  {opciones.map((o, oi, oarr) => (
+                    <div
+                      key={o.id}
+                      ref={dnd.registerItemRef(o.id)}
+                      className={`relative border p-2.5 flex flex-col gap-1 min-w-[140px] ${dnd.dragId === o.id ? 'opacity-30' : ''}`}
+                      style={{ borderColor: palette.line }}
+                    >
                       {editable && (
-                        <button
-                          type="button"
-                          onClick={() => remove(o.id)}
-                          aria-label={`Quitar ${o.label}`}
-                          className="absolute top-1 right-1 opacity-50 hover:opacity-100"
-                          style={{ color: palette.ink }}
-                        >
-                          <XIcon className="w-3 h-3" />
-                        </button>
+                        <div className="absolute top-1 right-1">
+                          <ItemToolbar
+                            variant="inline"
+                            color={palette.ink}
+                            canMoveUp={oi > 0}
+                            canMoveDown={oi < oarr.length - 1}
+                            onMoveUp={() => move(o.id, -1)}
+                            onMoveDown={() => move(o.id, 1)}
+                            onDuplicate={() => duplicate(o.id)}
+                            onRemove={() => remove(o.id)}
+                            onDragStart={dnd.startDrag(o)}
+                            removeLabel={`Quitar ${o.label}`}
+                          />
+                        </div>
                       )}
                       <Editable
                         editable
@@ -12156,6 +12314,11 @@ function SeccionCanje({
   const addPerk = () => onUpdatePerks?.([...perks, 'Nuevo beneficio']);
   const removePerk = (i) => onUpdatePerks?.(perks.filter((_, pi) => pi !== i));
 
+  // Sin ocultar en ninguna de las dos: modeloIdx/condIdx son índices activos
+  // del cotizador de canje, igual que en Comparador/Cotizador hermanos.
+  const { duplicate: duplicateModelo, move: moveModelo, dnd: modeloDnd } = useLocalListCrud(modelos, onUpdate);
+  const { duplicate: duplicateCond, move: moveCond, dnd: condDnd } = useLocalListCrud(condiciones, onUpdateCondiciones);
+
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-start">
@@ -12239,17 +12402,27 @@ function SeccionCanje({
           </label>
           {editable ? (
             <div className="flex flex-wrap gap-2 mb-5">
-              {modelos.map((m) => (
-                <div key={m.id} className="relative border p-2.5 flex flex-col gap-1 min-w-[130px]" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
-                  <button
-                    type="button"
-                    onClick={() => removeModelo(m.id)}
-                    aria-label={`Quitar ${m.nombre}`}
-                    className="absolute top-1 right-1 opacity-50 hover:opacity-100"
-                    style={{ color: '#fff' }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+              {modelos.map((m, mi, marr) => (
+                <div
+                  key={m.id}
+                  ref={modeloDnd.registerItemRef(m.id)}
+                  className={`relative border p-2.5 flex flex-col gap-1 min-w-[130px] ${modeloDnd.dragId === m.id ? 'opacity-30' : ''}`}
+                  style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                >
+                  <div className="absolute top-1 right-1">
+                    <ItemToolbar
+                      variant="inline"
+                      color="#fff"
+                      canMoveUp={mi > 0}
+                      canMoveDown={mi < marr.length - 1}
+                      onMoveUp={() => moveModelo(m.id, -1)}
+                      onMoveDown={() => moveModelo(m.id, 1)}
+                      onDuplicate={() => duplicateModelo(m.id)}
+                      onRemove={() => removeModelo(m.id)}
+                      onDragStart={modeloDnd.startDrag(m)}
+                      removeLabel={`Quitar ${m.nombre}`}
+                    />
+                  </div>
                   <Editable
                     editable
                     value={m.nombre}
@@ -12297,11 +12470,14 @@ function SeccionCanje({
             Estado
           </label>
           <div className={`grid gap-2 mb-7 ${editable ? '' : 'grid-cols-3'}`}>
-            {condiciones.map((c, i) => (
+            {condiciones.map((c, i, carr) => (
               <div
                 key={c.id}
+                ref={condDnd.registerItemRef(c.id)}
                 onClick={() => !editable && setCondIdx(i)}
-                className={`relative text-center p-2.5 border transition-all ${editable ? 'flex items-center gap-2' : ''} ${!editable ? 'cursor-pointer' : ''}`}
+                className={`relative text-center p-2.5 border transition-all ${editable ? 'flex items-center gap-2' : ''} ${
+                  !editable ? 'cursor-pointer' : ''
+                } ${condDnd.dragId === c.id ? 'opacity-30' : ''}`}
                 style={
                   i === condIdx
                     ? { borderColor: '#00d4c8', background: 'rgba(0,212,200,0.12)', color: '#00d4c8' }
@@ -12321,9 +12497,18 @@ function SeccionCanje({
                       className="w-16 border px-1 py-0.5 text-xs bg-transparent ml-auto"
                       style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
                     />
-                    <button type="button" onClick={() => removeCond(c.id)} aria-label="Quitar" className="opacity-50 hover:opacity-100">
-                      <XIcon className="w-3.5 h-3.5" />
-                    </button>
+                    <ItemToolbar
+                      variant="inline"
+                      color="#fff"
+                      canMoveUp={i > 0}
+                      canMoveDown={i < carr.length - 1}
+                      onMoveUp={() => moveCond(c.id, -1)}
+                      onMoveDown={() => moveCond(c.id, 1)}
+                      onDuplicate={() => duplicateCond(c.id)}
+                      onRemove={() => removeCond(c.id)}
+                      onDragStart={condDnd.startDrag(c)}
+                      removeLabel="Quitar"
+                    />
                   </>
                 ) : (
                   <>
@@ -12403,6 +12588,8 @@ function SeccionPedidosEspeciales({
   const updatePaso = (id, patch) => onUpdatePasos?.(pasos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const removePaso = (id) => onUpdatePasos?.(pasos.filter((p) => p.id !== id));
   const addPaso = () => onUpdatePasos?.([...pasos, { id: `paso-${Date.now()}`, texto: 'Nuevo paso' }]);
+  const { duplicate: duplicatePaso, move: movePaso, toggleOculto: togglePasoOculto, dnd: pasoDnd } = useLocalListCrud(pasos, onUpdatePasos);
+  const pasosVisibles = editable ? pasos : pasos.filter((p) => !p.oculto);
 
   const valid = tituloLibro.trim().length > 1 && telefono.trim().length > 5;
   const reset = () => {
@@ -12457,8 +12644,15 @@ function SeccionPedidosEspeciales({
             maxLength={220}
           />
           <div className="flex flex-col gap-3">
-            {pasos.map((p, i) => (
-              <div key={p.id} className="relative grid gap-3 items-baseline" style={{ gridTemplateColumns: 'auto 1fr' }}>
+            {pasosVisibles.map((p, i, arr) => (
+              <div
+                key={p.id}
+                ref={pasoDnd.registerItemRef(p.id)}
+                className={`relative grid gap-3 items-baseline ${p.oculto ? 'opacity-40' : ''} ${
+                  pasoDnd.dragId === p.id ? 'opacity-30' : ''
+                }`}
+                style={{ gridTemplateColumns: 'auto 1fr' }}
+              >
                 <span className="font-mono text-xs font-bold" style={{ color: accent }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
@@ -12474,15 +12668,21 @@ function SeccionPedidosEspeciales({
                   maxLength={140}
                 />
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removePaso(p.id)}
-                    aria-label="Quitar"
-                    className="absolute top-0 right-0 opacity-40 hover:opacity-100"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+                  <div className="absolute top-0 right-0">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={p.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => movePaso(p.id, -1)}
+                      onMoveDown={() => movePaso(p.id, 1)}
+                      onDuplicate={() => duplicatePaso(p.id)}
+                      onToggleOculto={() => togglePasoOculto(p.id)}
+                      onRemove={() => removePaso(p.id)}
+                      onDragStart={pasoDnd.startDrag(p)}
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -12610,6 +12810,8 @@ function SeccionEnsayos({
   };
   const removeRow = (id) => onRemove?.(id);
   const addRow = () => onAdd?.({ id: `fila-${Date.now()}`, cells: columnas.map(() => '—') });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(filas, onUpdate);
+  const filasVisibles = editable ? filas : filas.filter((r) => !r.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -12671,10 +12873,13 @@ function SeccionEnsayos({
                 />
               ))}
             </div>
-            {filas.map((row) => (
+            {filasVisibles.map((row, i, arr) => (
               <div
                 key={row.id}
-                className="relative grid items-center border-t"
+                ref={dnd.registerItemRef(row.id)}
+                className={`relative grid items-center border-t ${row.oculto ? 'opacity-40' : ''} ${
+                  dnd.dragId === row.id ? 'opacity-30' : ''
+                }`}
                 style={{ gridTemplateColumns: `repeat(${Math.max(columnas.length, 1)}, 1fr)`, borderColor: palette.line }}
               >
                 {row.cells.map((cell, idx) => (
@@ -12690,15 +12895,22 @@ function SeccionEnsayos({
                   />
                 ))}
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removeRow(row.id)}
-                    aria-label="Quitar fila"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={row.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(row.id, -1)}
+                      onMoveDown={() => move(row.id, 1)}
+                      onDuplicate={() => duplicate(row.id)}
+                      onToggleOculto={() => toggleOculto(row.id)}
+                      onRemove={() => removeRow(row.id)}
+                      onDragStart={dnd.startDrag(row)}
+                      removeLabel="Quitar fila"
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -12745,6 +12957,8 @@ function SeccionLogisticaZonas({
   const update = (id, patch) => onUpdate?.(zonas.map((z) => (z.id === id ? { ...z, ...patch } : z)));
   const remove = (id) => onRemove?.(id);
   const add = () => onAdd?.({ id: `zona-${Date.now()}`, zona: 'Nueva zona', dias: 'Días', minimo: '$0', flete: 'A convenir', gratis: false });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(zonas, onUpdate);
+  const visibles = editable ? zonas : zonas.filter((z) => !z.oculto);
 
   const handleImagen = async (e) => {
     const file = e.target.files?.[0];
@@ -12820,10 +13034,13 @@ function SeccionLogisticaZonas({
               <div className="px-4 py-3 text-right">Mínimo</div>
               <div className="px-4 py-3 text-right">Flete</div>
             </div>
-            {zonas.map((z) => (
+            {visibles.map((z, i, arr) => (
               <div
                 key={z.id}
-                className="relative grid items-center border-t"
+                ref={dnd.registerItemRef(z.id)}
+                className={`relative grid items-center border-t ${z.oculto ? 'opacity-40' : ''} ${
+                  dnd.dragId === z.id ? 'opacity-30' : ''
+                }`}
                 style={{ gridTemplateColumns: '1.3fr 1fr 0.9fr 0.9fr', borderColor: palette.line }}
               >
                 <Editable
@@ -12874,15 +13091,22 @@ function SeccionLogisticaZonas({
                   )}
                 </div>
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => remove(z.id)}
-                    aria-label="Quitar zona"
-                    className="absolute -right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="absolute -right-1 top-1/2 -translate-y-1/2">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={z.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(z.id, -1)}
+                      onMoveDown={() => move(z.id, 1)}
+                      onDuplicate={() => duplicate(z.id)}
+                      onToggleOculto={() => toggleOculto(z.id)}
+                      onRemove={() => remove(z.id)}
+                      onDragStart={dnd.startDrag(z)}
+                      removeLabel="Quitar zona"
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -13585,6 +13809,8 @@ function SeccionLugares({
   const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
   const add = () =>
     onUpdate?.([...items, { id: `lugar-${Date.now()}`, kind: 'Lugar', nombre: 'Nuevo lugar', direccion: '', hora: '', imagen: '' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -13614,17 +13840,30 @@ function SeccionLugares({
         />
       </Reveal>
       <div className="max-w-4xl mx-auto grid @lg:grid-cols-2 gap-6">
-        {items.map((it, i) => (
-          <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative border" style={{ borderColor: palette.line, background: palette.bg }}>
+        {visibles.map((it, i, arr) => (
+          <Reveal
+            key={it.id}
+            ref={dnd.registerItemRef(it.id)}
+            delay={Math.min(i * 0.08, 0.4)}
+            className={`relative border ${it.oculto ? 'opacity-40' : ''} ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
+            style={{ borderColor: palette.line, background: palette.bg }}
+          >
             {editable && (
-              <button
-                type="button"
-                onClick={() => remove(it.id)}
-                aria-label={`Quitar ${it.nombre}`}
-                className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center"
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+              <div className="absolute top-2 right-2 z-10">
+                <ItemToolbar
+                  variant="overlay"
+                  oculto={it.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(it.id, -1)}
+                  onMoveDown={() => move(it.id, 1)}
+                  onDuplicate={() => duplicate(it.id)}
+                  onToggleOculto={() => toggleOculto(it.id)}
+                  onRemove={() => remove(it.id)}
+                  onDragStart={dnd.startDrag(it)}
+                  removeLabel={`Quitar ${it.nombre}`}
+                />
+              </div>
             )}
             <label
               className={`relative block aspect-[16/10] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
@@ -13749,10 +13988,14 @@ function SeccionDressCode({
   const updateNota = (id, patch) => onUpdateNotas?.(notas.map((n) => (n.id === id ? { ...n, ...patch } : n)));
   const removeNota = (id) => onUpdateNotas?.(notas.filter((n) => n.id !== id));
   const addNota = () => onUpdateNotas?.([...notas, { id: `nota-${Date.now()}`, positivo: true, texto: 'Nueva nota' }]);
+  const { duplicate: duplicateNota, move: moveNota, toggleOculto: toggleNotaOculto, dnd: notaDnd } = useLocalListCrud(notas, onUpdateNotas);
+  const notasVisibles = editable ? notas : notas.filter((n) => !n.oculto);
 
   const updateColor = (id, patch) => onUpdatePaletaColores?.(paletaColores.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   const removeColor = (id) => onUpdatePaletaColores?.(paletaColores.filter((c) => c.id !== id));
   const addColor = () => onUpdatePaletaColores?.([...paletaColores, { id: `color-${Date.now()}`, nombre: 'Color', hex: '#a8577a' }]);
+  const { duplicate: duplicateColor, move: moveColor, toggleOculto: toggleColorOculto, dnd: colorDnd } = useLocalListCrud(paletaColores, onUpdatePaletaColores);
+  const paletaVisibles = editable ? paletaColores : paletaColores.filter((c) => !c.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
@@ -13794,8 +14037,15 @@ function SeccionDressCode({
             maxLength={220}
           />
           <div className="flex flex-col gap-3">
-            {notas.map((n) => (
-              <div key={n.id} className="relative grid gap-3 items-baseline" style={{ gridTemplateColumns: 'auto 1fr' }}>
+            {notasVisibles.map((n, i, arr) => (
+              <div
+                key={n.id}
+                ref={notaDnd.registerItemRef(n.id)}
+                className={`relative grid gap-3 items-baseline ${n.oculto ? 'opacity-40' : ''} ${
+                  notaDnd.dragId === n.id ? 'opacity-30' : ''
+                }`}
+                style={{ gridTemplateColumns: 'auto 1fr' }}
+              >
                 {editable ? (
                   <button
                     type="button"
@@ -13822,15 +14072,21 @@ function SeccionDressCode({
                   maxLength={100}
                 />
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removeNota(n.id)}
-                    aria-label="Quitar"
-                    className="absolute top-0 right-0 opacity-50 hover:opacity-100"
-                    style={{ color: '#fff' }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+                  <div className="absolute top-0 right-0">
+                    <ItemToolbar
+                      variant="inline"
+                      color="#fff"
+                      oculto={n.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => moveNota(n.id, -1)}
+                      onMoveDown={() => moveNota(n.id, 1)}
+                      onDuplicate={() => duplicateNota(n.id)}
+                      onToggleOculto={() => toggleNotaOculto(n.id)}
+                      onRemove={() => removeNota(n.id)}
+                      onDragStart={notaDnd.startDrag(n)}
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -13851,8 +14107,12 @@ function SeccionDressCode({
             Paleta sugerida
           </div>
           <div className="grid grid-cols-3 @sm:grid-cols-5 gap-3">
-            {paletaColores.map((c) => (
-              <div key={c.id} className="relative">
+            {paletaVisibles.map((c, i, arr) => (
+              <div
+                key={c.id}
+                ref={colorDnd.registerItemRef(c.id)}
+                className={`relative ${c.oculto ? 'opacity-40' : ''} ${colorDnd.dragId === c.id ? 'opacity-30' : ''}`}
+              >
                 {editable ? (
                   <input
                     type="color"
@@ -13876,14 +14136,21 @@ function SeccionDressCode({
                   maxLength={20}
                 />
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removeColor(c.id)}
-                    aria-label="Quitar color"
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center"
-                  >
-                    <XIcon className="w-2.5 h-2.5" />
-                  </button>
+                  <div className="absolute -top-1.5 -right-1.5">
+                    <ItemToolbar
+                      variant="overlay"
+                      oculto={c.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => moveColor(c.id, -1)}
+                      onMoveDown={() => moveColor(c.id, 1)}
+                      onDuplicate={() => duplicateColor(c.id)}
+                      onToggleOculto={() => toggleColorOculto(c.id)}
+                      onRemove={() => removeColor(c.id)}
+                      onDragStart={colorDnd.startDrag(c)}
+                      removeLabel="Quitar color"
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -13945,6 +14212,8 @@ function SeccionRSVP({
   const updateMenu = (id, patch) => onUpdateMenuOptions?.(menuOptions.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   const removeMenu = (id) => onUpdateMenuOptions?.(menuOptions.filter((m) => m.id !== id));
   const addMenu = () => onUpdateMenuOptions?.([...menuOptions, { id: `menu-${Date.now()}`, nombre: 'Menú', desc: '' }]);
+  const { duplicate: duplicateMenu, move: moveMenu, toggleOculto: toggleMenuOculto, dnd: menuDnd } = useLocalListCrud(menuOptions, onUpdateMenuOptions);
+  const menuVisibles = editable ? menuOptions : menuOptions.filter((m) => !m.oculto);
 
   const menuName = menuOptions.find((m) => m.id === menu)?.nombre || 'Sin elegir';
   const guestLabel = guests === 1 ? 'Solo yo' : `${guests} personas`;
@@ -14152,8 +14421,12 @@ function SeccionRSVP({
                   Elegí tu menú
                 </label>
                 <div className="flex flex-col gap-2">
-                  {menuOptions.map((m) => (
-                    <div key={m.id} className="relative">
+                  {menuVisibles.map((m, i, arr) => (
+                    <div
+                      key={m.id}
+                      ref={menuDnd.registerItemRef(m.id)}
+                      className={`relative ${m.oculto ? 'opacity-40' : ''} ${menuDnd.dragId === m.id ? 'opacity-30' : ''}`}
+                    >
                       <button
                         type="button"
                         onClick={() => !editable && setMenu(m.id)}
@@ -14183,15 +14456,22 @@ function SeccionRSVP({
                         </span>
                       </button>
                       {editable && (
-                        <button
-                          type="button"
-                          onClick={() => removeMenu(m.id)}
-                          aria-label="Quitar menú"
-                          className="absolute top-2 right-2 opacity-40 hover:opacity-100"
-                          style={{ color: palette.ink }}
-                        >
-                          <XIcon className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="absolute top-2 right-2">
+                          <ItemToolbar
+                            variant="inline"
+                            color={palette.ink}
+                            oculto={m.oculto}
+                            canMoveUp={i > 0}
+                            canMoveDown={i < arr.length - 1}
+                            onMoveUp={() => moveMenu(m.id, -1)}
+                            onMoveDown={() => moveMenu(m.id, 1)}
+                            onDuplicate={() => duplicateMenu(m.id)}
+                            onToggleOculto={() => toggleMenuOculto(m.id)}
+                            onRemove={() => removeMenu(m.id)}
+                            onDragStart={menuDnd.startDrag(m)}
+                            removeLabel="Quitar menú"
+                          />
+                        </div>
                       )}
                     </div>
                   ))}
@@ -14334,6 +14614,8 @@ function SeccionPlaylist({
   const update = (id, patch) => onUpdate?.(canciones.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   const remove = (id) => onUpdate?.(canciones.filter((c) => c.id !== id));
   const add = () => onUpdate?.([...canciones, { id: `song-${Date.now()}`, titulo: 'Artista — Tema', por: 'Vos' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(canciones, onUpdate);
+  const cancionesVisibles = editable ? canciones : canciones.filter((c) => !c.oculto);
 
   const addRequest = () => {
     const v = input.trim();
@@ -14414,8 +14696,15 @@ function SeccionPlaylist({
             Ya pidieron
           </div>
           <div className="flex flex-col">
-            {canciones.map((s, i) => (
-              <div key={s.id} className="relative grid gap-3 items-center py-3 border-b" style={{ gridTemplateColumns: 'auto 1fr auto', borderColor: palette.line }}>
+            {cancionesVisibles.map((s, i, arr) => (
+              <div
+                key={s.id}
+                ref={dnd.registerItemRef(s.id)}
+                className={`relative grid gap-3 items-center py-3 border-b ${s.oculto ? 'opacity-40' : ''} ${
+                  dnd.dragId === s.id ? 'opacity-30' : ''
+                }`}
+                style={{ gridTemplateColumns: 'auto 1fr auto', borderColor: palette.line }}
+              >
                 <span className="font-serif text-base min-w-[1.6rem]" style={{ color: '#c0a05c' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
@@ -14432,9 +14721,19 @@ function SeccionPlaylist({
                 {editable ? (
                   <div className="flex items-center gap-2">
                     <Editable editable value={s.por} onChange={(v) => update(s.id, { por: v })} tag="span" placeholder="Quién lo pidió" style={{ color: palette.inkSoft }} className="text-xs" maxLength={20} />
-                    <button type="button" onClick={() => remove(s.id)} aria-label="Quitar" className="opacity-40 hover:opacity-100" style={{ color: palette.ink }}>
-                      <XIcon className="w-3 h-3" />
-                    </button>
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={s.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(s.id, -1)}
+                      onMoveDown={() => move(s.id, 1)}
+                      onDuplicate={() => duplicate(s.id)}
+                      onToggleOculto={() => toggleOculto(s.id)}
+                      onRemove={() => remove(s.id)}
+                      onDragStart={dnd.startDrag(s)}
+                    />
                   </div>
                 ) : (
                   <span className="text-xs" style={{ color: palette.inkSoft }}>
@@ -14495,6 +14794,8 @@ function SeccionRegalos({
   const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
   const add = () => onUpdate?.([...items, { id: `regalo-${Date.now()}`, glyph: '♡', titulo: 'Nueva opción', desc: '', detalle: '' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -14536,18 +14837,30 @@ function SeccionRegalos({
         />
       </Reveal>
       <div className="max-w-4xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
-        {items.map((it, i) => (
-          <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative border text-center px-6 py-8" style={{ borderColor: palette.line, background: palette.bg }}>
+        {visibles.map((it, i, arr) => (
+          <Reveal
+            key={it.id}
+            ref={dnd.registerItemRef(it.id)}
+            delay={Math.min(i * 0.08, 0.4)}
+            className={`relative border text-center px-6 py-8 ${it.oculto ? 'opacity-40' : ''} ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
+            style={{ borderColor: palette.line, background: palette.bg }}
+          >
             {editable && (
-              <button
-                type="button"
-                onClick={() => remove(it.id)}
-                aria-label="Quitar"
-                className="absolute top-2 right-2 opacity-40 hover:opacity-100"
-                style={{ color: palette.ink }}
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+              <div className="absolute top-2 right-2">
+                <ItemToolbar
+                  variant="inline"
+                  color={palette.ink}
+                  oculto={it.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(it.id, -1)}
+                  onMoveDown={() => move(it.id, 1)}
+                  onDuplicate={() => duplicate(it.id)}
+                  onToggleOculto={() => toggleOculto(it.id)}
+                  onRemove={() => remove(it.id)}
+                  onDragStart={dnd.startDrag(it)}
+                />
+              </div>
             )}
             <Editable
               editable={editable}
@@ -14763,6 +15076,8 @@ function SeccionCondiciones({
   const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   const remove = (id) => onRemove?.(id);
   const add = () => onAdd?.({ id: `cond-${Date.now()}`, titulo: 'Nueva condición', desc: '' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   const suave = textColor || 'rgba(244,245,247,0.72)';
 
@@ -14798,23 +15113,30 @@ function SeccionCondiciones({
           className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4"
           style={{ borderTop: '1px solid rgba(244,245,247,0.2)', borderLeft: '1px solid rgba(244,245,247,0.2)' }}
         >
-          {items.map((it, i) => (
+          {visibles.map((it, i, arr) => (
             <Reveal
               key={it.id}
+              ref={dnd.registerItemRef(it.id)}
               delay={Math.min(i * 0.08, 0.4)}
-              className="relative px-6 py-7"
+              className={`relative px-6 py-7 ${it.oculto ? 'opacity-40' : ''} ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
               style={{ borderRight: '1px solid rgba(244,245,247,0.2)', borderBottom: '1px solid rgba(244,245,247,0.2)' }}
             >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(it.id)}
-                  aria-label="Quitar"
-                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
-                  style={{ color: textColor || palette.bg }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2">
+                  <ItemToolbar
+                    variant="inline"
+                    color={textColor || palette.bg}
+                    oculto={it.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(it.id, -1)}
+                    onMoveDown={() => move(it.id, 1)}
+                    onDuplicate={() => duplicate(it.id)}
+                    onToggleOculto={() => toggleOculto(it.id)}
+                    onRemove={() => remove(it.id)}
+                    onDragStart={dnd.startDrag(it)}
+                  />
+                </div>
               )}
               <Editable
                 editable={editable}
@@ -14880,6 +15202,8 @@ function SeccionHospedaje({
   const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
   const add = () =>
     onUpdate?.([...items, { id: `hotel-${Date.now()}`, nombre: 'Nuevo hotel', distancia: '', desc: '', precio: '', codigo: '' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -14921,18 +15245,30 @@ function SeccionHospedaje({
         />
       </Reveal>
       <div className="max-w-5xl mx-auto grid @sm:grid-cols-2 @lg:grid-cols-3 gap-5">
-        {items.map((it, i) => (
-          <Reveal key={it.id} delay={Math.min(i * 0.08, 0.4)} className="relative border px-6 py-6" style={{ borderColor: palette.line, background: palette.bg }}>
+        {visibles.map((it, i, arr) => (
+          <Reveal
+            key={it.id}
+            ref={dnd.registerItemRef(it.id)}
+            delay={Math.min(i * 0.08, 0.4)}
+            className={`relative border px-6 py-6 ${it.oculto ? 'opacity-40' : ''} ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
+            style={{ borderColor: palette.line, background: palette.bg }}
+          >
             {editable && (
-              <button
-                type="button"
-                onClick={() => remove(it.id)}
-                aria-label="Quitar"
-                className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
-                style={{ color: palette.ink }}
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+              <div className="absolute top-2 right-2">
+                <ItemToolbar
+                  variant="inline"
+                  color={palette.ink}
+                  oculto={it.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(it.id, -1)}
+                  onMoveDown={() => move(it.id, 1)}
+                  onDuplicate={() => duplicate(it.id)}
+                  onToggleOculto={() => toggleOculto(it.id)}
+                  onRemove={() => remove(it.id)}
+                  onDragStart={dnd.startDrag(it)}
+                />
+              </div>
             )}
             <Editable
               editable={editable}
@@ -15033,6 +15369,8 @@ function SeccionLibroDeMensajes({
   const update = (id, patch) => onUpdate?.(mensajes.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   const remove = (id) => onUpdate?.(mensajes.filter((m) => m.id !== id));
   const add = () => onUpdate?.([...mensajes, { id: `msg-${Date.now()}`, texto: 'Nuevo mensaje', por: 'Alguien' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(mensajes, onUpdate);
+  const mensajesVisibles = editable ? mensajes : mensajes.filter((m) => !m.oculto);
 
   const addMensaje = () => {
     const v = input.trim();
@@ -15109,18 +15447,29 @@ function SeccionLibroDeMensajes({
           )}
         </Reveal>
         <Reveal delay={0.12} className="flex flex-col gap-4 @lg:max-h-[420px] @lg:overflow-y-auto scrollbar-hide">
-          {mensajes.map((m) => (
-            <div key={m.id} className="relative border px-5 py-5" style={{ borderColor: palette.line, background: palette.bg }}>
+          {mensajesVisibles.map((m, i, arr) => (
+            <div
+              key={m.id}
+              ref={dnd.registerItemRef(m.id)}
+              className={`relative border px-5 py-5 ${m.oculto ? 'opacity-40' : ''} ${dnd.dragId === m.id ? 'opacity-30' : ''}`}
+              style={{ borderColor: palette.line, background: palette.bg }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(m.id)}
-                  aria-label="Quitar"
-                  className="absolute top-2 right-2 opacity-40 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={m.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(m.id, -1)}
+                    onMoveDown={() => move(m.id, 1)}
+                    onDuplicate={() => duplicate(m.id)}
+                    onToggleOculto={() => toggleOculto(m.id)}
+                    onRemove={() => remove(m.id)}
+                    onDragStart={dnd.startDrag(m)}
+                  />
+                </div>
               )}
               <Editable
                 editable={editable}
@@ -15752,6 +16101,8 @@ function SeccionEscalasVolumen({
   const remove = (id) => onRemove?.(id);
   const add = () =>
     onAdd?.({ id: `tier-${Date.now()}`, tag: '', rango: 'Nuevo rango', off: '−0 %', desc: '', topColor: '#c6ccd8' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -15795,23 +16146,30 @@ function SeccionEscalasVolumen({
           />
         </Reveal>
         <div className="grid @sm:grid-cols-2 @lg:grid-cols-3 gap-5">
-          {items.map((it, i) => (
+          {visibles.map((it, i, arr) => (
             <Reveal
               key={it.id}
+              ref={dnd.registerItemRef(it.id)}
               delay={Math.min(i * 0.08, 0.4)}
-              className="relative bg-white px-6 py-7"
+              className={`relative bg-white px-6 py-7 ${it.oculto ? 'opacity-40' : ''} ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
               style={{ border: `1px solid ${palette.line}`, borderTop: `4px solid ${it.topColor || palette.line}`, background: palette.bg }}
             >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(it.id)}
-                  aria-label="Quitar"
-                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={it.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(it.id, -1)}
+                    onMoveDown={() => move(it.id, 1)}
+                    onDuplicate={() => duplicate(it.id)}
+                    onToggleOculto={() => toggleOculto(it.id)}
+                    onRemove={() => remove(it.id)}
+                    onDragStart={dnd.startDrag(it)}
+                  />
+                </div>
               )}
               <Editable
                 editable={editable}
@@ -16452,6 +16810,8 @@ function SeccionCicloTrabajo({
   const remove = (id) => onRemove?.(id);
   const add = () =>
     onAdd?.({ id: `etapa-${Date.now()}`, n: String(items.length + 1).padStart(2, '0'), rango: 'Mes — Mes', titulo: 'Nueva etapa', desc: '', items: ['Tarea'] });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   const updateSubitem = (id, idx, value) => {
     const it = items.find((x) => x.id === id);
@@ -16502,23 +16862,32 @@ function SeccionCicloTrabajo({
           className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4"
           style={{ borderTop: `2px solid ${palette.ink}` }}
         >
-          {items.map((it, i) => (
+          {visibles.map((it, i, arr) => (
             <Reveal
               key={it.id}
+              ref={dnd.registerItemRef(it.id)}
               delay={Math.min(i * 0.08, 0.4)}
-              className="relative border-r border-b @lg:border-b-0 px-5 py-6"
+              className={`relative border-r border-b @lg:border-b-0 px-5 py-6 ${it.oculto ? 'opacity-40' : ''} ${
+                dnd.dragId === it.id ? 'opacity-30' : ''
+              }`}
               style={{ borderColor: palette.line }}
             >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(it.id)}
-                  aria-label="Quitar"
-                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-2 right-2">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={it.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(it.id, -1)}
+                    onMoveDown={() => move(it.id, 1)}
+                    onDuplicate={() => duplicate(it.id)}
+                    onToggleOculto={() => toggleOculto(it.id)}
+                    onRemove={() => remove(it.id)}
+                    onDragStart={dnd.startDrag(it)}
+                  />
+                </div>
               )}
               <div className="flex items-baseline justify-between gap-3 mb-4">
                 <Editable
@@ -17152,6 +17521,8 @@ function SeccionReservas({
   const update = (id, patch) => onUpdate?.(servicios.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const remove = (id) => onUpdate?.(servicios.filter((s) => s.id !== id));
   const add = () => onUpdate?.([...servicios, { id: `resv-${Date.now()}`, nombre: 'Nuevo servicio' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(servicios, onUpdate);
+  const serviciosVisibles = editable ? servicios : servicios.filter((s) => !s.oculto);
 
   const [viewDate, setViewDate] = useState(() => new Date());
   const [pickedDay, setPickedDay] = useState(() => new Date().getDate());
@@ -17308,8 +17679,15 @@ function SeccionReservas({
               {itemsLabel}
             </p>
             <div className="flex flex-col gap-2 mb-5">
-              {servicios.map((s) => (
-                <div key={s.id} className="relative flex items-center border px-3 py-2" style={{ borderColor: lineColor }}>
+              {serviciosVisibles.map((s, i, arr) => (
+                <div
+                  key={s.id}
+                  ref={dnd.registerItemRef(s.id)}
+                  className={`relative flex items-center border px-3 py-2 ${s.oculto ? 'opacity-40' : ''} ${
+                    dnd.dragId === s.id ? 'opacity-30' : ''
+                  }`}
+                  style={{ borderColor: lineColor }}
+                >
                   <Editable
                     editable={editable}
                     value={s.nombre}
@@ -17323,15 +17701,21 @@ function SeccionReservas({
                     maxLength={60}
                   />
                   {editable && (
-                    <button
-                      type="button"
-                      onClick={() => remove(s.id)}
-                      aria-label="Quitar servicio"
-                      className="opacity-50 hover:opacity-100 transition-opacity ml-2 shrink-0"
-                      style={{ color: textColor || '#fff' }}
-                    >
-                      <XIcon className="w-3.5 h-3.5" />
-                    </button>
+                    <ItemToolbar
+                      variant="inline"
+                      color={textColor || '#fff'}
+                      className="ml-2"
+                      oculto={s.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(s.id, -1)}
+                      onMoveDown={() => move(s.id, 1)}
+                      onDuplicate={() => duplicate(s.id)}
+                      onToggleOculto={() => toggleOculto(s.id)}
+                      onRemove={() => remove(s.id)}
+                      onDragStart={dnd.startDrag(s)}
+                      removeLabel="Quitar servicio"
+                    />
                   )}
                 </div>
               ))}
@@ -17345,7 +17729,7 @@ function SeccionReservas({
                   <PlusIcon className="w-3.5 h-3.5" /> {addLabel}
                 </button>
               )}
-              {!editable && servicios.length === 0 && (
+              {!editable && serviciosVisibles.length === 0 && (
                 <p className="text-xs" style={{ color: textoSuave }}>
                   Todavía no cargaste servicios.
                 </p>
@@ -18567,6 +18951,10 @@ function SeccionMateriales({
 
   const update = (id, patch) => onUpdate?.(materiales.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   const remove = (id) => onUpdate?.(materiales.filter((m) => m.id !== id));
+  // Sin ocultar acá: `selected`/`current` apuntan por índice a `materiales`
+  // (el swatch elegido en el panel de detalle), igual que en Áreas/Sucursales
+  // — filtrar rompería ese índice. Duplicar/mover/arrastrar sí son seguros.
+  const { duplicate, move, dnd } = useLocalListCrud(materiales, onUpdate);
   const addWithFile = async (file) => {
     if (!(await validateImageFile(file, 'galeria'))) return;
     const imagen = await uploadImage(file);
@@ -18620,8 +19008,12 @@ function SeccionMateriales({
         </div>
         <div>
           <div className="flex gap-3 mb-6 flex-wrap">
-            {materiales.map((m, i) => (
-              <div key={m.id} className="relative">
+            {materiales.map((m, i, arr) => (
+              <div
+                key={m.id}
+                ref={dnd.registerItemRef(m.id)}
+                className={`relative ${dnd.dragId === m.id ? 'opacity-30' : ''}`}
+              >
                 <button
                   type="button"
                   onClick={() => setSelected(i)}
@@ -18654,14 +19046,19 @@ function SeccionMateriales({
                         }}
                       />
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => remove(m.id)}
-                      aria-label={`Quitar ${m.nombre}`}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center"
-                    >
-                      <XIcon className="w-2.5 h-2.5" />
-                    </button>
+                    <div className="absolute -top-1.5 -right-1.5">
+                      <ItemToolbar
+                        variant="overlay"
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => move(m.id, -1)}
+                        onMoveDown={() => move(m.id, 1)}
+                        onDuplicate={() => duplicate(m.id)}
+                        onRemove={() => remove(m.id)}
+                        onDragStart={dnd.startDrag(m)}
+                        removeLabel={`Quitar ${m.nombre}`}
+                      />
+                    </div>
                   </>
                 )}
               </div>
@@ -18750,10 +19147,12 @@ function SeccionTurnos({
   onAddBarbero,
   onRemoveBarbero,
   onUpdateBarbero,
+  onUpdateBarberos,
   servicios = [],
   onAddServicio,
   onRemoveServicio,
   onUpdateServicio,
+  onUpdateServicios,
   eyebrow,
   onUpdateEyebrow,
   titulo,
@@ -18797,6 +19196,11 @@ function SeccionTurnos({
     onAddBarbero?.({ id: `barbero-${Date.now()}`, nombre: 'Nuevo barbero', especialidad: '', imagen: '' });
   const addServicio = () =>
     onAddServicio?.({ id: `servicio-${Date.now()}`, nombre: 'Nuevo servicio', minutos: 30, precio: 0 });
+  // Sin ocultar en ninguna de las dos listas: `sel.barbero`/`sel.servicio` son
+  // índices activos del selector de turnos, igual que en Materiales — filtrar
+  // desalinearía cuál es "el elegido". Duplicar/mover/arrastrar sí son seguros.
+  const { duplicate: duplicateBarbero, move: moveBarbero, dnd: barberoDnd } = useLocalListCrud(barberos, onUpdateBarberos);
+  const { duplicate: duplicateServicio, move: moveServicio, dnd: servicioDnd } = useLocalListCrud(servicios, onUpdateServicios);
 
   const handleFoto = (id) => async (e) => {
     const file = e.target.files?.[0];
@@ -18856,28 +19260,33 @@ function SeccionTurnos({
               1 · Tu barbero
             </p>
             <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-              {barberos.map((b, i) => {
+              {barberos.map((b, i, arr) => {
                 const on = i === barberoIdx;
                 return (
                   <div
                     key={b.id}
-                    className="relative flex items-center gap-2.5 p-2.5 border cursor-pointer"
+                    ref={barberoDnd.registerItemRef(b.id)}
+                    className={`relative flex items-center gap-2.5 p-2.5 border cursor-pointer ${
+                      barberoDnd.dragId === b.id ? 'opacity-30' : ''
+                    }`}
                     onClick={() => setSel((s) => ({ ...s, barbero: i, hora: null }))}
                     style={{ borderColor: on ? accent : palette.line, background: on ? `${accent}1f` : 'transparent' }}
                   >
                     {editable && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveBarbero?.(b.id);
-                        }}
-                        aria-label={`Quitar ${b.nombre}`}
-                        className="absolute top-1 right-1 opacity-50 hover:opacity-100 transition-opacity"
-                        style={{ color: palette.ink }}
-                      >
-                        <XIcon className="w-3 h-3" />
-                      </button>
+                      <div className="absolute top-1 right-1" onClick={(e) => e.stopPropagation()}>
+                        <ItemToolbar
+                          variant="inline"
+                          color={palette.ink}
+                          canMoveUp={i > 0}
+                          canMoveDown={i < arr.length - 1}
+                          onMoveUp={() => moveBarbero(b.id, -1)}
+                          onMoveDown={() => moveBarbero(b.id, 1)}
+                          onDuplicate={() => duplicateBarbero(b.id)}
+                          onRemove={() => onRemoveBarbero?.(b.id)}
+                          onDragStart={barberoDnd.startDrag(b)}
+                          removeLabel={`Quitar ${b.nombre}`}
+                        />
+                      </div>
                     )}
                     <label
                       className={`relative w-11 h-11 shrink-0 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
@@ -18938,12 +19347,15 @@ function SeccionTurnos({
               2 · Servicio
             </p>
             <div className="flex flex-col gap-2">
-              {servicios.map((sv, i) => {
+              {servicios.map((sv, i, arr) => {
                 const on = i === servicioIdx;
                 return (
                   <div
                     key={sv.id}
-                    className="relative flex items-center justify-between gap-3 p-3 border cursor-pointer"
+                    ref={servicioDnd.registerItemRef(sv.id)}
+                    className={`relative flex items-center justify-between gap-3 p-3 border cursor-pointer ${
+                      servicioDnd.dragId === sv.id ? 'opacity-30' : ''
+                    }`}
                     onClick={() => setSel((s) => ({ ...s, servicio: i }))}
                     style={{ borderColor: on ? accent : palette.line, background: on ? `${accent}1f` : 'transparent' }}
                   >
@@ -18982,18 +19394,20 @@ function SeccionTurnos({
                         className="font-mono font-bold text-sm"
                       />
                       {editable && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveServicio?.(sv.id);
-                          }}
-                          aria-label={`Quitar ${sv.nombre}`}
-                          className="opacity-50 hover:opacity-100 transition-opacity"
-                          style={{ color: palette.ink }}
-                        >
-                          <XIcon className="w-3.5 h-3.5" />
-                        </button>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <ItemToolbar
+                            variant="inline"
+                            color={palette.ink}
+                            canMoveUp={i > 0}
+                            canMoveDown={i < arr.length - 1}
+                            onMoveUp={() => moveServicio(sv.id, -1)}
+                            onMoveDown={() => moveServicio(sv.id, 1)}
+                            onDuplicate={() => duplicateServicio(sv.id)}
+                            onRemove={() => onRemoveServicio?.(sv.id)}
+                            onDragStart={servicioDnd.startDrag(sv)}
+                            removeLabel={`Quitar ${sv.nombre}`}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -19162,6 +19576,7 @@ function SeccionPreciosBarberia({
   onAddServicio,
   onRemoveServicio,
   onUpdateServicio,
+  onUpdate,
   titulo,
   onUpdateTitulo,
   nota,
@@ -19176,6 +19591,8 @@ function SeccionPreciosBarberia({
   const remove = (id) => onRemoveServicio?.(id);
   const add = () =>
     onAddServicio?.({ id: `precio-${Date.now()}`, nombre: 'Nuevo servicio', desc: '', minutos: 30, precio: 0 });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(servicios, onUpdate);
+  const visibles = editable ? servicios : servicios.filter((sv) => !sv.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -19202,10 +19619,13 @@ function SeccionPreciosBarberia({
         />
       </div>
       <div className="max-w-5xl mx-auto flex flex-col">
-        {servicios.map((sv, i) => (
+        {visibles.map((sv, i, arr) => (
           <div
             key={sv.id}
-            className="relative grid gap-x-4 @lg:gap-x-7 gap-y-1 items-center py-4 border-b"
+            ref={dnd.registerItemRef(sv.id)}
+            className={`relative grid gap-x-4 @lg:gap-x-7 gap-y-1 items-center py-4 border-b ${
+              sv.oculto ? 'opacity-40' : ''
+            } ${dnd.dragId === sv.id ? 'opacity-30' : ''}`}
             style={{ gridTemplateColumns: 'auto 1fr auto auto', borderColor: palette.line }}
           >
             <span className="font-mono text-xs min-w-[1.8rem]" style={{ color: palette.inkSoft, opacity: 0.6 }}>
@@ -19260,15 +19680,20 @@ function SeccionPreciosBarberia({
                 className="font-serif text-xl whitespace-nowrap"
               />
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(sv.id)}
-                  aria-label={`Quitar ${sv.nombre}`}
-                  className="opacity-50 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
+                <ItemToolbar
+                  variant="inline"
+                  color={palette.ink}
+                  oculto={sv.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(sv.id, -1)}
+                  onMoveDown={() => move(sv.id, 1)}
+                  onDuplicate={() => duplicate(sv.id)}
+                  onToggleOculto={() => toggleOculto(sv.id)}
+                  onRemove={() => remove(sv.id)}
+                  onDragStart={dnd.startDrag(sv)}
+                  removeLabel={`Quitar ${sv.nombre}`}
+                />
               )}
             </div>
           </div>
@@ -19300,6 +19725,7 @@ function SeccionBarberos({
   onAddBarbero,
   onRemoveBarbero,
   onUpdateBarbero,
+  onUpdate,
   titulo,
   onUpdateTitulo,
   eyebrow,
@@ -19314,6 +19740,8 @@ function SeccionBarberos({
   const remove = (id) => onRemoveBarbero?.(id);
   const add = () =>
     onAddBarbero?.({ id: `equipo-${Date.now()}`, nombre: 'Nueva persona', especialidad: '', anios: '', bio: '', foto: '' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(barberos, onUpdate);
+  const visibles = editable ? barberos : barberos.filter((b) => !b.oculto);
 
   const handleFoto = (id) => async (e) => {
     const file = e.target.files?.[0];
@@ -19347,17 +19775,28 @@ function SeccionBarberos({
         />
       </div>
       <div className="max-w-5xl mx-auto grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
-        {barberos.map((b) => (
-          <div key={b.id} className="relative">
+        {visibles.map((b, i, arr) => (
+          <div
+            key={b.id}
+            ref={dnd.registerItemRef(b.id)}
+            className={`relative ${b.oculto ? 'opacity-40' : ''} ${dnd.dragId === b.id ? 'opacity-30' : ''}`}
+          >
             {editable && (
-              <button
-                type="button"
-                onClick={() => remove(b.id)}
-                aria-label={`Quitar ${b.nombre}`}
-                className="absolute top-3 right-3 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+              <div className="absolute top-3 right-3 z-10">
+                <ItemToolbar
+                  variant="overlay"
+                  oculto={b.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(b.id, -1)}
+                  onMoveDown={() => move(b.id, 1)}
+                  onDuplicate={() => duplicate(b.id)}
+                  onToggleOculto={() => toggleOculto(b.id)}
+                  onRemove={() => remove(b.id)}
+                  onDragStart={dnd.startDrag(b)}
+                  removeLabel={`Quitar ${b.nombre}`}
+                />
+              </div>
             )}
             <label
               className={`relative block w-full aspect-[3/4] bg-black/10 overflow-hidden mb-4 ${editable ? 'cursor-pointer' : ''}`}
@@ -19445,6 +19884,7 @@ function SeccionReviewsBarberia({
   onAddReview,
   onRemoveReview,
   onUpdateReview,
+  onUpdate,
   editable,
   bgColor,
   accent,
@@ -19453,26 +19893,38 @@ function SeccionReviewsBarberia({
   const update = (id, patch) => onUpdateReview?.(id, patch);
   const remove = (id) => onRemoveReview?.(id);
   const add = () => onAddReview?.({ id: `review-${Date.now()}`, cita: 'Escribí acá la reseña.', persona: 'Nombre', meta: 'Detalle' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(reviews, onUpdate);
+  const visibles = editable ? reviews : reviews.filter((r) => !r.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto flex gap-4 overflow-x-auto pb-2" style={{ scrollSnapType: 'x mandatory' }}>
-        {reviews.map((r) => (
+        {visibles.map((r, i, arr) => (
           <div
             key={r.id}
-            className="relative shrink-0 w-[320px] border p-6"
+            ref={dnd.registerItemRef(r.id)}
+            className={`relative shrink-0 w-[320px] border p-6 ${r.oculto ? 'opacity-40' : ''} ${
+              dnd.dragId === r.id ? 'opacity-30' : ''
+            }`}
             style={{ scrollSnapAlign: 'start', borderColor: palette.line }}
           >
             {editable && (
-              <button
-                type="button"
-                onClick={() => remove(r.id)}
-                aria-label="Quitar reseña"
-                className="absolute top-3 right-3 opacity-50 hover:opacity-100 transition-opacity"
-                style={{ color: palette.ink }}
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+              <div className="absolute top-3 right-3">
+                <ItemToolbar
+                  variant="inline"
+                  color={palette.ink}
+                  oculto={r.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(r.id, -1)}
+                  onMoveDown={() => move(r.id, 1)}
+                  onDuplicate={() => duplicate(r.id)}
+                  onToggleOculto={() => toggleOculto(r.id)}
+                  onRemove={() => remove(r.id)}
+                  onDragStart={dnd.startDrag(r)}
+                  removeLabel="Quitar reseña"
+                />
+              </div>
             )}
             <div className="font-mono tracking-[0.2em] text-sm mb-4" style={{ color: accent }}>
               ★★★★★
@@ -19601,6 +20053,7 @@ function SeccionProcesoTaller({
   onAddPaso,
   onRemovePaso,
   onUpdatePaso,
+  onUpdate,
   titulo,
   onUpdateTitulo,
   eyebrow,
@@ -19616,6 +20069,8 @@ function SeccionProcesoTaller({
   const remove = (id) => onRemovePaso?.(id);
   const add = () =>
     onAddPaso?.({ id: `proceso-${Date.now()}`, titulo: 'Nueva etapa', desc: 'Describí esta etapa del proceso.', imagen: '' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(pasos, onUpdate);
+  const visibles = editable ? pasos : pasos.filter((p) => !p.oculto);
 
   const handleImagen = (id) => async (e) => {
     const file = e.target.files?.[0];
@@ -19650,17 +20105,31 @@ function SeccionProcesoTaller({
         />
       </div>
       <div className="flex gap-4 overflow-x-auto px-6 @lg:px-10 pb-2" style={{ scrollSnapType: 'x mandatory' }}>
-        {pasos.map((p, i) => (
-          <div key={p.id} className="relative shrink-0 w-[clamp(240px,26vw,320px)]" style={{ scrollSnapAlign: 'start' }}>
+        {visibles.map((p, i, arr) => (
+          <div
+            key={p.id}
+            ref={dnd.registerItemRef(p.id)}
+            className={`relative shrink-0 w-[clamp(240px,26vw,320px)] ${p.oculto ? 'opacity-40' : ''} ${
+              dnd.dragId === p.id ? 'opacity-30' : ''
+            }`}
+            style={{ scrollSnapAlign: 'start' }}
+          >
             {editable && (
-              <button
-                type="button"
-                onClick={() => remove(p.id)}
-                aria-label="Quitar etapa"
-                className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+              <div className="absolute top-2 right-2 z-10">
+                <ItemToolbar
+                  variant="overlay"
+                  oculto={p.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(p.id, -1)}
+                  onMoveDown={() => move(p.id, 1)}
+                  onDuplicate={() => duplicate(p.id)}
+                  onToggleOculto={() => toggleOculto(p.id)}
+                  onRemove={() => remove(p.id)}
+                  onDragStart={dnd.startDrag(p)}
+                  removeLabel="Quitar etapa"
+                />
+              </div>
             )}
             <label
               className={`relative block w-full aspect-[4/3] bg-black/5 mb-3.5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
@@ -19733,6 +20202,7 @@ function SeccionArtesanas({
   onAddArtesana,
   onRemoveArtesana,
   onUpdateArtesana,
+  onUpdate,
   titulo,
   onUpdateTitulo,
   editable,
@@ -19754,6 +20224,8 @@ function SeccionArtesanas({
       firma: '',
       badgeBg: BADGE_COLORS[artesanas.length % BADGE_COLORS.length],
     });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(artesanas, onUpdate);
+  const visibles = editable ? artesanas : artesanas.filter((a) => !a.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -19769,24 +20241,36 @@ function SeccionArtesanas({
           maxLength={70}
         />
       </div>
-      {artesanas.length === 0 && !editable ? (
+      {visibles.length === 0 && !editable ? (
         <p className="text-center text-sm max-w-sm mx-auto" style={{ color: palette.inkSoft }}>
           Todavía no agregaste a las personas del taller.
         </p>
       ) : (
         <div className="max-w-5xl mx-auto grid grid-cols-1 @lg:grid-cols-3 gap-7">
-          {artesanas.map((a, i) => (
-            <div key={a.id} className="relative" style={{ marginTop: OFFSETS[i % OFFSETS.length] }}>
+          {visibles.map((a, i, arr) => (
+            <div
+              key={a.id}
+              ref={dnd.registerItemRef(a.id)}
+              className={`relative ${a.oculto ? 'opacity-40' : ''} ${dnd.dragId === a.id ? 'opacity-30' : ''}`}
+              style={{ marginTop: OFFSETS[i % OFFSETS.length] }}
+            >
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(a.id)}
-                  aria-label={`Quitar ${a.nombre}`}
-                  className="absolute top-0 right-0 opacity-50 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                <div className="absolute top-0 right-0">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={a.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(a.id, -1)}
+                    onMoveDown={() => move(a.id, 1)}
+                    onDuplicate={() => duplicate(a.id)}
+                    onToggleOculto={() => toggleOculto(a.id)}
+                    onRemove={() => remove(a.id)}
+                    onDragStart={dnd.startDrag(a)}
+                    removeLabel={`Quitar ${a.nombre}`}
+                  />
+                </div>
               )}
               <div className="flex items-center gap-2.5 mb-3.5">
                 <div
@@ -19883,6 +20367,7 @@ function SeccionFerias({
   onAddFeria,
   onRemoveFeria,
   onUpdateFeria,
+  onUpdate,
   titulo,
   onUpdateTitulo,
   subtitulo,
@@ -19897,6 +20382,8 @@ function SeccionFerias({
   const remove = (id) => onRemoveFeria?.(id);
   const add = () =>
     onAddFeria?.({ id: `feria-${Date.now()}`, fechas: '', nombre: 'Nueva feria', ciudad: '', stand: '', destacada: false });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(ferias, onUpdate);
+  const visibles = editable ? ferias : ferias.filter((f) => !f.oculto);
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -19922,16 +20409,19 @@ function SeccionFerias({
           maxLength={50}
         />
       </div>
-      {ferias.length === 0 && !editable ? (
+      {visibles.length === 0 && !editable ? (
         <p className="text-center text-sm max-w-sm mx-auto" style={{ color: palette.inkSoft }}>
           Todavía no cargaste ninguna feria o evento.
         </p>
       ) : (
         <div className="max-w-5xl mx-auto flex flex-col">
-          {ferias.map((f) => (
+          {visibles.map((f, i, arr) => (
             <div
               key={f.id}
-              className="relative grid grid-cols-2 @lg:grid-cols-[auto_1fr_auto_auto] gap-x-4 gap-y-1 items-center py-4 border-b"
+              ref={dnd.registerItemRef(f.id)}
+              className={`relative grid grid-cols-2 @lg:grid-cols-[auto_1fr_auto_auto] gap-x-4 gap-y-1 items-center py-4 border-b ${
+                f.oculto ? 'opacity-40' : ''
+              } ${dnd.dragId === f.id ? 'opacity-30' : ''}`}
               style={{ borderColor: palette.line }}
             >
               <Editable
@@ -19993,15 +20483,20 @@ function SeccionFerias({
                   {f.destacada ? 'Próxima' : 'Confirmada'}
                 </button>
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => remove(f.id)}
-                    aria-label="Quitar feria"
-                    className="opacity-50 hover:opacity-100 transition-opacity"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </button>
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={f.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(f.id, -1)}
+                    onMoveDown={() => move(f.id, 1)}
+                    onDuplicate={() => duplicate(f.id)}
+                    onToggleOculto={() => toggleOculto(f.id)}
+                    onRemove={() => remove(f.id)}
+                    onDragStart={dnd.startDrag(f)}
+                    removeLabel="Quitar feria"
+                  />
                 )}
               </div>
             </div>
@@ -20166,6 +20661,7 @@ function SeccionVisitaTaller({
   onAddFila,
   onRemoveFila,
   onUpdateFila,
+  onUpdate,
   imagen,
   onUpdateImagen,
   mapaSimulado = false,
@@ -20185,6 +20681,8 @@ function SeccionVisitaTaller({
   const update = (id, patch) => onUpdateFila?.(id, patch);
   const remove = (id) => onRemoveFila?.(id);
   const add = () => onAddFila?.({ id: `visita-${Date.now()}`, label: 'Dato', value: 'Detalle' });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(filas, onUpdate);
+  const visibles = editable ? filas : filas.filter((f) => !f.oculto);
 
   const handleImagen = async (e) => {
     const file = e.target.files?.[0];
@@ -20237,18 +20735,29 @@ function SeccionVisitaTaller({
             </>
           )}
           <div className="flex flex-col gap-5">
-            {filas.map((f) => (
-              <div key={f.id} className="relative">
+            {visibles.map((f, i, arr) => (
+              <div
+                key={f.id}
+                ref={dnd.registerItemRef(f.id)}
+                className={`relative ${f.oculto ? 'opacity-40' : ''} ${dnd.dragId === f.id ? 'opacity-30' : ''}`}
+              >
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => remove(f.id)}
-                    aria-label="Quitar fila"
-                    className="absolute top-0 right-0 opacity-50 hover:opacity-100 transition-opacity"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="absolute top-0 right-0">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={f.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(f.id, -1)}
+                      onMoveDown={() => move(f.id, 1)}
+                      onDuplicate={() => duplicate(f.id)}
+                      onToggleOculto={() => toggleOculto(f.id)}
+                      onRemove={() => remove(f.id)}
+                      onDragStart={dnd.startDrag(f)}
+                      removeLabel="Quitar fila"
+                    />
+                  </div>
                 )}
                 <Editable
                   editable={editable}
@@ -20467,6 +20976,9 @@ function SeccionSeries({
       ...items,
       { id: `serie-${Date.now()}`, key: 'Nueva', title: 'Nueva serie', desc: '', year: '', format: '', count: '', hint: '', imagen: '' },
     ]);
+  // Sin ocultar: `active`/`activeIndex` son el índice elegido en el selector
+  // de series, igual que Materiales — filtrar rompería ese índice.
+  const { duplicate, move, dnd } = useLocalListCrud(items, onUpdate);
 
   const handleImagen = async (e) => {
     const file = e.target.files?.[0];
@@ -20535,12 +21047,15 @@ function SeccionSeries({
             {eyebrowEl}
             <div className="mb-7">{tituloEl}</div>
             <div className="flex flex-col border-t" style={{ borderColor: palette.line }}>
-              {items.map((it, i) => (
+              {items.map((it, i, arr) => (
                 <div
                   key={it.id}
+                  ref={dnd.registerItemRef(it.id)}
                   onClick={() => setActive(i)}
                   onMouseEnter={() => setActive(i)}
-                  className="relative cursor-pointer px-3 py-4 border-b border-l-[3px] transition-colors"
+                  className={`relative cursor-pointer px-3 py-4 border-b border-l-[3px] transition-colors ${
+                    dnd.dragId === it.id ? 'opacity-30' : ''
+                  }`}
                   style={{
                     borderBottomColor: palette.line,
                     borderLeftColor: i === activeIndex ? accent : 'transparent',
@@ -20569,19 +21084,21 @@ function SeccionSeries({
                     className="text-sm"
                     maxLength={60}
                   />
-                  {editable && items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        remove(it.id);
-                      }}
-                      aria-label={`Quitar ${it.title}`}
-                      className="absolute top-3 right-2 opacity-40 hover:opacity-100 transition-opacity"
-                      style={{ color: palette.ink }}
-                    >
-                      <XIcon className="w-3.5 h-3.5" />
-                    </button>
+                  {editable && (
+                    <div className="absolute top-3 right-2" onClick={(e) => e.stopPropagation()}>
+                      <ItemToolbar
+                        variant="inline"
+                        color={palette.ink}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => move(it.id, -1)}
+                        onMoveDown={() => move(it.id, 1)}
+                        onDuplicate={() => duplicate(it.id)}
+                        onRemove={arr.length > 1 ? () => remove(it.id) : undefined}
+                        onDragStart={dnd.startDrag(it)}
+                        removeLabel={`Quitar ${it.title}`}
+                      />
+                    </div>
                   )}
                 </div>
               ))}
@@ -20628,11 +21145,14 @@ function SeccionSeries({
             {tituloEl}
           </div>
           <div className="flex flex-wrap gap-2">
-            {items.map((it, i) => (
+            {items.map((it, i, arr) => (
               <div
                 key={it.id}
+                ref={dnd.registerItemRef(it.id)}
                 onClick={() => setActive(i)}
-                className="relative cursor-pointer font-mono text-xs uppercase tracking-wide px-3 py-1.5 border transition-colors"
+                className={`relative cursor-pointer font-mono text-xs uppercase tracking-wide px-3 py-1.5 border transition-colors ${
+                  dnd.dragId === it.id ? 'opacity-30' : ''
+                }`}
                 style={
                   i === activeIndex
                     ? { borderColor: accent, background: accent, color: palette.bg }
@@ -20647,18 +21167,16 @@ function SeccionSeries({
                   placeholder="Nombre"
                   maxLength={20}
                 />
-                {editable && items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      remove(it.id);
-                    }}
-                    aria-label={`Quitar serie ${it.key}`}
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center"
-                  >
-                    <XIcon className="w-2.5 h-2.5" />
-                  </button>
+                {editable && (
+                  <div className="absolute -top-1.5 -right-1.5" onClick={(e) => e.stopPropagation()}>
+                    <ItemToolbar
+                      variant="overlay"
+                      onDuplicate={() => duplicate(it.id)}
+                      onRemove={arr.length > 1 ? () => remove(it.id) : undefined}
+                      onDragStart={dnd.startDrag(it)}
+                      removeLabel={`Quitar serie ${it.key}`}
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -20779,6 +21297,11 @@ function SeccionArchivo({
       { id: `archivo-${Date.now()}`, imagen: '', titulo: 'Nueva foto', meta: '', colSpan: 1, rowSpan: 1 },
     ]);
   const cycleSpan = (it, key) => update(it.id, { [key]: it[key] >= 2 ? 1 : 2 });
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
+  // El lightbox solo se abre en modo lectura, así que `visibles` ahí siempre
+  // es la lista filtrada real — el índice del modal nunca queda desalineado
+  // con lo que efectivamente ve el visitante.
+  const visibles = editable ? items : items.filter((it) => !it.oculto);
 
   useEffect(() => {
     if (editable || openIndex === null) return undefined;
@@ -20815,12 +21338,15 @@ function SeccionArchivo({
         </Reveal>
 
         <div className="grid grid-cols-2 @lg:grid-cols-4 auto-rows-[140px] @lg:auto-rows-[190px] gap-3">
-          {items.map((it, idx) => (
+          {visibles.map((it, idx, arr) => (
             <Reveal
               as="div"
               key={it.id}
+              ref={dnd.registerItemRef(it.id)}
               delay={Math.min(idx * 0.06, 0.3)}
-              className="relative group/archivo overflow-hidden bg-black/5"
+              className={`relative group/archivo overflow-hidden bg-black/5 ${it.oculto ? 'opacity-40' : ''} ${
+                dnd.dragId === it.id ? 'opacity-30' : ''
+              }`}
               style={{ gridColumn: `span ${it.colSpan || 1}`, gridRow: `span ${it.rowSpan || 1}` }}
             >
               {editable ? (
@@ -20848,7 +21374,7 @@ function SeccionArchivo({
               ) : it.imagen ? (
                 <button
                   type="button"
-                  onClick={() => setOpenIndex(items.indexOf(it))}
+                  onClick={() => setOpenIndex(visibles.indexOf(it))}
                   aria-label={`Ampliar ${it.titulo}`}
                   className="absolute inset-0 cursor-zoom-in"
                 >
@@ -20908,14 +21434,19 @@ function SeccionArchivo({
                   >
                     ↕
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => remove(it.id)}
-                    aria-label={`Quitar ${it.titulo}`}
-                    className="w-6 h-6 bg-black/50 text-white flex items-center justify-center"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={it.oculto}
+                    canMoveUp={idx > 0}
+                    canMoveDown={idx < arr.length - 1}
+                    onMoveUp={() => move(it.id, -1)}
+                    onMoveDown={() => move(it.id, 1)}
+                    onDuplicate={() => duplicate(it.id)}
+                    onToggleOculto={() => toggleOculto(it.id)}
+                    onRemove={() => remove(it.id)}
+                    onDragStart={dnd.startDrag(it)}
+                    removeLabel={`Quitar ${it.titulo}`}
+                  />
                 </div>
               )}
             </Reveal>
@@ -20933,21 +21464,21 @@ function SeccionArchivo({
         </div>
       </div>
 
-      {!editable && openIndex !== null && items[openIndex] && (
+      {!editable && openIndex !== null && visibles[openIndex] && (
         <div
           onClick={() => setOpenIndex(null)}
           className="fixed inset-0 z-[95] bg-black/95 flex items-center justify-center p-4 @lg:p-12 cursor-zoom-out"
         >
           <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
             <img
-              src={items[openIndex].imagen}
-              alt={items[openIndex].titulo}
+              src={visibles[openIndex].imagen}
+              alt={visibles[openIndex].titulo}
               className="w-full max-h-[76vh] object-contain"
             />
             <div className="flex flex-wrap items-baseline justify-between gap-3 mt-4">
-              <p className="font-serif font-semibold text-lg text-white">{items[openIndex].titulo}</p>
+              <p className="font-serif font-semibold text-lg text-white">{visibles[openIndex].titulo}</p>
               <p className="font-mono text-xs" style={{ color: accent }}>
-                {items[openIndex].meta}
+                {visibles[openIndex].meta}
               </p>
             </div>
           </div>
@@ -20978,6 +21509,8 @@ function SeccionZonas({
   const update = (id, patch) => onUpdate?.(zonas.map((z) => (z.id === id ? { ...z, ...patch } : z)));
   const remove = (id) => onUpdate?.(zonas.filter((z) => z.id !== id));
   const add = () => onUpdate?.([...zonas, { id: `zona-${Date.now()}`, nombre: 'Nueva zona' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(zonas, onUpdate);
+  const visibles = editable ? zonas : zonas.filter((z) => !z.oculto);
   const textoSuave = textColor || 'rgba(255,255,255,0.85)';
 
   const heading = (
@@ -21016,10 +21549,13 @@ function SeccionZonas({
         <div className="max-w-5xl mx-auto">
           {heading}
           <div className="flex flex-wrap gap-2.5">
-            {zonas.map((z) => (
+            {visibles.map((z, i, arr) => (
               <div
                 key={z.id}
-                className="relative inline-flex items-center gap-1.5 border rounded-full pl-3.5 pr-3 py-1.5"
+                ref={dnd.registerItemRef(z.id)}
+                className={`relative inline-flex items-center gap-1.5 border rounded-full pl-3.5 pr-3 py-1.5 ${
+                  z.oculto ? 'opacity-40' : ''
+                } ${dnd.dragId === z.id ? 'opacity-30' : ''}`}
                 style={{ borderColor: accent || 'rgba(255,255,255,0.3)' }}
               >
                 <Editable
@@ -21034,15 +21570,20 @@ function SeccionZonas({
                   maxLength={30}
                 />
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => remove(z.id)}
-                    aria-label={`Quitar ${z.nombre}`}
-                    className="opacity-40 hover:opacity-100 transition-opacity"
-                    style={{ color: textoSuave }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+                  <ItemToolbar
+                    variant="inline"
+                    color={textoSuave}
+                    oculto={z.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(z.id, -1)}
+                    onMoveDown={() => move(z.id, 1)}
+                    onDuplicate={() => duplicate(z.id)}
+                    onToggleOculto={() => toggleOculto(z.id)}
+                    onRemove={() => remove(z.id)}
+                    onDragStart={dnd.startDrag(z)}
+                    removeLabel={`Quitar ${z.nombre}`}
+                  />
                 )}
               </div>
             ))}
@@ -21068,8 +21609,14 @@ function SeccionZonas({
       <div className="max-w-5xl mx-auto">
         {heading}
         <div className="grid grid-cols-2 @lg:grid-cols-5 gap-x-6 gap-y-3">
-          {zonas.map((z) => (
-            <div key={z.id} className="relative flex items-center gap-2">
+          {visibles.map((z, i, arr) => (
+            <div
+              key={z.id}
+              ref={dnd.registerItemRef(z.id)}
+              className={`relative flex items-center gap-2 ${z.oculto ? 'opacity-40' : ''} ${
+                dnd.dragId === z.id ? 'opacity-30' : ''
+              }`}
+            >
               <CheckCircleIcon className="w-3.5 h-3.5 shrink-0" style={{ color: accent }} />
               <Editable
                 editable={editable}
@@ -21083,15 +21630,20 @@ function SeccionZonas({
                 maxLength={30}
               />
               {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(z.id)}
-                  aria-label={`Quitar ${z.nombre}`}
-                  className="opacity-40 hover:opacity-100 transition-opacity"
-                  style={{ color: textoSuave }}
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
+                <ItemToolbar
+                  variant="inline"
+                  color={textoSuave}
+                  oculto={z.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(z.id, -1)}
+                  onMoveDown={() => move(z.id, 1)}
+                  onDuplicate={() => duplicate(z.id)}
+                  onToggleOculto={() => toggleOculto(z.id)}
+                  onRemove={() => remove(z.id)}
+                  onDragStart={dnd.startDrag(z)}
+                  removeLabel={`Quitar ${z.nombre}`}
+                />
               )}
             </div>
           ))}
@@ -21511,6 +22063,8 @@ function SeccionVisitanosBoletin({
   const updateFila = (id, patch) => onUpdateFilas?.(filas.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   const removeFila = (id) => onUpdateFilas?.(filas.filter((f) => f.id !== id));
   const addFila = () => onUpdateFilas?.([...filas, { id: `fila-${Date.now()}`, label: 'Dato', valor: 'Valor' }]);
+  const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(filas, onUpdateFilas);
+  const filasVisibles = editable ? filas : filas.filter((f) => !f.oculto);
 
   const suscribir = () => {
     if (email.trim().includes('@')) setDone(true);
@@ -21533,18 +22087,28 @@ function SeccionVisitanosBoletin({
             maxLength={40}
           />
           <div className="flex flex-col gap-4.5">
-            {filas.map((f) => (
-              <div key={f.id} className="relative">
+            {filasVisibles.map((f, i, arr) => (
+              <div
+                key={f.id}
+                ref={dnd.registerItemRef(f.id)}
+                className={`relative ${f.oculto ? 'opacity-40' : ''} ${dnd.dragId === f.id ? 'opacity-30' : ''}`}
+              >
                 {editable && (
-                  <button
-                    type="button"
-                    onClick={() => removeFila(f.id)}
-                    aria-label="Quitar"
-                    className="absolute -top-1 -right-1 opacity-40 hover:opacity-100"
-                    style={{ color: palette.ink }}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
+                  <div className="absolute -top-1 -right-1">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={f.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(f.id, -1)}
+                      onMoveDown={() => move(f.id, 1)}
+                      onDuplicate={() => duplicate(f.id)}
+                      onToggleOculto={() => toggleOculto(f.id)}
+                      onRemove={() => removeFila(f.id)}
+                      onDragStart={dnd.startDrag(f)}
+                    />
+                  </div>
                 )}
                 <Editable
                   editable={editable}
