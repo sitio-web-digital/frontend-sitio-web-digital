@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.33.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Beneficios, cómo funciona, cronograma, nuestra historia, áreas/especialidades, sucursales, estadísticas, formas de pago, menciones y categorías: todos sus ítems ahora se pueden duplicar, ocultar y arrastrar para reordenar, igual que ya podían productos, testimonios y equipo.' },
+    ],
+  },
+  {
     version: '1.32.0',
     date: '2026-08-01',
     changes: [
