@@ -181,6 +181,39 @@ export function AppProvider({ children }) {
     });
   };
 
+  // Historial de deshacer/rehacer (Ctrl+Z / Ctrl+Shift+Z) — snapshots
+  // completos del sitio (mismo formato que serializeSite/hydrateSite, ya
+  // usado para guardar y para restaurar la página de otra cuenta), no un
+  // historial de comandos por función. Todo en refs (no useState) para no
+  // generar renders extra en cada snapshot; `historyTick` es el único
+  // useState, solo para que los botones deshacer/rehacer sepan si mostrarse
+  // habilitados.
+  const undoStack = useRef([]);
+  const redoStack = useRef([]);
+  // Snapshot de referencia contra el que se compara cada cambio; también
+  // sirve como "estado actual" al que volver si se hace redo después de un undo.
+  const lastSnapshotRef = useRef(null);
+  // Snapshot de ANTES de que arrancara la tanda de cambios en curso — es lo
+  // que efectivamente se guarda en el historial cuando la tanda se asienta
+  // (ver el debounce más abajo): así escribir un párrafo entero cuenta como
+  // un solo paso de undo, no uno por tecla.
+  const undoBurstBaseRef = useRef(null);
+  const undoDebounceTimer = useRef(null);
+  // Se prende justo antes de aplicar un snapshot (undo/redo) o de cargar un
+  // sitio entero (login, "editar como admin", elegir plantilla) para que ESE
+  // cambio de estado no se registre a sí mismo como un paso nuevo de historial.
+  const skipHistoryRef = useRef(false);
+  const [historyTick, setHistoryTick] = useState(0);
+
+  const clearHistory = () => {
+    undoStack.current = [];
+    redoStack.current = [];
+    undoBurstBaseRef.current = null;
+    clearTimeout(undoDebounceTimer.current);
+    skipHistoryRef.current = true;
+    setHistoryTick((t) => t + 1);
+  };
+
   // Se guarda en el navegador en cada cambio — este es el borrador local, vive
   // ahí siempre, esté o no logueado el usuario. Además, si hay sesión
   // iniciada, el mismo cambio se manda (con un debounce corto) a Postgres —
@@ -208,6 +241,33 @@ export function AppProvider({ children }) {
       posts,
     });
     saveSiteToStorage(json);
+
+    // Registrar el paso de historial ANTES de todo lo demás de este efecto —
+    // si vino de un undo/redo/carga completa (skipHistoryRef), no se anota
+    // como si fuera una edición nueva del usuario. Se compara como STRING
+    // (serializeSite devuelve un objeto nuevo en cada llamada, nunca `===`
+    // al anterior aunque el contenido sea idéntico) y así también queda listo
+    // para guardarse tal cual en los stacks y para JSON.parse en undo/redo.
+    const historyJson = json ? JSON.stringify(json) : null;
+    if (historyJson === null) {
+      // Sin plantilla elegida todavía — nada que versionar.
+    } else if (skipHistoryRef.current) {
+      skipHistoryRef.current = false;
+      lastSnapshotRef.current = historyJson;
+    } else if (lastSnapshotRef.current === null) {
+      lastSnapshotRef.current = historyJson; // primer render: solo fija la base, nada que anotar todavía
+    } else if (historyJson !== lastSnapshotRef.current) {
+      if (undoBurstBaseRef.current === null) undoBurstBaseRef.current = lastSnapshotRef.current;
+      clearTimeout(undoDebounceTimer.current);
+      undoDebounceTimer.current = setTimeout(() => {
+        undoStack.current.push(undoBurstBaseRef.current);
+        if (undoStack.current.length > 50) undoStack.current.shift();
+        redoStack.current = [];
+        undoBurstBaseRef.current = null;
+        lastSnapshotRef.current = historyJson;
+        setHistoryTick((t) => t + 1);
+      }, 500);
+    }
 
     clearTimeout(backendAutosaveTimer.current);
     // Si soporte bloqueó esta página, no se intenta guardar del lado del
@@ -278,6 +338,7 @@ export function AppProvider({ children }) {
     // la plantilla en sí, así que cualquier edición de plantilla en curso
     // queda descartada acá.
     setEditingTemplate(null);
+    clearHistory();
     // Busca en fábrica + admin combinadas — una plantilla creada por el
     // admin no existe en el TEMPLATES estático, así que getTemplateById(id)
     // solo (sin la lista combinada) nunca la encontraría.
@@ -349,6 +410,7 @@ export function AppProvider({ children }) {
   // arma la plantilla sección por sección.
   const startBlankTemplate = () => {
     setEditingTemplate(null);
+    clearHistory();
     setTemplateId(BLANK_TEMPLATE.id);
     // Texto de ejemplo genérico (no de un negocio puntual, a diferencia de
     // las plantillas de fábrica) — sin esto, cada sección que se agrega
@@ -758,9 +820,15 @@ export function AppProvider({ children }) {
       }, 900);
     });
 
-  // Aplica al estado de React el sitio que vino de "la base" (login o carga inicial).
-  const applyHydratedSite = (hydrated) => {
+  // Aplica al estado de React el sitio que vino de "la base" (login o carga
+  // inicial) o de un paso de deshacer/rehacer (`fromHistory`). En el primer
+  // caso se corta toda relación con el historial de edición anterior (no
+  // tendría sentido poder deshacer hacia la página de OTRA cuenta); en el
+  // segundo, `undo`/`redo` ya se encargaron de mover los stacks a mano.
+  const applyHydratedSite = (hydrated, { fromHistory = false } = {}) => {
     if (!hydrated) return;
+    if (!fromHistory) clearHistory();
+    else skipHistoryRef.current = true;
     setTemplateId(hydrated.templateId);
     setSiteData(hydrated.siteData);
     setTheme(hydrated.theme);
@@ -777,6 +845,35 @@ export function AppProvider({ children }) {
     setMenuItems(hydrated.menuItems ?? []);
     setMarcas(hydrated.marcas ?? []);
     setPosts(hydrated.posts ?? []);
+  };
+
+  // Ctrl+Z / Ctrl+Shift+Z (ver Editor.jsx, que engancha el atajo de teclado).
+  // Si hay una tanda de cambios recién tipeada sin asentarse todavía (ver el
+  // debounce de más arriba), deshacer primero la fuerza a asentarse — si no,
+  // el usuario perdería esos cambios sin haberlos podido "deshacer" antes.
+  const undo = () => {
+    if (undoDebounceTimer.current) {
+      clearTimeout(undoDebounceTimer.current);
+      if (undoBurstBaseRef.current !== null) {
+        undoStack.current.push(undoBurstBaseRef.current);
+        undoBurstBaseRef.current = null;
+      }
+    }
+    if (undoStack.current.length === 0) return;
+    const previous = undoStack.current.pop();
+    redoStack.current.push(lastSnapshotRef.current);
+    applyHydratedSite(hydrateSite(JSON.parse(previous)), { fromHistory: true });
+    lastSnapshotRef.current = previous;
+    setHistoryTick((t) => t + 1);
+  };
+
+  const redo = () => {
+    if (redoStack.current.length === 0) return;
+    const next = redoStack.current.pop();
+    undoStack.current.push(lastSnapshotRef.current);
+    applyHydratedSite(hydrateSite(JSON.parse(next)), { fromHistory: true });
+    lastSnapshotRef.current = next;
+    setHistoryTick((t) => t + 1);
   };
 
   // Admin > Páginas > Editar: carga la página de esa cuenta puntual (no la
@@ -976,6 +1073,7 @@ export function AppProvider({ children }) {
   };
 
   const resetAll = () => {
+    clearHistory();
     setQuiz(initialQuiz);
     setTemplateId(null);
     setSiteData(null);
@@ -1069,6 +1167,13 @@ export function AppProvider({ children }) {
     return result;
   };
 
+  // Se recalculan en cada render — `historyTick` cambia (y fuerza un render)
+  // cada vez que undo/redo/clearHistory tocan los stacks, así los botones del
+  // editor siempre reflejan el estado real de los refs sin exponerlos directo.
+  void historyTick;
+  const canUndo = undoStack.current.length > 0 || undoBurstBaseRef.current !== null;
+  const canRedo = redoStack.current.length > 0;
+
   const value = {
     quiz,
     setQuiz,
@@ -1087,6 +1192,10 @@ export function AppProvider({ children }) {
     template,
     chooseTemplate,
     startBlankTemplate,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     siteData,
     updateSiteData,
     logoUrl,

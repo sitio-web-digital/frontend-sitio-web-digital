@@ -604,3 +604,21 @@ export function UrgentBoltIcon({ className = 'w-4 h-4' }) {
     </svg>
   );
 }
+
+export function UndoIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M7 8H4V5" />
+      <path d="M4.5 15.5A8 8 0 1012 4a8 8 0 00-7.5 5" />
+    </svg>
+  );
+}
+
+export function RedoIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M17 8h3V5" />
+      <path d="M19.5 15.5A8 8 0 1012 4a8 8 0 017.5 5" />
+    </svg>
+  );
+}

@@ -3117,41 +3117,6 @@ function FixedPopover({ anchorRef, align = 'end', gap = 8, className = '', onClo
 // `variant`, que es lo único que decide cómo se acomoda el contenido existente.
 function SectionVariantPicker({ type, variant, onChange, onClose, anchorRef, align }) {
   const variantes = SECTION_VARIANTS[type] ?? [];
-  // Algunos tipos de sección (hoy, "productos") juntan distribuciones para
-  // usos bastante distintos entre sí — mostrar precios, listar servicios sin
-  // foto, o un catálogo de productos con foto — bajo el mismo `type`. Sin
-  // agrupar, las 9 opciones se ven como una sola grilla pareja y no queda
-  // claro cuál conviene para cada caso. Si ninguna variante declaró `group`,
-  // se muestra la grilla plana de siempre (el resto de los tipos de sección).
-  const hasGroups = variantes.some((v) => v.group);
-  const grupos = variantes.reduce((acc, v) => {
-    const g = v.group || '';
-    (acc[g] ||= []).push(v);
-    return acc;
-  }, {});
-
-  const grid = (items) => (
-    <div className="grid grid-cols-2 gap-2">
-      {items.map((v) => (
-        <button
-          key={v.id}
-          type="button"
-          onClick={() => onChange(v.id)}
-          aria-label={v.label}
-          className={`rounded-lg border transition-colors p-2 text-center ${
-            v.id === variant
-              ? 'border-gold-500 bg-gold-500/5'
-              : 'border-neutral-200 hover:border-gold-500 hover:bg-gold-500/5'
-          }`}
-        >
-          <div className="h-12 rounded-md bg-neutral-50 border border-neutral-100 mb-1.5 p-2 flex items-center justify-center overflow-hidden">
-            <VariantSkeleton kind={v.skeleton} />
-          </div>
-          <span className="text-[11px] font-semibold text-neutral-700">{v.label}</span>
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <FixedPopover
@@ -3161,14 +3126,7 @@ function SectionVariantPicker({ type, variant, onChange, onClose, anchorRef, ali
       className="w-64 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left"
     >
       <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2 px-1">Distribución</p>
-      {hasGroups
-        ? Object.entries(grupos).map(([g, items], i) => (
-            <div key={g || 'sin-grupo'} className={i > 0 ? 'mt-3' : ''}>
-              {g && <p className="text-[10px] font-bold uppercase tracking-wide text-gold-600 mb-1.5 px-1">{g}</p>}
-              {grid(items)}
-            </div>
-          ))
-        : grid(variantes)}
+      <VariantGrid items={variantes} selected={variant} onSelect={onChange} previewHeight="h-12" />
     </FixedPopover>
   );
 }
@@ -3834,6 +3792,9 @@ function VariantSkeleton({ kind }) {
     );
   }
   if (kind === 'heroVidriera') {
+    // Dos capas superpuestas que se turnan (misma animación de "aparecer" que
+    // ya usa el selector de animación de texto, con un desfasaje de medio
+    // ciclo) — sugiere la rotación automática de fotos sin reinventar nada.
     return (
       <div className="grid grid-cols-2 gap-1.5 w-full h-full">
         <div className="flex flex-col gap-1 justify-center">
@@ -3841,8 +3802,10 @@ function VariantSkeleton({ kind }) {
           <div className={`${bar} h-1.5`} />
           <div className={`${bar} h-1.5 w-2/3`} />
         </div>
-        <div className={`${box} h-full relative flex items-end justify-center pb-1`}>
-          <div className="flex gap-0.5">
+        <div className="relative h-full">
+          <div className={`${box} absolute inset-0 preview-anim-fade`} />
+          <div className="absolute inset-0 bg-neutral-400 rounded preview-anim-fade" style={{ animationDelay: '1.1s' }} />
+          <div className="absolute inset-x-0 bottom-1 flex items-center justify-center gap-0.5">
             <div className="w-1 h-1 rounded-full bg-white" />
             <div className="w-1 h-1 rounded-full bg-white/50" />
             <div className="w-1 h-1 rounded-full bg-white/50" />
@@ -3945,7 +3908,8 @@ function VariantSkeleton({ kind }) {
   if (kind === 'mediaAuto') {
     return (
       <div className="relative w-full h-full">
-        <div className={`${box} w-full h-full`} />
+        <div className={`${box} absolute inset-0 preview-anim-fade`} />
+        <div className="absolute inset-0 bg-neutral-400 rounded preview-anim-fade" style={{ animationDelay: '1.1s' }} />
         <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-white border border-neutral-300 flex items-center justify-center">
           <div className="w-1.5 h-1.5 rounded-full border border-t-transparent border-neutral-400" />
         </div>
@@ -3954,8 +3918,8 @@ function VariantSkeleton({ kind }) {
   }
   if (kind === 'mediaZoom') {
     return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        <div className={`${box} w-3/4 h-3/4`} />
+      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+        <div className={`${box} w-3/4 h-3/4`} style={{ animation: 'kenburns 4s ease-in-out infinite alternate' }} />
         <div className="absolute inset-0 border border-dashed border-neutral-300 rounded-sm m-0.5" />
       </div>
     );
@@ -4195,11 +4159,16 @@ function VariantSkeleton({ kind }) {
     );
   }
   if (kind === 'marqueeScroll') {
+    // Mismo truco que el marquee real (contenido duplicado + loop del 0% al
+    // -50%) pero con una duración bien corta acá — a 26s (la de la sección de
+    // verdad) el movimiento sería imperceptible en una vista de 4 segundos.
     return (
-      <div className="flex gap-1.5 w-full h-full items-center overflow-hidden">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className={`${bar} h-1.5 w-8 shrink-0`} />
-        ))}
+      <div className="flex w-full h-full items-center overflow-hidden">
+        <div className="flex gap-1.5 shrink-0" style={{ animation: 'marquee-scroll 3.5s linear infinite' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className={`${bar} h-1.5 w-8 shrink-0`} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -4306,11 +4275,14 @@ function VariantSkeleton({ kind }) {
     );
   }
   if (kind === 'estadisticasFila') {
+    // Cada número "entra" con un desfasaje distinto (misma animación que el
+    // selector de texto) para sugerir el conteo ascendente, sin recalcular de
+    // verdad los números — es un adorno del menú, no la sección real.
     return (
       <div className={`${box} flex items-center justify-around w-full h-full`} style={{ background: '#1c1f26' }}>
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-0.5">
-            <div className="bg-neutral-400 h-2 w-4" />
+            <div className="bg-neutral-400 h-2 w-4 preview-anim-up" style={{ animationDelay: `${i * 0.35}s` }} />
             <div className={`${bar} h-1 w-5`} />
           </div>
         ))}
@@ -4320,7 +4292,9 @@ function VariantSkeleton({ kind }) {
   if (kind === 'vidrieraRotativa') {
     return (
       <div className="flex flex-col gap-1 w-full h-full items-center">
-        <div className={`${box} flex-1 w-2/3 relative`}>
+        <div className="flex-1 w-2/3 relative">
+          <div className={`${box} absolute inset-0 preview-anim-fade`} />
+          <div className="absolute inset-0 bg-neutral-400 rounded preview-anim-fade" style={{ animationDelay: '1.1s' }} />
           <div className="absolute bottom-0.5 left-0.5 flex gap-0.5">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/50'}`} />
@@ -4381,7 +4355,115 @@ function VariantSkeleton({ kind }) {
       </div>
     );
   }
+  if (kind === 'footerMinimal') {
+    return (
+      <div className="flex items-center justify-between w-full h-full">
+        <div className={`${box} w-3 h-3 shrink-0`} />
+        <div className="flex gap-1">
+          <div className={`${bar} w-3 h-1`} />
+          <div className={`${bar} w-3 h-1`} />
+        </div>
+        <div className={`${bar} w-4 h-1`} />
+      </div>
+    );
+  }
+  if (kind === 'ctaCentered') {
+    return (
+      <div className="flex flex-col items-center gap-1 w-full h-full justify-center">
+        <div className={`${bar} w-2/3 h-1.5`} />
+        <div className={`${bar} w-1/2 h-1`} />
+        <div className="h-2 w-1/3 rounded-full mt-1" style={{ background: '#c9a227' }} />
+      </div>
+    );
+  }
+  if (kind === 'ctaImage') {
+    return (
+      <div className={`relative w-full h-full ${box} flex flex-col items-center justify-center gap-1`}>
+        <div className="absolute inset-0 bg-neutral-400/40 rounded-sm" />
+        <div className="relative bg-white/70 w-1/2 h-1 rounded-sm" />
+        <div className="relative h-1.5 w-1/3 rounded-full mt-0.5" style={{ background: '#c9a227' }} />
+      </div>
+    );
+  }
+  if (kind === 'menuList') {
+    return (
+      <div className="flex flex-col gap-1 w-full h-full justify-center">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-between gap-1">
+            <div className={`${bar} h-1 w-2/3`} />
+            <div className={`${bar} h-1 w-4`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (kind === 'marcasRow') {
+    return (
+      <div className="flex items-center justify-around w-full h-full">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={`${box} w-3 h-3`} />
+        ))}
+      </div>
+    );
+  }
+  if (kind === 'mapaFull') {
+    return (
+      <div className={`${box} w-full h-full relative flex items-center justify-center`}>
+        <div className="absolute w-3 h-3 rounded-full border border-white/70" />
+        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+      </div>
+    );
+  }
   return <div className={`${box} w-full h-full`} />;
+}
+
+// Grilla de opciones con esqueleto — la misma grilla vivía copiada 3 veces
+// (distribución de sección, paso 2 de "agregar sección", animación de foto),
+// cada una divergiendo un poco en tamaño/estilo. Ahora es una sola fuente:
+// agrupa por `group` si algún ítem lo declaró, si no muestra la grilla plana.
+function VariantGrid({ items, selected, onSelect, previewHeight = 'h-12' }) {
+  const hasGroups = items.some((v) => v.group);
+  const grupos = items.reduce((acc, v) => {
+    const g = v.group || '';
+    (acc[g] ||= []).push(v);
+    return acc;
+  }, {});
+
+  const grid = (list) => (
+    <div className="grid grid-cols-2 gap-2">
+      {list.map((v) => (
+        <button
+          key={v.id}
+          type="button"
+          onClick={() => onSelect(v.id)}
+          aria-label={v.label}
+          title={v.desc}
+          className={`rounded-lg border transition-colors p-2 text-center ${
+            v.id === selected
+              ? 'border-gold-500 bg-gold-500/5'
+              : 'border-neutral-200 hover:border-gold-500 hover:bg-gold-500/5'
+          }`}
+        >
+          <div className={`${previewHeight} rounded-md bg-neutral-50 border border-neutral-100 mb-1.5 p-2 flex items-center justify-center overflow-hidden`}>
+            <VariantSkeleton kind={v.skeleton} />
+          </div>
+          <span className="text-[11px] font-semibold text-neutral-700">{v.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  if (!hasGroups) return grid(items);
+  return (
+    <>
+      {Object.entries(grupos).map(([g, list], i) => (
+        <div key={g || 'sin-grupo'} className={i > 0 ? 'mt-3' : ''}>
+          {g && <p className="text-[10px] font-bold uppercase tracking-wide text-gold-600 mb-1.5 px-1">{g}</p>}
+          {grid(list)}
+        </div>
+      ))}
+    </>
+  );
 }
 
 // Agregar una sección es de dos pasos cuando tiene más de una disposición posible:
@@ -4395,6 +4477,7 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
   const btnRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [pickedType, setPickedType] = useState(null);
+  const [query, setQuery] = useState('');
   const [showVariantHint, setShowVariantHint] = useState(() => {
     try {
       return localStorage.getItem(VARIANT_HINT_KEY) !== '1';
@@ -4415,7 +4498,15 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
   const close = () => {
     setOpen(false);
     setPickedType(null);
+    setQuery('');
   };
+
+  // El catálogo ya pasa de 45 tipos de sección — sin buscador, encontrar uno
+  // puntual significa scrollear a ciegas. Normaliza acentos para que "cronograma"
+  // encuentre "Cronograma" sin depender de mayúsculas ni tildes exactas.
+  const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const q = norm(query);
+  const filtrados = q ? disponibles.filter((c) => norm(c.label).includes(q) || norm(c.desc).includes(q)) : disponibles;
 
   const chooseType = (typeId) => {
     const variants = SECTION_VARIANTS[typeId];
@@ -4471,21 +4562,43 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
         </button>
       )}
       {open && !pickedType && (
-        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="w-56 rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5 text-left">
+        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5 text-left">
           {disponibles.length === 0 ? (
             <p className="text-xs text-neutral-400 px-3 py-2.5">Ya agregaste todas las secciones.</p>
           ) : (
-            disponibles.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => chooseType(c.id)}
-                className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <span className="block text-sm font-semibold text-neutral-800">{c.label}</span>
-                <span className="block text-xs text-neutral-400">{c.desc}</span>
-              </button>
-            ))
+            <>
+              <div className="px-1.5 pt-1 pb-1.5">
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar sección..."
+                  className="w-full border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-gold-500"
+                />
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {filtrados.length === 0 ? (
+                  <p className="text-xs text-neutral-400 px-3 py-2.5">Ninguna sección coincide con "{query}".</p>
+                ) : (
+                  filtrados.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => chooseType(c.id)}
+                      className="w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
+                    >
+                      <div className="w-10 h-10 shrink-0 rounded-md bg-neutral-50 border border-neutral-100 p-1.5 flex items-center justify-center overflow-hidden">
+                        <VariantSkeleton kind={SECTION_VARIANTS[c.id]?.[0]?.skeleton} />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block text-sm font-semibold text-neutral-800">{c.label}</span>
+                        <span className="block text-xs text-neutral-400">{c.desc}</span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </>
           )}
         </FixedPopover>
       )}
@@ -4520,26 +4633,16 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
               </button>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            {SECTION_VARIANTS[pickedType].map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => {
-                  onAdd(pickedType, v.id);
-                  dismissVariantHint();
-                  close();
-                }}
-                aria-label={v.label}
-                className="rounded-lg border border-neutral-200 hover:border-gold-500 hover:bg-gold-500/5 transition-colors p-2 text-center"
-              >
-                <div className="h-14 rounded-md bg-neutral-50 border border-neutral-100 mb-1.5 p-2 flex items-center justify-center overflow-hidden">
-                  <VariantSkeleton kind={v.skeleton} />
-                </div>
-                <span className="text-xs font-semibold text-neutral-700">{v.label}</span>
-              </button>
-            ))}
-          </div>
+          <VariantGrid
+            items={SECTION_VARIANTS[pickedType]}
+            selected={null}
+            onSelect={(id) => {
+              onAdd(pickedType, id);
+              dismissVariantHint();
+              close();
+            }}
+            previewHeight="h-14"
+          />
         </FixedPopover>
       )}
     </div>
@@ -7498,27 +7601,7 @@ function MediaAnimationPicker({ value, onChange, onClose, anchorRef }) {
       className="w-64 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left"
     >
       <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2 px-1">Animación de la foto</p>
-      <div className="grid grid-cols-2 gap-2">
-        {MEDIA_ANIMATIONS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => onChange(a.id)}
-            aria-label={a.label}
-            title={a.desc}
-            className={`rounded-lg border transition-colors p-2 text-center ${
-              a.id === value
-                ? 'border-gold-500 bg-gold-500/5'
-                : 'border-neutral-200 hover:border-gold-500 hover:bg-gold-500/5'
-            }`}
-          >
-            <div className="h-12 rounded-md bg-neutral-50 border border-neutral-100 mb-1.5 p-2 flex items-center justify-center overflow-hidden">
-              <VariantSkeleton kind={a.skeleton} />
-            </div>
-            <span className="text-[11px] font-semibold text-neutral-700">{a.label}</span>
-          </button>
-        ))}
-      </div>
+      <VariantGrid items={MEDIA_ANIMATIONS} selected={value} onSelect={onChange} previewHeight="h-12" />
     </FixedPopover>
   );
 }

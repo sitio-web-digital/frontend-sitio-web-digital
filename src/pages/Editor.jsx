@@ -23,6 +23,8 @@ import {
   PlusIcon,
   PaletteIcon,
   TypeIcon,
+  UndoIcon,
+  RedoIcon,
 } from '../components/icons';
 import { FONT_OPTIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
@@ -42,6 +44,10 @@ export default function Editor() {
     template,
     siteData,
     updateSiteData,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     logoUrl,
     setLogoUrl,
     logoPalette,
@@ -138,6 +144,26 @@ export default function Editor() {
   useEffect(() => {
     if (editingBlocked) navigate('/dashboard', { replace: true });
   }, [editingBlocked, navigate]);
+
+  // Ctrl+Z / Ctrl+Shift+Z (o Cmd en Mac) para deshacer/rehacer — mientras el
+  // foco está en un campo de texto se deja pasar tal cual (undo nativo del
+  // navegador sobre lo que se está tipeando), para no pisarle a mitad de
+  // palabra el deshacer de todo el sitio.
+  useEffect(() => {
+    const isTypingTarget = (el) =>
+      !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    const onKeyDown = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key !== 'z' && key !== 'y') return;
+      if (isTypingTarget(document.activeElement)) return;
+      e.preventDefault();
+      if (key === 'y' || (key === 'z' && e.shiftKey)) redo();
+      else undo();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [undo, redo]);
 
   // Sondea el bloqueo cada pocos segundos mientras el editor está abierto —
   // sin esto, un bloqueo de soporte recién se notaría al recargar la página.
@@ -292,6 +318,28 @@ export default function Editor() {
           })}
         </div>
         <div className="flex items-center gap-2.5">
+          <div className="flex items-center border border-white/10 divide-x divide-white/10 shrink-0">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Deshacer (Ctrl+Z)"
+              aria-label="Deshacer"
+              className="w-9 h-9 text-ink-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
+            >
+              <UndoIcon className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Rehacer (Ctrl+Shift+Z)"
+              aria-label="Rehacer"
+              className="w-9 h-9 text-ink-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
+            >
+              <RedoIcon className="w-4 h-4" />
+            </button>
+          </div>
           {/* Diseño global: todo lo que cambia toda la página de una, agrupado
               como un solo control segmentado en vez de botones sueltos. */}
           <div className="flex items-center border border-white/10 divide-x divide-white/10 shrink-0">

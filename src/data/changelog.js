@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.37.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'nuevo', text: 'Deshacer y rehacer (Ctrl+Z / Ctrl+Shift+Z) en todo el editor, con botones nuevos en la barra superior — cualquier cambio de contenido, color, sección o lista se puede revertir.' },
+      { type: 'mejora', text: 'El menú de "Agregar sección" ahora tiene buscador y una miniatura por cada tipo, en vez de una lista de solo texto — más fácil de encontrar entre los 45+ tipos disponibles.' },
+      { type: 'mejora', text: 'Las miniaturas de distribución que faltaban (Footer minimalista, CTA centrado, CTA con imagen, Menú en lista, Fila de marcas, Mapa) ya no se ven como un rectángulo gris genérico.' },
+      { type: 'mejora', text: 'Las distribuciones que rotan solas (Vidriera, "Armá el tuyo" con foto automática, Marquee, cuenta regresiva, estadísticas, foto con zoom) ahora muestran esa animación en su propia miniatura del menú, para distinguirlas de un carrusel manual a simple vista.' },
+    ],
+  },
+  {
     version: '1.36.0',
     date: '2026-08-02',
     changes: [
