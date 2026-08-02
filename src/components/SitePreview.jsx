@@ -1411,6 +1411,7 @@ export default function SitePreview({
                 onUpdateCita={(id, patch) =>
                   onSetSectionStyle?.(sec.id, { citas: (sec.citas ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)) })
                 }
+                onUpdate={(arr) => onSetSectionStyle?.(sec.id, { citas: arr })}
                 eyebrow={sec.eyebrow}
                 onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
                 editable={editable}
@@ -13349,6 +13350,9 @@ function SeccionZonasTecnicas({
   const remove = (id) => onRemove?.(id);
   const add = () =>
     onAdd?.({ id: `zona-${Date.now()}`, label: 'Nueva zona', tech: 'Nombre y apellido', specialty: 'Especialidad', facts: [{ k: 'Dato', v: 'Valor' }] });
+  // Sin ocultar: `active` es el índice elegido en el selector — igual que
+  // Áreas/Materiales, filtrar rompería ese índice.
+  const { duplicate, move, dnd } = useLocalListCrud(zonas, onUpdate);
 
   const updateFact = (id, idx, patch) => {
     const z = zonas.find((x) => x.id === id);
@@ -13412,20 +13416,41 @@ function SeccionZonasTecnicas({
             maxLength={200}
           />
           <div className="flex flex-wrap gap-2">
-            {zonas.map((z, i) => (
-              <button
+            {zonas.map((z, i, arr) => (
+              <div
                 key={z.id}
-                type="button"
-                onClick={() => setActive(i)}
-                className="border text-sm px-3.5 py-2 transition-colors"
-                style={
-                  i === activeIndex
-                    ? { borderColor: '#3f6b2b', background: '#e8efe0', color: '#3f6b2b' }
-                    : { borderColor: palette.line, color: palette.ink, background: palette.bg }
-                }
+                ref={dnd.registerItemRef(z.id)}
+                className={`relative ${dnd.dragId === z.id ? 'opacity-30' : ''}`}
               >
-                {z.label}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActive(i)}
+                  className="border text-sm px-3.5 py-2 pr-8 transition-colors"
+                  style={
+                    i === activeIndex
+                      ? { borderColor: '#3f6b2b', background: '#e8efe0', color: '#3f6b2b' }
+                      : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                  }
+                >
+                  {z.label}
+                </button>
+                {editable && (
+                  <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                    <ItemToolbar
+                      variant="inline"
+                      color={i === activeIndex ? '#3f6b2b' : palette.ink}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(z.id, -1)}
+                      onMoveDown={() => move(z.id, 1)}
+                      onDuplicate={() => duplicate(z.id)}
+                      onRemove={() => remove(z.id)}
+                      onDragStart={dnd.startDrag(z)}
+                      removeLabel={`Quitar ${z.label}`}
+                    />
+                  </div>
+                )}
+              </div>
             ))}
             {editable && (
               <button
@@ -13442,17 +13467,6 @@ function SeccionZonasTecnicas({
         <Reveal delay={0.12} className="flex flex-col gap-5">
           {zona && (
             <div className="relative border p-6 grid grid-cols-[auto_1fr] gap-5 items-start" style={{ borderColor: palette.line, background: palette.bg }}>
-              {editable && (
-                <button
-                  type="button"
-                  onClick={() => remove(zona.id)}
-                  aria-label={`Quitar ${zona.label}`}
-                  className="absolute top-2 right-2 opacity-40 hover:opacity-100"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
-              )}
               <div
                 className="w-14 h-14 flex items-center justify-center font-serif font-semibold text-lg shrink-0"
                 style={{ background: '#3f6b2b', color: '#fff' }}
@@ -18610,6 +18624,9 @@ function SeccionVidriera({
     if (!(await validateImageFile(file, 'galeria'))) return;
     update(id, { imagen: await uploadImage(file) });
   };
+  // Sin ocultar: `editIndex`/`activeIndex` son índices activos del picker —
+  // igual que Materiales/Áreas, filtrar rompería cuál foto se está editando.
+  const { duplicate, move, dnd } = useLocalListCrud(items, onUpdate);
 
   const current = items[Math.min(editIndex, Math.max(0, items.length - 1))];
 
@@ -18708,14 +18725,6 @@ function SeccionVidriera({
                       }}
                     />
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => remove(current.id)}
-                    aria-label="Quitar foto"
-                    className="absolute top-2 right-2 z-10 w-6 h-6 bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
                   <div className="absolute left-3 bottom-3 right-3 flex flex-col gap-1 z-10">
                     <Editable
                       editable
@@ -18758,26 +18767,48 @@ function SeccionVidriera({
                 </label>
               )}
             </div>
-            {items.length > 0 && (
-              <div className="flex items-center justify-center gap-1.5 mb-3">
-                {items.map((_, i) => (
+            <div className="flex flex-wrap gap-2.5">
+              {items.map((it, i, arr) => (
+                <div
+                  key={it.id}
+                  ref={dnd.registerItemRef(it.id)}
+                  className={`relative ${dnd.dragId === it.id ? 'opacity-30' : ''}`}
+                >
                   <button
-                    key={i}
                     type="button"
                     onClick={() => setEditIndex(i)}
                     aria-label={`Foto ${i + 1}`}
-                    className="w-2 h-2 rounded-full"
-                    style={{ background: i === editIndex ? accent : palette.line }}
-                  />
-                ))}
-              </div>
-            )}
-            {items.length > 0 && (
+                    className="w-14 h-14 overflow-hidden"
+                    style={{ outline: `2px solid ${i === editIndex ? accent : 'transparent'}`, outlineOffset: 2 }}
+                  >
+                    {it.imagen ? (
+                      <img src={it.imagen} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                        <ImageIcon className="w-4 h-4" style={{ color: palette.inkSoft }} />
+                      </div>
+                    )}
+                  </button>
+                  <div className="absolute -top-1.5 -right-1.5">
+                    <ItemToolbar
+                      variant="overlay"
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(it.id, -1)}
+                      onMoveDown={() => move(it.id, 1)}
+                      onDuplicate={() => duplicate(it.id)}
+                      onRemove={() => remove(it.id)}
+                      onDragStart={dnd.startDrag(it)}
+                      removeLabel={`Quitar ${it.nombre || 'foto'}`}
+                    />
+                  </div>
+                </div>
+              ))}
               <label
-                className="flex items-center justify-center gap-1.5 border-2 border-dashed py-2.5 text-sm font-semibold cursor-pointer"
+                className="w-14 h-14 border-2 border-dashed flex items-center justify-center cursor-pointer"
                 style={{ borderColor: palette.line, color: palette.inkSoft }}
               >
-                <PlusIcon className="w-3.5 h-3.5" /> Agregar foto
+                <PlusIcon className="w-4 h-4" />
                 <input
                   type="file"
                   accept="image/*"
@@ -18789,7 +18820,7 @@ function SeccionVidriera({
                   }}
                 />
               </label>
-            )}
+            </div>
           </div>
         )}
       </div>
@@ -20529,6 +20560,7 @@ function SeccionCitasRotativas({
   onAddCita,
   onRemoveCita,
   onUpdateCita,
+  onUpdate,
   eyebrow,
   onUpdateEyebrow,
   editable,
@@ -20547,6 +20579,9 @@ function SeccionCitasRotativas({
 
   const add = () =>
     onAddCita?.({ id: `cita-${Date.now()}`, frase: 'Escribí acá la cita de un cliente.', persona: 'Nombre', ciudad: '' });
+  // Sin ocultar: `idx`/`current` son el índice activo del picker de citas —
+  // igual que Vidriera/ZonasTecnicas, filtrar rompería cuál cita se muestra.
+  const { duplicate, move, dnd } = useLocalListCrud(citas, onUpdate);
 
   if (citas.length === 0 && !editable) return null;
   const activa = citas[current];
@@ -20568,20 +20603,6 @@ function SeccionCitasRotativas({
         {activa ? (
           <>
             <div className="relative min-h-[5.5rem] flex items-center justify-center">
-              {editable && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onRemoveCita?.(activa.id);
-                    setIdx(0);
-                  }}
-                  aria-label="Quitar esta cita"
-                  className="absolute -top-1 right-0 opacity-50 hover:opacity-100 transition-opacity"
-                  style={{ color: palette.ink }}
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
-              )}
               <Editable
                 editable={editable}
                 value={activa.frase}
@@ -20615,19 +20636,57 @@ function SeccionCitasRotativas({
                 maxLength={30}
               />
             </div>
-            {citas.length > 1 && (
-              <div className="flex justify-center gap-1.5 mt-7">
-                {citas.map((c, i) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setIdx(i)}
-                    aria-label={`Ver cita ${i + 1}`}
-                    className="h-[5px] transition-all"
-                    style={{ width: i === current ? '22px' : '5px', background: i === current ? accent : palette.line }}
-                  />
+            {editable ? (
+              <div className="flex flex-wrap justify-center gap-2 mt-7">
+                {citas.map((c, i, arr) => (
+                  <div key={c.id} ref={dnd.registerItemRef(c.id)} className={`relative ${dnd.dragId === c.id ? 'opacity-30' : ''}`}>
+                    <button
+                      type="button"
+                      onClick={() => setIdx(i)}
+                      className="border text-sm px-3.5 py-2 pr-8 transition-colors"
+                      style={
+                        i === current
+                          ? { borderColor: accent, background: palette.accentSoft || 'rgba(0,0,0,0.04)', color: accent }
+                          : { borderColor: palette.line, color: palette.ink, background: palette.bg }
+                      }
+                    >
+                      {c.persona || `Cita ${i + 1}`}
+                    </button>
+                    <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                      <ItemToolbar
+                        variant="inline"
+                        color={i === current ? accent : palette.ink}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => move(c.id, -1)}
+                        onMoveDown={() => move(c.id, 1)}
+                        onDuplicate={() => duplicate(c.id)}
+                        onRemove={() => {
+                          onRemoveCita?.(c.id);
+                          setIdx(0);
+                        }}
+                        onDragStart={dnd.startDrag(c)}
+                        removeLabel={`Quitar cita de ${c.persona || 'cliente'}`}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
+            ) : (
+              citas.length > 1 && (
+                <div className="flex justify-center gap-1.5 mt-7">
+                  {citas.map((c, i) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setIdx(i)}
+                      aria-label={`Ver cita ${i + 1}`}
+                      className="h-[5px] transition-all"
+                      style={{ width: i === current ? '22px' : '5px', background: i === current ? accent : palette.line }}
+                    />
+                  ))}
+                </div>
+              )
             )}
           </>
         ) : (

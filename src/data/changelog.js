@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.36.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'mejora', text: 'Vidriera rotativa y Cita única rotativa: el selector de fotos/citas en edición pasa de puntitos sin espacio para nada a una tira de miniaturas y una fila de fichas, cada una con sus propios controles de duplicar, mover y arrastrar.' },
+      { type: 'nuevo', text: '"Un referente por zona" ahora también permite duplicar, mover y arrastrar cada zona para reordenarla.' },
+    ],
+  },
+  {
     version: '1.35.0',
     date: '2026-08-02',
     changes: [
