@@ -439,6 +439,21 @@ export const TEMPLATES = [
       { type: 'sobre-nosotros' },
       { type: 'footer' },
     ],
+    seeds: {
+      productos: [
+        { id: 'prod-milanesa', nombre: 'Milanesa napolitana con papas', precio: 8500, desc: 'De ternera, con jamón, queso y salsa, acompañada de papas fritas.', detalle: '', imagenes: [photo('schnitzel', 601)] },
+        { id: 'prod-empanadas', nombre: 'Docena de empanadas caseras', precio: 7200, desc: 'Carne cortada a cuchillo, pollo o jamón y queso, al horno.', detalle: '', imagenes: [photo('empanadas', 602)] },
+        { id: 'prod-guiso', nombre: 'Guiso de lentejas', precio: 6800, desc: 'Receta de la casa, con chorizo colorado y panceta.', detalle: '', imagenes: [photo('stew', 603)] },
+        { id: 'prod-tarta', nombre: 'Tarta de manzana casera', precio: 3200, desc: 'Masa quebrada, manzanas al horno y canela.', detalle: '', imagenes: [photo('applepie', 604)] },
+        { id: 'prod-pastel', nombre: 'Pastel de papa', precio: 7500, desc: 'Relleno de carne picada, huevo y aceitunas.', detalle: '', imagenes: [photo('shepherdspie', 605)] },
+        { id: 'prod-flan', nombre: 'Flan casero con dulce de leche', precio: 3000, desc: 'Con crema y dulce de leche a elección.', detalle: '', imagenes: [photo('flan', 606)] },
+      ],
+      testimonios: [
+        { id: 'testi-marta', nombre: 'Marta Fernández', texto: 'Comida como la de casa, con ese gusto de siempre. Pedimos delivery todas las semanas.', rating: 5, avatar: '', verificado: true },
+        { id: 'testi-ruben', nombre: 'Rubén Acosta', texto: 'Las empanadas son las mejores del barrio, y el guiso de lentejas no tiene rival.', rating: 5, avatar: '', verificado: true },
+        { id: 'testi-noelia', nombre: 'Noelia Suárez', texto: 'Atención de siempre, precios justos y porciones generosas. Volvemos seguido.', rating: 5, avatar: '', verificado: true },
+      ],
+    },
   },
   {
     id: 'turno-perfecto',

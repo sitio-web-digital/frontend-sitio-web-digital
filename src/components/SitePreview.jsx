@@ -1129,6 +1129,8 @@ export default function SitePreview({
                 headingColor={sec.headingColor}
                 accent={accent}
                 palette={palette}
+                nombreNegocio={nombreNegocio}
+                whatsapp={whatsapp}
               />
             )}
             {sec.type === 'ensayos' && (
@@ -1209,6 +1211,8 @@ export default function SitePreview({
                 headingColor={sec.headingColor}
                 accent={accent}
                 palette={palette}
+                nombreNegocio={nombreNegocio}
+                whatsapp={whatsapp}
               />
             )}
             {sec.type === 'logistica-zonas' && (
@@ -1693,6 +1697,8 @@ export default function SitePreview({
                 itemPlaceholder={sec.itemPlaceholder}
                 addLabel={sec.addLabel}
                 confirmLabel={sec.confirmLabel}
+                nombreNegocio={nombreNegocio}
+                whatsapp={whatsapp}
               />
             )}
             {sec.type === 'areas' && (
@@ -1739,6 +1745,10 @@ export default function SitePreview({
                 whatsapp={whatsapp}
                 botones={sec.botones ?? {}}
                 onUpdateBotones={(botones) => onSetSectionStyle?.(sec.id, { botones })}
+                precios={sec.precios}
+                onUpdatePrecios={(precios) => onSetSectionStyle?.(sec.id, { precios })}
+                planes={sec.planes}
+                onUpdatePlanes={(planes) => onSetSectionStyle?.(sec.id, { planes })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -2348,15 +2358,29 @@ function useListDragReorder(items, onReorder) {
   const [dragId, setDragId] = useState(null);
   const itemRefs = useRef({});
 
-  const computeOverIndex = (clientY) => {
+  // Consciente de grillas de varias columnas por fila, no solo listas de una
+  // columna: mirar nada más que clientY hacía que soltar a un costado, dentro
+  // de la misma fila, siempre cayera en el primer ítem de esa fila (todos
+  // comparten el mismo `rect.top`). Acá cada ítem decide si el puntero cae
+  // "antes" mirando primero si está arriba de su fila entera, y si está
+  // dentro de su misma fila, comparando también la coordenada X contra su
+  // punto medio horizontal.
+  const computeOverIndex = (clientX, clientY) => {
     let idx = items.length;
     for (let i = 0; i < items.length; i++) {
       const el = itemRefs.current[items[i].id];
       if (!el) continue;
       const rect = el.getBoundingClientRect();
-      if (clientY < rect.top + rect.height / 2) {
+      if (clientY < rect.top) {
         idx = i;
         break;
+      }
+      if (clientY < rect.bottom) {
+        if (clientX < rect.left + rect.width / 2) {
+          idx = i;
+          break;
+        }
+        continue;
       }
     }
     return idx;
@@ -2370,7 +2394,7 @@ function useListDragReorder(items, onReorder) {
       window.removeEventListener('pointerup', onUp);
       document.body.style.userSelect = '';
       setDragId(null);
-      onReorder(item.id, computeOverIndex(ev.clientY));
+      onReorder(item.id, computeOverIndex(ev.clientX, ev.clientY));
     };
     window.addEventListener('pointerup', onUp);
   };
@@ -8229,7 +8253,11 @@ function SeccionProductos({
   const submit = (e) => {
     e.preventDefault();
     if (!nombre.trim()) return;
-    onAddProducto?.({ nombre, precio, duracion, categoria });
+    // La fila de "tarifario" muestra `desc` (no `duracion`, que es lo que
+    // lee "servicios") — el mismo input de "desde" tiene que guardar en el
+    // campo que esa variante realmente después va a mostrar.
+    const extra = variant === 'tarifario' ? { desc: duracion } : { duracion };
+    onAddProducto?.({ nombre, precio, categoria, ...extra });
     setNombre('');
     setPrecio('');
     setDuracion('');
@@ -10339,11 +10367,12 @@ function SeccionPedidoMayorista({
   headingColor,
   accent,
   palette = {},
+  nombreNegocio,
+  whatsapp,
 }) {
   const [query, setQuery] = useState('');
   const [categoria, setCategoria] = useState('Todas');
   const [cart, setCart] = useState({});
-  const [orderSent, setOrderSent] = useState(false);
 
   // Solo duplicar/ocultar en `items` (el buscador + filtro por categor\u00eda ya
   // reordenan `shown` de forma independiente al array completo, no hay
@@ -10372,7 +10401,6 @@ function SeccionPedidoMayorista({
       else next[id] = v;
       return next;
     });
-    setOrderSent(false);
   };
 
   const money = (n) => '$' + Math.round(n).toLocaleString('es-AR');
@@ -10402,6 +10430,10 @@ function SeccionPedidoMayorista({
   const total = subtotal - discount;
   const reached = total >= montoMinimo;
   const missing = montoMinimo - total;
+
+  const mensajeWa = reached && cartLines.length > 0
+    ? `Hola! Quiero hacer este pedido:\n${cartLines.map((l) => `- ${l.label}`).join('\n')}\nTotal: ${money(total)}${discount > 0 ? ` (con descuento ${tier?.etiqueta || ''})` : ''}.`
+    : undefined;
 
   const updateItem = (id, patch) => onUpdate?.(items.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const removeItem = (id) => onRemove?.(id);
@@ -10634,17 +10666,19 @@ function SeccionPedidoMayorista({
                     ? `✓ Superás el mínimo de ${money(montoMinimo)}. Podés enviar el pedido.`
                     : `Te faltan ${money(missing)} para alcanzar el mínimo de ${money(montoMinimo)}.`}
               </div>
-              <button
-                type="button"
-                onClick={() => reached && setOrderSent(true)}
-                className="w-full text-center text-sm font-semibold py-3 mt-4 transition-colors"
-                style={{ background: reached ? accent : palette.line, color: '#fff' }}
+              <a
+                href={mensajeWa && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+                target={mensajeWa && whatsapp ? '_blank' : undefined}
+                rel={mensajeWa && whatsapp ? 'noreferrer' : undefined}
+                onClick={(e) => !(mensajeWa && whatsapp) && e.preventDefault()}
+                className="block w-full text-center text-sm font-semibold py-3 mt-4 transition-colors"
+                style={{ background: mensajeWa && whatsapp ? accent : palette.line, color: '#fff', cursor: mensajeWa && whatsapp ? 'pointer' : 'default' }}
               >
-                {reached ? 'Enviar pedido al vendedor' : 'Completá el mínimo para enviar'}
-              </button>
-              {orderSent && (
-                <p className="font-mono text-xs mt-3.5 leading-relaxed" style={{ color: '#1f7a4d' }}>
-                  ✓ Pedido enviado. Un vendedor te confirma stock y fecha de entrega hoy mismo.
+                {reached ? 'Enviar pedido por WhatsApp →' : 'Completá el mínimo para enviar'}
+              </a>
+              {reached && !whatsapp && (
+                <p className="font-mono text-xs mt-3.5 leading-relaxed" style={{ color: palette.inkSoft }}>
+                  Configurá el WhatsApp del negocio para poder recibir pedidos.
                 </p>
               )}
             </div>
@@ -12294,6 +12328,8 @@ function SeccionCotizador({
   headingColor,
   accent,
   palette = {},
+  nombreNegocio,
+  whatsapp,
 }) {
   const [optIdx, setOptIdx] = useState(0);
   const [cantidad, setCantidad] = useState('250');
@@ -12302,6 +12338,9 @@ function SeccionCotizador({
   const qty = Math.max(0, parseFloat(String(cantidad).replace(',', '.')) || 0);
   const costoUnitario = opt ? (opt.dosis || 0) * (opt.precioUnitario || 0) + (opt.extra || 0) : 0;
   const total = costoUnitario * qty;
+  const mensajeWa = opt
+    ? `Hola! Quiero una cotización formal: planteo "${opt.label}", ${qty.toLocaleString('es-AR')} ${opciones[0]?.cantidadUnidad || 'ha'}, estimado en ${'$' + Math.round(total).toLocaleString('es-AR')}.`
+    : undefined;
 
   const update = (id, patch) => onUpdate?.(opciones.map((o) => (o.id === id ? { ...o, ...patch } : o)));
   const remove = (id) => onRemove?.(id);
@@ -12495,9 +12534,12 @@ function SeccionCotizador({
             </div>
           </div>
           <a
-            href="#/whatsapp"
+            href={mensajeWa && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+            target={mensajeWa && whatsapp ? '_blank' : undefined}
+            rel={mensajeWa && whatsapp ? 'noreferrer' : undefined}
+            onClick={(e) => !(mensajeWa && whatsapp) && e.preventDefault()}
             className="block text-center font-semibold text-sm py-3.5"
-            style={{ background: accent, color: palette.inkHex || '#171717' }}
+            style={{ background: accent, color: palette.inkHex || '#171717', cursor: mensajeWa && whatsapp ? 'pointer' : 'default' }}
           >
             Pedir cotización formal
           </a>
@@ -17772,6 +17814,8 @@ function SeccionReservas({
   itemPlaceholder = 'Nombre del servicio',
   addLabel = 'Agregar servicio',
   confirmLabel = 'Confirmar turno →',
+  nombreNegocio,
+  whatsapp,
 }) {
   const update = (id, patch) => onUpdate?.(servicios.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const remove = (id) => onUpdate?.(servicios.filter((s) => s.id !== id));
@@ -17803,6 +17847,8 @@ function SeccionReservas({
   };
 
   const fechaLabel = pickedDay ? `${pickedDay} de ${monthLabelCap.split(' ')[0]}` : '—';
+  const hasTurno = Boolean(pickedDay && pickedTime);
+  const mensajeWa = hasTurno ? `Hola! Quiero reservar un turno para el ${fechaLabel} a las ${pickedTime}.` : undefined;
 
   return (
     <section className="relative px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
@@ -18002,13 +18048,21 @@ function SeccionReservas({
                 {pickedTime || '—'}
               </span>
             </div>
-            <button
-              type="button"
-              className="w-full py-2.5 text-sm font-semibold text-center"
-              style={{ background: accent, color: '#171717' }}
+            <a
+              href={hasTurno && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+              target={hasTurno && whatsapp ? '_blank' : undefined}
+              rel={hasTurno && whatsapp ? 'noreferrer' : undefined}
+              onClick={(e) => !(hasTurno && whatsapp) && e.preventDefault()}
+              className="block w-full py-2.5 text-sm font-semibold text-center transition-colors"
+              style={{
+                background: hasTurno ? accent : 'transparent',
+                border: hasTurno ? 'none' : `1px solid ${lineColor}`,
+                color: hasTurno ? '#171717' : textoSuave,
+                cursor: hasTurno && whatsapp ? 'pointer' : 'default',
+              }}
             >
-              {confirmLabel}
-            </button>
+              {hasTurno ? confirmLabel : 'Elegí día y horario'}
+            </a>
           </div>
         </div>
       </div>
@@ -18334,7 +18388,9 @@ function SeccionFinanciacion({
   accent,
   palette = {},
   precios = FINANCIACION_PRECIOS_DEFAULT,
+  onUpdatePrecios,
   planes = FINANCIACION_PLANES_DEFAULT,
+  onUpdatePlanes,
   botones: botonesData = {},
   onUpdateBotones,
   nombreNegocio,
@@ -18344,6 +18400,14 @@ function SeccionFinanciacion({
   const [selectedPrice, setSelectedPrice] = useState(precios[1] ?? precios[0]);
   const textoSuave = textColor || 'rgba(255,255,255,0.7)';
   const lineColor = 'rgba(255,255,255,0.12)';
+
+  const updatePrecio = (i, valor) => onUpdatePrecios?.(precios.map((p, idx) => (idx === i ? valor : p)));
+  const removePrecio = (i) => onUpdatePrecios?.(precios.filter((_, idx) => idx !== i));
+  const addPrecio = () => onUpdatePrecios?.([...precios, (precios[precios.length - 1] ?? 0) + 5000000]);
+
+  const updatePlan = (i, patch) => onUpdatePlanes?.(planes.map((pl, idx) => (idx === i ? { ...pl, ...patch } : pl)));
+  const removePlan = (i) => onUpdatePlanes?.(planes.filter((_, idx) => idx !== i));
+  const addPlan = () => onUpdatePlanes?.([...planes, { meses: 6, factor: 1.0 }]);
 
   const planResults = planes.map(({ meses, factor }) => ({
     meses,
@@ -18394,23 +18458,61 @@ function SeccionFinanciacion({
             <p className="font-mono text-xs uppercase tracking-wide mb-3" style={{ color: textoSuave }}>
               Precio del vehículo
             </p>
-            <div className="flex flex-wrap gap-2 mb-8">
-              {precios.map((p) => (
+            {editable ? (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {precios.map((p, i) => (
+                  <div key={i} className="relative flex items-center border" style={{ borderColor: lineColor }}>
+                    <span className="text-sm font-semibold pl-3" style={{ color: textColor || '#fff' }}>
+                      $
+                    </span>
+                    <Editable
+                      editable={editable}
+                      value={p}
+                      onChange={(v) => updatePrecio(i, Number(v) || 0)}
+                      tag="span"
+                      type="number"
+                      format={(v) => `${(Number(v || 0) / 1000000).toFixed(0)}M`}
+                      style={{ color: textColor || '#fff' }}
+                      className="text-sm font-semibold px-1.5 py-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePrecio(i)}
+                      aria-label="Quitar precio"
+                      className="opacity-40 hover:opacity-100 pr-2"
+                    >
+                      <XIcon className="w-3.5 h-3.5" style={{ color: textColor || '#fff' }} />
+                    </button>
+                  </div>
+                ))}
                 <button
-                  key={p}
                   type="button"
-                  onClick={() => setSelectedPrice(p)}
-                  className="text-sm font-semibold px-4 py-2 border"
-                  style={{
-                    borderColor: selectedPrice === p ? accent : lineColor,
-                    background: selectedPrice === p ? accent : 'transparent',
-                    color: selectedPrice === p ? '#171717' : textColor || '#fff',
-                  }}
+                  onClick={addPrecio}
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 border border-dashed"
+                  style={{ borderColor: lineColor, color: textoSuave }}
                 >
-                  ${(p / 1000000).toFixed(0)}M
+                  <PlusIcon className="w-3.5 h-3.5" /> Agregar precio
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {precios.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setSelectedPrice(p)}
+                    className="text-sm font-semibold px-4 py-2 border"
+                    style={{
+                      borderColor: selectedPrice === p ? accent : lineColor,
+                      background: selectedPrice === p ? accent : 'transparent',
+                      color: selectedPrice === p ? '#171717' : textColor || '#fff',
+                    }}
+                  >
+                    ${(p / 1000000).toFixed(0)}M
+                  </button>
+                ))}
+              </div>
+            )}
             {FINANCIACION_BUTTON_SLOTS.map((slot) => {
               const v = botonesData[slot.key];
               const defaultTarget = slot.defaultFuncion === 'whatsapp' ? whatsapp : undefined;
@@ -18434,21 +18536,68 @@ function SeccionFinanciacion({
             })}
           </div>
           <div>
-            {planResults.map((r) => (
-              <div key={r.meses} className="flex items-center justify-between py-4 border-b" style={{ borderColor: lineColor }}>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: textColor || '#fff' }}>
-                    {r.meses} cuotas
-                  </p>
-                  <p className="text-xs" style={{ color: textoSuave }}>
-                    Tasa estimada {r.factor.toFixed(2)}x
-                  </p>
-                </div>
-                <p className="font-mono font-bold text-lg" style={{ color: accent }}>
-                  ${r.monthly.toLocaleString('es-AR')}
-                </p>
-              </div>
-            ))}
+            {editable
+              ? planes.map((pl, i) => (
+                  <div key={i} className="relative flex items-center justify-between gap-3 py-4 border-b" style={{ borderColor: lineColor }}>
+                    <div className="flex items-center gap-1.5">
+                      <Editable
+                        editable={editable}
+                        value={pl.meses}
+                        onChange={(v) => updatePlan(i, { meses: Number(v) || 0 })}
+                        tag="span"
+                        type="number"
+                        style={{ color: textColor || '#fff' }}
+                        className="text-sm font-semibold w-10"
+                      />
+                      <span className="text-sm font-semibold" style={{ color: textColor || '#fff' }}>
+                        cuotas ·
+                      </span>
+                      <Editable
+                        editable={editable}
+                        value={pl.factor}
+                        onChange={(v) => updatePlan(i, { factor: Number(v) || 0 })}
+                        tag="span"
+                        type="number"
+                        format={(v) => `${Number(v || 0).toFixed(2)}x`}
+                        style={{ color: textoSuave }}
+                        className="text-xs w-14"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removePlan(i)}
+                      aria-label="Quitar plan"
+                      className="opacity-40 hover:opacity-100 shrink-0"
+                    >
+                      <XIcon className="w-3.5 h-3.5" style={{ color: textColor || '#fff' }} />
+                    </button>
+                  </div>
+                ))
+              : planResults.map((r) => (
+                  <div key={r.meses} className="flex items-center justify-between py-4 border-b" style={{ borderColor: lineColor }}>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: textColor || '#fff' }}>
+                        {r.meses} cuotas
+                      </p>
+                      <p className="text-xs" style={{ color: textoSuave }}>
+                        Tasa estimada {r.factor.toFixed(2)}x
+                      </p>
+                    </div>
+                    <p className="font-mono font-bold text-lg" style={{ color: accent }}>
+                      ${r.monthly.toLocaleString('es-AR')}
+                    </p>
+                  </div>
+                ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addPlan}
+                className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 mt-3 border border-dashed"
+                style={{ borderColor: lineColor, color: textoSuave }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" /> Agregar plan
+              </button>
+            )}
           </div>
         </div>
       </div>

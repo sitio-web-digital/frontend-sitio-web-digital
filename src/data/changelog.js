@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.40.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'fix', text: 'Financiación: los precios y planes de cuotas ahora se pueden editar de verdad — antes la sección siempre mostraba los mismos montos de ejemplo sin ninguna forma de cambiarlos.' },
+      { type: 'fix', text: 'Pedido mayorista: "Enviar pedido" ahora abre WhatsApp con el detalle real del pedido — antes solo mostraba un mensaje de confirmación falso, sin enviar nada.' },
+      { type: 'fix', text: 'Cotizador: "Pedir cotización formal" ahora abre WhatsApp con el detalle de la cotización — antes el botón no llevaba a ningún lado.' },
+      { type: 'fix', text: 'Turnos / Reservas: "Confirmar turno" ahora abre WhatsApp con el día y horario elegidos — antes el botón no hacía nada al tocarlo.' },
+      { type: 'fix', text: 'Productos, distribución "Lista de precios": el campo "desde" de un ítem nuevo ya no se pierde al guardarlo.' },
+      { type: 'fix', text: 'Arrastrar para reordenar ya funciona bien en secciones con grilla de varias columnas (como Zonas o Barberos) — antes soltar un ítem al costado, dentro de su misma fila, lo mandaba siempre al principio.' },
+      { type: 'mejora', text: 'La plantilla "Sabor Casero" ahora trae productos y reseñas propios (milanesas, empanadas, guiso) en vez de caer en el ejemplo genérico.' },
+    ],
+  },
+  {
     version: '1.39.1',
     date: '2026-08-02',
     changes: [
