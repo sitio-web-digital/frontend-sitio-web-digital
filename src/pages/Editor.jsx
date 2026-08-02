@@ -83,6 +83,7 @@ export default function Editor() {
     duplicateListItem,
     moveListItem,
     toggleListItemOculto,
+    reorderListItem,
     widgets,
     toggleWidget,
     setWidgetOption,
@@ -429,6 +430,7 @@ export default function Editor() {
             onDuplicateListItem={duplicateListItem}
             onMoveListItem={moveListItem}
             onToggleListItemOculto={toggleListItemOculto}
+            onReorderListItem={reorderListItem}
             widgets={widgets}
             textStyles={textStyles}
             onSetTextStyle={setTextStyle}

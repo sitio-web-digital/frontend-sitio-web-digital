@@ -271,6 +271,7 @@ export default function SitePreview({
   onDuplicateListItem,
   onMoveListItem,
   onToggleListItemOculto,
+  onReorderListItem,
   onShuffleGallery,
   onReorderSection,
   onSetSectionStyle,
@@ -636,6 +637,7 @@ export default function SitePreview({
                 onDuplicateProducto={(id) => onDuplicateListItem?.('productos', id)}
                 onMoveProducto={(id, dir) => onMoveListItem?.('productos', id, dir)}
                 onToggleOcultoProducto={(id) => onToggleListItemOculto?.('productos', id)}
+                onReorderProducto={(id, idx) => onReorderListItem?.('productos', id, idx)}
                 nombreNegocio={nombreNegocio}
                 whatsapp={whatsapp}
                 seccionesDisponibles={sections
@@ -685,6 +687,7 @@ export default function SitePreview({
                 onDuplicateTestimonio={(id) => onDuplicateListItem?.('testimonios', id)}
                 onMoveTestimonio={(id, dir) => onMoveListItem?.('testimonios', id, dir)}
                 onToggleOcultoTestimonio={(id) => onToggleListItemOculto?.('testimonios', id)}
+                onReorderTestimonio={(id, idx) => onReorderListItem?.('testimonios', id, idx)}
                 onConnectVerifiedReviews={onConnectVerifiedReviews}
               />
             )}
@@ -706,6 +709,7 @@ export default function SitePreview({
                 onDuplicateFAQ={(id) => onDuplicateListItem?.('faqs', id)}
                 onMoveFAQ={(id, dir) => onMoveListItem?.('faqs', id, dir)}
                 onToggleOcultoFAQ={(id) => onToggleListItemOculto?.('faqs', id)}
+                onReorderFAQ={(id, idx) => onReorderListItem?.('faqs', id, idx)}
                 onAddFaqImagenes={(urls) => onSetSectionStyle?.(sec.id, { faqImagenes: [...(sec.faqImagenes ?? []), ...urls] })}
                 onRemoveFaqImagen={(i) =>
                   onSetSectionStyle?.(sec.id, { faqImagenes: (sec.faqImagenes ?? []).filter((_, idx) => idx !== i) })
@@ -1477,6 +1481,7 @@ export default function SitePreview({
                 onDuplicatePlan={(id) => onDuplicateListItem?.('planes', id)}
                 onMovePlan={(id, dir) => onMoveListItem?.('planes', id, dir)}
                 onToggleOcultoPlan={(id) => onToggleListItemOculto?.('planes', id)}
+                onReorderPlan={(id, idx) => onReorderListItem?.('planes', id, idx)}
                 nombreNegocio={nombreNegocio}
                 whatsapp={whatsapp}
                 seccionesDisponibles={sections
@@ -1501,6 +1506,7 @@ export default function SitePreview({
                 onDuplicateMember={(id) => onDuplicateListItem?.('equipo', id)}
                 onMoveMember={(id, dir) => onMoveListItem?.('equipo', id, dir)}
                 onToggleOcultoMember={(id) => onToggleListItemOculto?.('equipo', id)}
+                onReorderMember={(id, idx) => onReorderListItem?.('equipo', id, idx)}
               />
             )}
             {sec.type === 'cta' && (
@@ -1560,6 +1566,7 @@ export default function SitePreview({
                 onRemoveLogo={(id) => onRemoveListItem?.('marcas', id)}
                 onDuplicateLogo={(id) => onDuplicateListItem?.('marcas', id)}
                 onToggleOcultoLogo={(id) => onToggleListItemOculto?.('marcas', id)}
+                onReorderLogo={(id, idx) => onReorderListItem?.('marcas', id, idx)}
               />
             )}
             {sec.type === 'mapa' && (
@@ -1591,6 +1598,7 @@ export default function SitePreview({
                 onDuplicatePost={(id) => onDuplicateListItem?.('posts', id)}
                 onMovePost={(id, dir) => onMoveListItem?.('posts', id, dir)}
                 onToggleOcultoPost={(id) => onToggleListItemOculto?.('posts', id)}
+                onReorderPost={(id, idx) => onReorderListItem?.('posts', id, idx)}
               />
             )}
             {sec.type === 'categorias' && (
@@ -2300,6 +2308,51 @@ function SectionShell({
       )}
     </div>
   );
+}
+
+// Arrastrar para reordenar una lista plana (productos, testimonios, precios,
+// equipo, etc.) — versión más simple que useZonasDragDrop: acá no hay
+// "zonas" hermanas entre las que elegir, solo un arreglo y una posición
+// donde soltar. Se llama una vez por sección que renderiza esa lista (no por
+// ítem) y el resultado se reparte a cada tarjeta.
+function useListDragReorder(items, onReorder) {
+  const [dragId, setDragId] = useState(null);
+  const itemRefs = useRef({});
+
+  const computeOverIndex = (clientY) => {
+    let idx = items.length;
+    for (let i = 0; i < items.length; i++) {
+      const el = itemRefs.current[items[i].id];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) {
+        idx = i;
+        break;
+      }
+    }
+    return idx;
+  };
+
+  const startDrag = (item) => (e) => {
+    e.preventDefault();
+    setDragId(item.id);
+    document.body.style.userSelect = 'none';
+    const onUp = (ev) => {
+      window.removeEventListener('pointerup', onUp);
+      document.body.style.userSelect = '';
+      setDragId(null);
+      onReorder(item.id, computeOverIndex(ev.clientY));
+    };
+    window.addEventListener('pointerup', onUp);
+  };
+
+  return {
+    dragId,
+    registerItemRef: (id) => (el) => {
+      itemRefs.current[id] = el;
+    },
+    startDrag,
+  };
 }
 
 // Barra de acciones para UN ítem dentro de una lista (producto, testimonio,
@@ -7756,6 +7809,7 @@ function SeccionProductos({
   onDuplicateProducto,
   onMoveProducto,
   onToggleOcultoProducto,
+  onReorderProducto,
   nombreNegocio,
   whatsapp,
   seccionesDisponibles = [],
@@ -7767,6 +7821,7 @@ function SeccionProductos({
   onUpdateEyebrow,
 }) {
   const [nombre, setNombre] = useState('');
+  const productosDnd = useListDragReorder(productos, (id, idx) => onReorderProducto?.(id, idx));
   const [precio, setPrecio] = useState('');
   const [duracion, setDuracion] = useState('');
   const [categoria, setCategoria] = useState('');
@@ -7828,9 +7883,10 @@ function SeccionProductos({
           {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
             <div
               key={p.id}
+              ref={productosDnd.registerItemRef(p.id)}
               className={`relative overflow-hidden group/bento ${i === 0 ? 'col-span-2 row-span-2' : ''} ${
                 p.oculto ? 'opacity-40' : ''
-              }`}
+              } ${productosDnd.dragId === p.id ? 'opacity-30' : ''}`}
               style={{ background: 'rgba(0,0,0,0.05)' }}
             >
               <label className={`absolute inset-0 ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
@@ -7901,6 +7957,7 @@ function SeccionProductos({
                     onDuplicate={() => onDuplicateProducto?.(p.id)}
                     onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                     onRemove={() => onRemoveProducto?.(p.id)}
+                    onDragStart={productosDnd.startDrag(p)}
                     removeLabel={`Quitar ${p.nombre}`}
                   />
                 </div>
@@ -7944,7 +8001,10 @@ function SeccionProductos({
           {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
             <div
               key={p.id}
-              className={`flex items-center gap-5 py-5 border-b ${p.oculto ? 'opacity-40' : ''}`}
+              ref={productosDnd.registerItemRef(p.id)}
+              className={`flex items-center gap-5 py-5 border-b ${p.oculto ? 'opacity-40' : ''} ${
+                productosDnd.dragId === p.id ? 'opacity-30' : ''
+              }`}
               style={{ borderColor: palette.line }}
             >
               <label
@@ -8029,6 +8089,7 @@ function SeccionProductos({
                     onDuplicate={() => onDuplicateProducto?.(p.id)}
                     onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                     onRemove={() => onRemoveProducto?.(p.id)}
+                    onDragStart={productosDnd.startDrag(p)}
                     removeLabel={`Quitar ${p.nombre}`}
                   />
                 )}
@@ -8088,6 +8149,7 @@ function SeccionProductos({
                     onDuplicate={() => onDuplicateProducto?.(p.id)}
                     onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                     onRemove={() => onRemoveProducto?.(p.id)}
+                    onDragStart={productosDnd.startDrag(p)}
                     removeLabel={`Quitar ${p.nombre}`}
                   />
                 </div>
@@ -8214,6 +8276,7 @@ function SeccionProductos({
                     onDuplicate={() => onDuplicateProducto?.(p.id)}
                     onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                     onRemove={() => onRemoveProducto?.(p.id)}
+                    onDragStart={productosDnd.startDrag(p)}
                     removeLabel={`Quitar ${p.nombre}`}
                   />
                 </div>
@@ -8579,7 +8642,13 @@ function SeccionProductos({
           )}
           <div className="grid grid-cols-2 @lg:grid-cols-4 gap-x-5 gap-y-8">
             {productosFiltrados.map((p, i, arr) => (
-              <div key={p.id} className={`relative flex flex-col text-left ${p.oculto ? 'opacity-40' : ''}`}>
+              <div
+                key={p.id}
+                ref={productosDnd.registerItemRef(p.id)}
+                className={`relative flex flex-col text-left ${p.oculto ? 'opacity-40' : ''} ${
+                  productosDnd.dragId === p.id ? 'opacity-30' : ''
+                }`}
+              >
                 {editable && (
                   <div className="absolute top-2 right-2 z-10">
                     <ItemToolbar
@@ -8592,6 +8661,7 @@ function SeccionProductos({
                       onDuplicate={() => onDuplicateProducto?.(p.id)}
                       onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                       onRemove={() => onRemoveProducto?.(p.id)}
+                      onDragStart={productosDnd.startDrag(p)}
                       removeLabel={`Quitar ${p.nombre}`}
                     />
                   </div>
@@ -8803,10 +8873,11 @@ function SeccionProductos({
               return (
                 <RowTag
                   key={p.id}
+                  ref={productosDnd.registerItemRef(p.id)}
                   {...rowLinkProps}
                   className={`relative flex items-baseline justify-between gap-4 py-3.5 px-2 -mx-2 border-b no-underline transition-colors ${
                     !editable && whatsapp ? 'hover:bg-current/[0.04]' : ''
-                  } ${p.oculto ? 'opacity-40' : ''}`}
+                  } ${p.oculto ? 'opacity-40' : ''} ${productosDnd.dragId === p.id ? 'opacity-30' : ''}`}
                   style={{ borderColor: palette.line, color: palette.ink }}
                 >
                   <Editable
@@ -8855,6 +8926,7 @@ function SeccionProductos({
                         onDuplicate={() => onDuplicateProducto?.(p.id)}
                         onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                         onRemove={() => onRemoveProducto?.(p.id)}
+                        onDragStart={productosDnd.startDrag(p)}
                         removeLabel={`Quitar ${p.nombre}`}
                       />
                     )}
@@ -8931,6 +9003,7 @@ function SeccionProductos({
                     onDuplicate={() => onDuplicateProducto?.(p.id)}
                     onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
                     onRemove={() => onRemoveProducto?.(p.id)}
+                    onDragStart={productosDnd.startDrag(p)}
                     removeLabel={`Quitar ${p.nombre}`}
                   />
                 </div>
@@ -9326,12 +9399,18 @@ function TestimonioCard({
   canMoveUp,
   canMoveDown,
   onToggleOculto,
+  onDragStart,
+  dragging,
+  itemRef,
   accent,
   palette = {},
 }) {
   return (
     <div
-      className={`relative border p-6 text-left h-full flex flex-col ${t.oculto ? 'opacity-40' : ''}`}
+      ref={itemRef}
+      className={`relative border p-6 text-left h-full flex flex-col ${t.oculto ? 'opacity-40' : ''} ${
+        dragging ? 'opacity-30' : ''
+      }`}
       style={{ borderColor: palette.line }}
     >
       {editable && (
@@ -9347,6 +9426,7 @@ function TestimonioCard({
             onDuplicate={onDuplicate}
             onToggleOculto={onToggleOculto}
             onRemove={onRemove}
+            onDragStart={onDragStart}
             removeLabel={`Quitar testimonio de ${t.nombre}`}
           />
         </div>
@@ -10217,11 +10297,13 @@ function SeccionTestimonios({
   onDuplicateTestimonio,
   onMoveTestimonio,
   onToggleOcultoTestimonio,
+  onReorderTestimonio,
   onConnectVerifiedReviews,
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [idx, setIdx] = useState(0);
   const current = Math.min(idx, Math.max(testimonios.length - 1, 0));
+  const testimoniosDnd = useListDragReorder(testimonios, (id, i) => onReorderTestimonio?.(id, i));
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -10400,6 +10482,9 @@ function SeccionTestimonios({
                   canMoveDown={i < arr.length - 1}
                   onToggleOculto={() => onToggleOcultoTestimonio?.(t.id)}
                   onRemove={() => onRemoveTestimonio?.(t.id)}
+                  onDragStart={testimoniosDnd.startDrag(t)}
+                  dragging={testimoniosDnd.dragId === t.id}
+                  itemRef={testimoniosDnd.registerItemRef(t.id)}
                 />
               </div>
             ))}
@@ -10427,6 +10512,9 @@ function SeccionTestimonios({
               canMoveDown={i < arr.length - 1}
               onToggleOculto={() => onToggleOcultoTestimonio?.(t.id)}
               onRemove={() => onRemoveTestimonio?.(t.id)}
+              onDragStart={testimoniosDnd.startDrag(t)}
+              dragging={testimoniosDnd.dragId === t.id}
+              itemRef={testimoniosDnd.registerItemRef(t.id)}
             />
           ))}
           {editable && <TestimonioForm accent={accent} onAdd={(t) => onAddTestimonio?.(t)} />}
@@ -10452,10 +10540,12 @@ function FAQList({
   onDuplicateFAQ,
   onMoveFAQ,
   onToggleOcultoFAQ,
+  onReorderFAQ,
 }) {
   const [openId, setOpenId] = useState(faqs[0]?.id ?? null);
   const [draftQ, setDraftQ] = useState('');
   const [draftA, setDraftA] = useState('');
+  const faqDnd = useListDragReorder(faqs, (id, idx) => onReorderFAQ?.(id, idx));
 
   const submit = (e) => {
     e.preventDefault();
@@ -10479,7 +10569,10 @@ function FAQList({
           return (
             <div
               key={item.id}
-              className={`relative group/faq-item border-b ${item.oculto ? 'opacity-40' : ''}`}
+              ref={faqDnd.registerItemRef(item.id)}
+              className={`relative group/faq-item border-b ${item.oculto ? 'opacity-40' : ''} ${
+                faqDnd.dragId === item.id ? 'opacity-30' : ''
+              }`}
               style={{ borderColor: palette.line }}
             >
               <Row
@@ -10545,6 +10638,7 @@ function FAQList({
                     canMoveDown={i < arr.length - 1}
                     onMoveUp={() => onMoveFAQ?.(item.id, -1)}
                     onMoveDown={() => onMoveFAQ?.(item.id, 1)}
+                    onDragStart={faqDnd.startDrag(item)}
                     onDuplicate={() => onDuplicateFAQ?.(item.id)}
                     onToggleOculto={() => onToggleOcultoFAQ?.(item.id)}
                     onRemove={() => onRemoveFAQ?.(item.id)}
@@ -10779,6 +10873,7 @@ function SeccionFAQ({
   onDuplicateFAQ,
   onMoveFAQ,
   onToggleOcultoFAQ,
+  onReorderFAQ,
   onAddFaqImagenes,
   onRemoveFaqImagen,
   onReplaceFaqImagen,
@@ -10796,6 +10891,7 @@ function SeccionFAQ({
     onDuplicateFAQ,
     onMoveFAQ,
     onToggleOcultoFAQ,
+    onReorderFAQ,
   };
   const heading = (className) => (
     <Editable
@@ -15224,11 +15320,13 @@ function SeccionPrecios({
   onDuplicatePlan,
   onMovePlan,
   onToggleOcultoPlan,
+  onReorderPlan,
   nombreNegocio,
   whatsapp,
   seccionesDisponibles = [],
 }) {
   const [nombre, setNombre] = useState('');
+  const planesDnd = useListDragReorder(planes, (id, idx) => onReorderPlan?.(id, idx));
 
   const submit = (e) => {
     e.preventDefault();
@@ -15269,7 +15367,10 @@ function SeccionPrecios({
           {(editable ? planes : planes.filter((p) => !p.oculto)).map((p, i, arr) => (
             <div
               key={p.id}
-              className={`relative border p-7 text-left flex flex-col gap-4 ${p.oculto ? 'opacity-40' : ''}`}
+              ref={planesDnd.registerItemRef(p.id)}
+              className={`relative border p-7 text-left flex flex-col gap-4 ${p.oculto ? 'opacity-40' : ''} ${
+                planesDnd.dragId === p.id ? 'opacity-30' : ''
+              }`}
               style={{ borderColor: palette.line }}
             >
               {editable && (
@@ -15292,6 +15393,7 @@ function SeccionPrecios({
                     canMoveDown={i < arr.length - 1}
                     onMoveUp={() => onMovePlan?.(p.id, -1)}
                     onMoveDown={() => onMovePlan?.(p.id, 1)}
+                    onDragStart={planesDnd.startDrag(p)}
                     onDuplicate={() => onDuplicatePlan?.(p.id)}
                     onToggleOculto={() => onToggleOcultoPlan?.(p.id)}
                     onRemove={() => onRemovePlan?.(p.id)}
@@ -15613,10 +15715,12 @@ function SeccionEquipo({
   onDuplicateMember,
   onMoveMember,
   onToggleOcultoMember,
+  onReorderMember,
 }) {
   const [idx, setIdx] = useState(0);
   const current = Math.min(idx, Math.max(equipo.length - 1, 0));
   const [nombre, setNombre] = useState('');
+  const equipoDnd = useListDragReorder(equipo, (id, i) => onReorderMember?.(id, i));
 
   const handleFoto = (id) => async (e) => {
     const file = e.target.files?.[0];
@@ -15633,7 +15737,13 @@ function SeccionEquipo({
   };
 
   const Card = ({ m, canMoveUp, canMoveDown }) => (
-    <div className={`relative text-left border-t-2 pt-4 ${m.oculto ? 'opacity-40' : ''}`} style={{ borderColor: accent }}>
+    <div
+      ref={equipoDnd.registerItemRef(m.id)}
+      className={`relative text-left border-t-2 pt-4 ${m.oculto ? 'opacity-40' : ''} ${
+        equipoDnd.dragId === m.id ? 'opacity-30' : ''
+      }`}
+      style={{ borderColor: accent }}
+    >
       {editable && (
         <div className="absolute top-4 right-0">
           <ItemToolbar
@@ -15644,6 +15754,7 @@ function SeccionEquipo({
             canMoveDown={canMoveDown}
             onMoveUp={() => onMoveMember?.(m.id, -1)}
             onMoveDown={() => onMoveMember?.(m.id, 1)}
+            onDragStart={equipoDnd.startDrag(m)}
             onDuplicate={() => onDuplicateMember?.(m.id)}
             onToggleOculto={() => onToggleOcultoMember?.(m.id)}
             onRemove={() => onRemoveMember?.(m.id)}
@@ -15761,7 +15872,10 @@ function SeccionEquipo({
           {(editable ? equipo : equipo.filter((m) => !m.oculto)).map((m, i, arr) => (
             <div
               key={m.id}
-              className={`relative text-left border-t-2 pt-4 ${m.oculto ? 'opacity-40' : ''}`}
+              ref={equipoDnd.registerItemRef(m.id)}
+              className={`relative text-left border-t-2 pt-4 ${m.oculto ? 'opacity-40' : ''} ${
+                equipoDnd.dragId === m.id ? 'opacity-30' : ''
+              }`}
               style={{ borderColor: accent }}
             >
               {editable && (
@@ -15774,6 +15888,7 @@ function SeccionEquipo({
                     canMoveDown={i < arr.length - 1}
                     onMoveUp={() => onMoveMember?.(m.id, -1)}
                     onMoveDown={() => onMoveMember?.(m.id, 1)}
+                    onDragStart={equipoDnd.startDrag(m)}
                     onDuplicate={() => onDuplicateMember?.(m.id)}
                     onToggleOculto={() => onToggleOcultoMember?.(m.id)}
                     onRemove={() => onRemoveMember?.(m.id)}
@@ -20921,7 +21036,9 @@ function SeccionMarcas({
   onRemoveLogo,
   onDuplicateLogo,
   onToggleOcultoLogo,
+  onReorderLogo,
 }) {
+  const marcasDnd = useListDragReorder(marcas, (id, idx) => onReorderLogo?.(id, idx));
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
@@ -20945,7 +21062,13 @@ function SeccionMarcas({
       {marcas.length === 0 && !editable ? null : (
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-6 @lg:gap-10">
           {(editable ? marcas : marcas.filter((m) => !m.oculto)).map((m) => (
-            <div key={m.id} className={`relative group/logo ${m.oculto ? 'opacity-40' : ''}`}>
+            <div
+              key={m.id}
+              ref={marcasDnd.registerItemRef(m.id)}
+              className={`relative group/logo ${m.oculto ? 'opacity-40' : ''} ${
+                marcasDnd.dragId === m.id ? 'opacity-30' : ''
+              }`}
+            >
               <img
                 src={m.imagen}
                 alt=""
@@ -20959,6 +21082,7 @@ function SeccionMarcas({
                     onDuplicate={() => onDuplicateLogo?.(m.id)}
                     onToggleOculto={() => onToggleOcultoLogo?.(m.id)}
                     onRemove={() => onRemoveLogo?.(m.id)}
+                    onDragStart={marcasDnd.startDrag(m)}
                     removeLabel="Quitar logo"
                   />
                 </div>
@@ -21215,8 +21339,10 @@ function SeccionBlog({
   onDuplicatePost,
   onMovePost,
   onToggleOcultoPost,
+  onReorderPost,
 }) {
   const [tituloDraft, setTituloDraft] = useState('');
+  const postsDnd = useListDragReorder(posts, (id, idx) => onReorderPost?.(id, idx));
 
   const handleImagen = (id) => async (e) => {
     const file = e.target.files?.[0];
@@ -21235,7 +21361,12 @@ function SeccionBlog({
   const Card = ({ post, canMoveUp, canMoveDown }) => {
     const embed = toEmbedUrl(post.videoUrl);
     return (
-      <div className={`relative flex flex-col text-left ${post.oculto ? 'opacity-40' : ''}`}>
+      <div
+        ref={postsDnd.registerItemRef(post.id)}
+        className={`relative flex flex-col text-left ${post.oculto ? 'opacity-40' : ''} ${
+          postsDnd.dragId === post.id ? 'opacity-30' : ''
+        }`}
+      >
         {editable && (
           <div className="absolute top-2 right-2 z-10">
             <ItemToolbar
@@ -21245,6 +21376,7 @@ function SeccionBlog({
               canMoveDown={canMoveDown}
               onMoveUp={() => onMovePost?.(post.id, -1)}
               onMoveDown={() => onMovePost?.(post.id, 1)}
+              onDragStart={postsDnd.startDrag(post)}
               onDuplicate={() => onDuplicatePost?.(post.id)}
               onToggleOculto={() => onToggleOcultoPost?.(post.id)}
               onRemove={() => onRemovePost?.(post.id)}

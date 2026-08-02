@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.30.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'nuevo', text: 'Productos, testimonios, precios, equipo, marcas y novedades ahora se pueden arrastrar para reordenar, además de los botones subir/bajar que ya tenían — mismo ícono de arrastre que ya usan los objetos de "Armá el tuyo".' },
+    ],
+  },
+  {
     version: '1.29.0',
     date: '2026-08-01',
     changes: [

@@ -710,6 +710,22 @@ export function AppProvider({ children }) {
     ALL_LIST_SETTERS[key]?.((prev) => prev.map((it) => (it.id === id ? { ...it, oculto: !it.oculto } : it)));
   };
 
+  // Reordenar arrastrando (a diferencia de moveListItem, que solo sube/baja
+  // de a un lugar) — mismo mecanismo que reorderSection: mueve el item a la
+  // posición `toIndex` dentro del arreglo ya sin ese elemento.
+  const reorderListItem = (key, id, toIndex) => {
+    ALL_LIST_SETTERS[key]?.((prev) => {
+      const fromIndex = prev.findIndex((it) => it.id === id);
+      if (fromIndex === -1) return prev;
+      const next = [...prev];
+      const [item] = next.splice(fromIndex, 1);
+      let insertAt = fromIndex < toIndex ? toIndex - 1 : toIndex;
+      insertAt = Math.max(0, Math.min(insertAt, next.length));
+      next.splice(insertAt, 0, item);
+      return next;
+    });
+  };
+
   // MOCK: acá se simula la conexión con Google/Facebook Reviews — en producción esto
   // llamaría a la API real (Google Places API, Facebook Graph API) con OAuth de por medio.
   // Como no hay backend en este prototipo, "traemos" un lote fijo de reseñas de ejemplo
@@ -1117,6 +1133,7 @@ export function AppProvider({ children }) {
     duplicateListItem,
     moveListItem,
     toggleListItemOculto,
+    reorderListItem,
     widgets,
     toggleWidget,
     setWidgetOption,
