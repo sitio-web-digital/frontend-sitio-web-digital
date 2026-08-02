@@ -3125,7 +3125,7 @@ const FixedPopover = forwardRef(function FixedPopover(
           else if (forwardedRef) forwardedRef.current = el;
         }}
         style={style}
-        className={`z-40 overflow-y-auto ${className}`}
+        className={`z-40 overflow-y-auto popover-scroll-light ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -3167,7 +3167,6 @@ function SidePreviewPanel({ panelRef, gap = 10, width = 300, height = 260, child
       style={style}
       className="z-40 rounded-xl border border-neutral-200 bg-white shadow-xl p-2 pointer-events-none flex flex-col"
     >
-      <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">Vista previa</p>
       <div className="flex-1 rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">{children}</div>
     </div>
   );

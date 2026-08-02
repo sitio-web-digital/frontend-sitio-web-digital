@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.39.1',
+    date: '2026-08-02',
+    changes: [
+      { type: 'mejora', text: 'La ventanita de vista previa ya no muestra el cartel "Vista previa" arriba, para aprovechar mejor el espacio.' },
+      { type: 'fix', text: 'La barra de scroll del menú de secciones y distribuciones se veía negra y sin contraste sobre el fondo blanco — ahora usa tonos grises claros para que se note bien dónde estás parado.' },
+    ],
+  },
+  {
     version: '1.39.0',
     date: '2026-08-02',
     changes: [

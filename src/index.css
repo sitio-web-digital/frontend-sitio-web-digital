@@ -108,6 +108,23 @@ body::after {
   background: var(--color-navy-500);
 }
 
+/* Los popovers flotantes del editor (menú de secciones, distribuciones, etc.)
+   tienen fondo blanco — la barra oscura de arriba (pensada para el navy del
+   sitio) se ve como una franja negra sin contraste entre riel y agarre. */
+.popover-scroll-light {
+  scrollbar-color: var(--color-neutral-400) var(--color-neutral-100);
+}
+.popover-scroll-light::-webkit-scrollbar-track {
+  background: var(--color-neutral-100);
+}
+.popover-scroll-light::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-400);
+  border-radius: 999px;
+}
+.popover-scroll-light::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-500);
+}
+
 /* Para filas con scroll horizontal donde la barra distrae del contenido
    (ej. Testimonios en fila) — oculta la barra sin bloquear el scroll. */
 .scrollbar-hide {
