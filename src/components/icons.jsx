@@ -99,6 +99,17 @@ export function CopyIcon({ className = 'w-4 h-4' }) {
   );
 }
 
+export function ImagesIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="M3 15V6a1.5 1.5 0 011.5-1.5H15" strokeLinecap="round" />
+      <rect x="7" y="7" width="14" height="14" rx="1.5" />
+      <circle cx="12" cy="12" r="1.3" />
+      <path d="M9 18l3-3 2 2 3-3 2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function TrashIcon({ className = 'w-4 h-4' }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">

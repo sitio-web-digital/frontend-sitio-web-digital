@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.31.0',
+    date: '2026-08-01',
+    changes: [
+      { type: 'fix', text: 'Zonas: la columna de foto del Hero y de Sobre Nosotros solo dejaba agregar otra foto si borrabas la que tenía — ahora esa zona también acepta un carrusel, una etiqueta o un botón, así nunca queda sin opciones.' },
+      { type: 'nuevo', text: 'Nuevo objeto "Carrusel" para Zonas: varias fotos rotando en un mismo bloque, en vez de una sola imagen fija (reusa el mismo carrusel que ya usan Productos y FAQ).' },
+    ],
+  },
+  {
     version: '1.30.0',
     date: '2026-08-01',
     changes: [

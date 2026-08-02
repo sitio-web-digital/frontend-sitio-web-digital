@@ -1264,6 +1264,7 @@ export const OBJECT_TYPES = {
   texto: { label: 'Texto', icon: 'AlignLeftIcon' },
   boton: { label: 'Botón', icon: 'LinkIcon' },
   imagen: { label: 'Imagen', icon: 'ImageIcon' },
+  carrusel: { label: 'Carrusel', icon: 'ImagesIcon' },
   badge: { label: 'Etiqueta', icon: 'TagIcon' },
 };
 

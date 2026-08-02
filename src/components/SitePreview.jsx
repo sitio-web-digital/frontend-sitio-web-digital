@@ -52,6 +52,7 @@ import {
   CopyIcon,
   TypeIcon,
   AlignLeftIcon,
+  ImagesIcon,
 } from './icons';
 import {
   SECCIONES_CATALOGO,
@@ -571,6 +572,11 @@ export default function SitePreview({
                 onUpdateFirma={(v) => onSetSectionStyle?.(sec.id, { firma: v })}
                 zonas={sec.zonas}
                 onUpdateZonas={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
               />
             )}
             {sec.type === 'footer' && (
@@ -2441,7 +2447,7 @@ function ItemToolbar({
 // mockData.js) — mismo patrón que ICON_COMPONENTS, pero con las claves en
 // PascalCase porque acá no son elegibles por el usuario, solo decoran el
 // menú de "Agregar objeto".
-const OBJECT_TYPE_ICON_COMPONENTS = { TypeIcon, AlignLeftIcon, LinkIcon, ImageIcon, TagIcon };
+const OBJECT_TYPE_ICON_COMPONENTS = { TypeIcon, AlignLeftIcon, LinkIcon, ImageIcon, ImagesIcon, TagIcon };
 
 function defaultObjetoData(tipo) {
   switch (tipo) {
@@ -2455,6 +2461,8 @@ function defaultObjetoData(tipo) {
       return { label: 'Botón', funcion: 'whatsapp' };
     case 'imagen':
       return { src: '' };
+    case 'carrusel':
+      return { imagenes: [] };
     default:
       return {};
   }
@@ -2571,6 +2579,28 @@ function ObjectRenderer({
           </>
         )}
       </label>
+    );
+  }
+  if (objeto.tipo === 'carrusel') {
+    return (
+      <MediaCarousel
+        images={objeto.imagenes || []}
+        editable={editable}
+        onAddImages={async (files) => {
+          const urls = await Promise.all(files.map(uploadImage));
+          onUpdate({ imagenes: [...(objeto.imagenes || []), ...urls] });
+        }}
+        onRemoveImage={(i) => onUpdate({ imagenes: (objeto.imagenes || []).filter((_, idx) => idx !== i) })}
+        onReplaceImage={async (i, file) => {
+          const url = await uploadImage(file);
+          onUpdate({ imagenes: (objeto.imagenes || []).map((img, idx) => (idx === i ? url : img)) });
+        }}
+        mediaVariant={objeto.mediaVariant}
+        onChangeMediaVariant={(v) => onUpdate({ mediaVariant: v })}
+        aspect="aspect-[4/5]"
+        emptyLabel="Agregar fotos"
+        limitKey="galeria"
+      />
     );
   }
   return null;
@@ -5728,7 +5758,7 @@ function SeccionHero({
   const ZONAS_CONFIG_BY_VARIANT = {
     zonas: [
       { key: 'izquierda', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 },
-      { key: 'derecha', allowedTypes: ['imagen'], maxObjetos: 1 },
+      { key: 'derecha', allowedTypes: ['imagen', 'carrusel', 'badge', 'boton'], maxObjetos: 3 },
     ],
     'zonas-centrado': [{ key: 'centro', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
     'zonas-superpuesto': [{ key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
@@ -5906,11 +5936,15 @@ function SeccionHero({
             dnd={dnd}
             objetos={derecha}
             onChange={(next) => updateZona('derecha', next)}
-            allowedTypes={['imagen']}
-            maxObjetos={1}
+            allowedTypes={['imagen', 'carrusel', 'badge', 'boton']}
+            maxObjetos={3}
             editable={editable}
             palette={palette}
             accent={accent}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
           />
         </div>
       </section>
@@ -6702,6 +6736,10 @@ function SeccionSobreNosotros({
   onUpdateFirma,
   zonas,
   onUpdateZonas,
+  whatsapp,
+  telefono,
+  nombreNegocio,
+  seccionesDisponibles = [],
 }) {
   const fondo = variant === 'fondo';
   // Si esta sección tiene su propia foto puesta a mano, esa gana — si no,
@@ -6714,7 +6752,7 @@ function SeccionSobreNosotros({
   // distribuciones nuevas esté activa.
   const ZONAS_CONFIG_BY_VARIANT_SN = {
     zonas: [
-      { key: 'imagen', allowedTypes: ['imagen'], maxObjetos: 1 },
+      { key: 'imagen', allowedTypes: ['imagen', 'carrusel', 'badge', 'boton'], maxObjetos: 3 },
       { key: 'contenido', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 },
     ],
     'zonas-centrado': [{ key: 'centro', allowedTypes: ['badge', 'titulo', 'texto', 'boton'], maxObjetos: 6 }],
@@ -6811,11 +6849,15 @@ function SeccionSobreNosotros({
             dnd={dndSN}
             objetos={imagenObjetos}
             onChange={(next) => updateZona('imagen', next)}
-            allowedTypes={['imagen']}
-            maxObjetos={1}
+            allowedTypes={['imagen', 'carrusel', 'badge', 'boton']}
+            maxObjetos={3}
             editable={editable}
             palette={palette}
             accent={accent}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
           />
           <ZoneRenderer
             zonaKey="contenido"
@@ -6829,6 +6871,10 @@ function SeccionSobreNosotros({
             accent={accent}
             headingColor={headingColor}
             textColor={textColor}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
           />
         </div>
       </section>
@@ -6854,6 +6900,10 @@ function SeccionSobreNosotros({
             accent={accent}
             headingColor={headingColor}
             textColor={textColor}
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
           />
         </div>
       </section>
@@ -6888,6 +6938,10 @@ function SeccionSobreNosotros({
             accent={accent}
             headingColor="#ffffff"
             textColor="rgba(255,255,255,0.82)"
+            seccionesDisponibles={seccionesDisponibles}
+            nombreNegocio={nombreNegocio}
+            whatsapp={whatsapp}
+            telefono={telefono}
           />
           {editable && (
             <label className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer">
