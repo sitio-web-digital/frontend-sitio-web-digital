@@ -1255,6 +1255,271 @@ export const SECTION_VARIANTS = {
   ],
 };
 
+// Plantilla y datos de negocio "neutros" para la vista previa en vivo del
+// menú de secciones (ver SectionLivePreview en SitePreview.jsx) — no son de
+// ningún rubro puntual, para que la miniatura se vea razonable sea cual sea
+// el tipo de sección que se esté mostrando.
+export const SECTION_PREVIEW_TEMPLATE = { id: 'preview', rubros: [], accent: '#7c5cff', accentSoft: tint('#7c5cff', 88) };
+export const SECTION_PREVIEW_SITE_DATA = {
+  nombreNegocio: 'Tu Negocio',
+  rubroLabel: 'Tu rubro o eslogan',
+  sobreNosotros: 'Contá acá de qué se trata tu negocio y qué te diferencia de otros.',
+  whatsapp: '5491100000000',
+  telefono: '011 0000-0000',
+  direccion: 'Tu dirección',
+  horarios: 'Lun a Vie, 9 a 18 hs',
+  instagram: '@tunegocio',
+  galeria: [img('preview-1'), img('preview-2'), img('preview-3'), img('preview-4')],
+};
+
+// Datos de ejemplo por tipo de sección para esa misma vista previa — cubre
+// los campos que viven DIRECTO en la sección (arrays propios: items, zonas,
+// citas, etc.), que si no se completan quedan vacíos y la vista previa no
+// muestra nada útil. Las 8 listas globales (productos/faqs/testimonios/
+// planes/equipo/menuItems/marcas/posts) no hace falta repetirlas acá: usan
+// directo sus seed*() ya existentes (ver SectionLivePreview).
+export const SECTION_PREVIEW_DATA = {
+  categorias: {
+    categorias: [
+      { id: 'p1', img: img('preview-cat-1'), label: 'Categoría uno' },
+      { id: 'p2', img: img('preview-cat-2'), label: 'Categoría dos' },
+      { id: 'p3', img: img('preview-cat-3'), label: 'Categoría tres' },
+    ],
+  },
+  pasos: {
+    pasos: [
+      { id: 'p1', titulo: 'Elegí lo que necesitás', desc: 'Mirá el catálogo y elegí lo que te sirve.' },
+      { id: 'p2', titulo: 'Coordiná por WhatsApp', desc: 'Te confirmamos disponibilidad al toque.' },
+      { id: 'p3', titulo: 'Listo', desc: 'Retirás o te lo llevamos.' },
+    ],
+  },
+  areas: {
+    areas: [
+      { id: 'p1', nombre: 'Primera área', resumen: 'Resumen breve.', desc: 'Descripción más larga de esta área de práctica.', tags: ['Etiqueta uno', 'Etiqueta dos'] },
+      { id: 'p2', nombre: 'Segunda área', resumen: 'Resumen breve.', desc: 'Descripción más larga de esta otra área.', tags: ['Etiqueta tres'] },
+    ],
+  },
+  pagos: { metodos: [{ id: 'p1', label: 'Efectivo' }, { id: 'p2', label: 'Transferencia' }, { id: 'p3', label: 'Tarjetas' }] },
+  financiacion: {},
+  beneficios: {
+    items: [
+      { id: 'p1', icon: 'check', titulo: 'Envío gratis', desc: 'En compras desde cierto monto.' },
+      { id: 'p2', icon: 'shield', titulo: 'Garantía', desc: '30 días para cambios.' },
+      { id: 'p3', icon: 'clock', titulo: 'Entrega rápida', desc: '24 a 48 hs hábiles.' },
+    ],
+  },
+  marquee: { mensajes: [{ id: 'p1', texto: 'Visto en La Nación' }, { id: 'p2', texto: '+500 clientes' }, { id: 'p3', texto: 'Desde 2015' }] },
+  series: {
+    items: [
+      { id: 'p1', key: 'Serie A', title: 'Primera serie', desc: 'Descripción de esta serie de trabajos.', year: '2026', format: 'Digital', count: '18 fotografías', hint: 'Retratos', imagen: img('preview-serie-1') },
+      { id: 'p2', key: 'Serie B', title: 'Segunda serie', desc: 'Otra serie distinta.', year: '2025', format: 'Analógico', count: '24 fotografías', hint: 'Paisajes', imagen: img('preview-serie-2') },
+    ],
+  },
+  archivo: {
+    items: [
+      { id: 'p1', imagen: img('preview-arch-1'), titulo: 'Primera foto', meta: '35mm · 2026', colSpan: 2, rowSpan: 2 },
+      { id: 'p2', imagen: img('preview-arch-2'), titulo: 'Segunda foto', meta: '2025', colSpan: 1, rowSpan: 1 },
+      { id: 'p3', imagen: img('preview-arch-3'), titulo: 'Tercera foto', meta: '2025', colSpan: 1, rowSpan: 1 },
+    ],
+  },
+  comparador: {
+    modelos: [
+      { id: 'p1', nombre: 'Modelo A', precioNum: 450000, specs: { precio: '$450.000', bateria: '18 hs' } },
+      { id: 'p2', nombre: 'Modelo B', precioNum: 620000, specs: { precio: '$620.000', bateria: '24 hs' } },
+    ],
+    campos: [{ key: 'precio', label: 'Precio' }, { key: 'bateria', label: 'Batería' }],
+  },
+  canje: {
+    modelos: [{ id: 'p1', nombre: 'Modelo A', valorBase: 300000 }, { id: 'p2', nombre: 'Modelo B', valorBase: 500000 }],
+    condiciones: [{ id: 'p1', label: 'Como nuevo', hint: 'Sin marcas', factor: 1 }, { id: 'p2', label: 'Usado', hint: 'Con marcas de uso', factor: 0.7 }],
+    perks: ['Retiro sin cargo', 'Evaluación en el momento'],
+  },
+  sucursales: {
+    sucursales: [
+      { id: 'p1', nombre: 'Sucursal Centro', ciudad: 'CABA', abierto: true, direccion: 'Av. Ejemplo 123', horarios: 'Lun a Sáb, 9 a 20 hs', telefono: '011 0000-0000' },
+      { id: 'p2', nombre: 'Sucursal Norte', ciudad: 'CABA', abierto: true, direccion: 'Av. Otro 456', horarios: 'Lun a Vie, 9 a 18 hs', telefono: '011 1111-1111' },
+    ],
+  },
+  cronograma: {
+    items: [
+      { id: 'p1', time: '19:00', title: 'Ceremonia', desc: 'Llegada e inicio.' },
+      { id: 'p2', time: '21:00', title: 'Recepción', desc: 'Brindis y cena.' },
+      { id: 'p3', time: '23:00', title: 'Fiesta', desc: 'Música y baile.' },
+    ],
+  },
+  lugares: {
+    items: [
+      { id: 'p1', kind: 'Ceremonia', nombre: 'Salón Principal', direccion: 'Av. Ejemplo 123', hora: '19:00', imagen: img('preview-lugar-1') },
+      { id: 'p2', kind: 'Fiesta', nombre: 'Quinta El Ombú', direccion: 'Ruta 8 km 40', hora: '21:00', imagen: img('preview-lugar-2') },
+    ],
+  },
+  dresscode: {
+    notas: [{ id: 'p1', positivo: true, texto: 'Elegante sport' }, { id: 'p2', positivo: false, texto: 'Jean y zapatillas' }],
+    paletaColores: [{ id: 'p1', nombre: 'Verde salvia', hex: '#8a9a7a' }, { id: 'p2', nombre: 'Dorado', hex: '#c0a05c' }],
+  },
+  rsvp: { menuOptions: [{ id: 'p1', nombre: 'Carne', desc: 'Bife de chorizo' }, { id: 'p2', nombre: 'Vegetariano', desc: 'Risotto de hongos' }] },
+  playlist: { canciones: [{ id: 'p1', titulo: 'Artista — Tema', por: 'Los novios' }, { id: 'p2', titulo: 'Otro artista — Otro tema', por: 'Invitado' }] },
+  regalos: {
+    items: [
+      { id: 'p1', glyph: '♡', titulo: 'Luna de miel', desc: 'Colaborá con nuestro viaje.', detalle: 'Alias: novios.mp' },
+      { id: 'p2', glyph: '🏠', titulo: 'Nuestra casa', desc: 'Para el hogar que estamos armando.', detalle: 'Alias: casa.novios' },
+    ],
+  },
+  historia: {
+    items: [
+      { id: 'p1', year: '2015', title: 'Los comienzos', desc: 'Abrimos las puertas por primera vez.' },
+      { id: 'p2', year: '2020', title: 'Nueva sede', desc: 'Nos mudamos a un local más grande.' },
+      { id: 'p3', year: '2026', title: 'Hoy', desc: 'Seguimos creciendo con vos.' },
+    ],
+  },
+  hospedaje: {
+    items: [
+      { id: 'p1', nombre: 'Hotel Central', distancia: 'A 2 km', desc: 'Cómodo y bien ubicado.', precio: 'Desde $40.000', codigo: 'NOVIOS10' },
+      { id: 'p2', nombre: 'Hostería del Sur', distancia: 'A 5 km', desc: 'Opción más económica.', precio: 'Desde $25.000', codigo: 'NOVIOS10' },
+    ],
+  },
+  'libro-mensajes': { mensajes: [{ id: 'p1', texto: 'Felicidades, que sean muy felices.', por: 'Ana' }, { id: 'p2', texto: 'Los queremos mucho.', por: 'Juan y Sol' }] },
+  'catalogo-libros': {
+    items: [
+      { id: 'p1', titulo: 'Cien años de soledad', autor: 'G. García Márquez', genero: 'Novela', precio: '$18.000', stock: 'En stock', stockColor: '#3f6b6b', img: img('preview-libro-1') },
+      { id: 'p2', titulo: 'Rayuela', autor: 'J. Cortázar', genero: 'Novela', precio: '$16.500', stock: 'Últimas unidades', stockColor: '#b45309', img: img('preview-libro-2') },
+    ],
+  },
+  recomendados: {
+    items: [
+      { id: 'p1', titulo: 'El nombre del viento', autor: 'P. Rothfuss', nota: 'Ideal para empezar con fantasía.', staff: 'Male, librera', img: img('preview-reco-1') },
+      { id: 'p2', titulo: 'Persépolis', autor: 'M. Satrapi', nota: 'Una novela gráfica imperdible.', staff: 'Tomás, librero', img: img('preview-reco-2') },
+    ],
+  },
+  'club-lectura': { datos: [{ id: 'p1', label: 'Próximo encuentro', valor: '15 de agosto' }, { id: 'p2', label: 'Dónde', valor: 'Salón de arriba' }, { id: 'p3', label: 'Cuánto', valor: 'Gratis' }] },
+  'firmas-eventos': {
+    items: [
+      { id: 'p1', dia: '12', mes: 'Ago', titulo: 'Firma de ejemplares', detalle: 'Con la autora invitada.', hora: '18:00' },
+      { id: 'p2', dia: '20', mes: 'Ago', titulo: 'Club de lectura', detalle: 'Charla abierta.', hora: '19:00' },
+    ],
+  },
+  'pedidos-especiales': { pasos: [{ id: 'p1', texto: 'Nos escribís el título y autor.' }, { id: 'p2', texto: 'Te confirmamos precio y llegada.' }, { id: 'p3', texto: 'Te avisamos cuando está.' }] },
+  'visitanos-boletin': { filas: [{ id: 'p1', label: 'Dirección', valor: 'Av. Ejemplo 123' }, { id: 'p2', label: 'Horario', valor: 'Lun a Sáb, 9 a 20 hs' }] },
+  'ciclo-trabajo': {
+    items: [
+      { id: 'p1', n: '01', rango: 'Semana 1—2', titulo: 'Diseño', desc: 'Definimos la propuesta.', items: ['Reunión inicial', 'Boceto'] },
+      { id: 'p2', n: '02', rango: 'Semana 3—4', titulo: 'Producción', desc: 'Fabricamos la pieza.', items: ['Torno', 'Horneado'] },
+    ],
+  },
+  'catalogo-insumos': {
+    items: [
+      { id: 'p1', tipo: 'Analgésico', nombre: 'Ejemplo A', formula: 'Ibuprofeno 400mg', precio: '$2.500', unidad: 'por caja', stock: 'Disponible', stockColor: '#3f6b2b', specs: [{ k: 'Presentación', v: 'x30 comp.' }] },
+      { id: 'p2', tipo: 'Antibiótico', nombre: 'Ejemplo B', formula: 'Amoxicilina 500mg', precio: '$4.200', unidad: 'por caja', stock: 'Disponible', stockColor: '#3f6b2b', specs: [{ k: 'Presentación', v: 'x21 comp.' }] },
+    ],
+  },
+  cotizador: {
+    opciones: [
+      { id: 'p1', label: 'Opción A', dosis: 2, dosisUnidad: 'kg/ha', producto: 'Producto sugerido A', precioUnitario: 850, precioUnidad: 'kg', extra: 0 },
+      { id: 'p2', label: 'Opción B', dosis: 1.5, dosisUnidad: 'kg/ha', producto: 'Producto sugerido B', precioUnitario: 1200, precioUnidad: 'kg', extra: 0 },
+    ],
+  },
+  ensayos: {
+    columnas: ['Producto', 'Rinde (kg/ha)', 'Variación'],
+    filas: [
+      { id: 'p1', cells: ['Producto A', '4.200', '+8%'] },
+      { id: 'p2', cells: ['Producto B', '3.900', '+2%'] },
+    ],
+  },
+  'zonas-tecnicas': {
+    zonas: [
+      { id: 'p1', label: 'Zona Norte', tech: 'Juan Pérez', specialty: 'Instalaciones', facts: [{ k: 'Experiencia', v: '10 años' }] },
+      { id: 'p2', label: 'Zona Sur', tech: 'Ana Gómez', specialty: 'Mantenimiento', facts: [{ k: 'Experiencia', v: '6 años' }] },
+    ],
+  },
+  'escalas-volumen': {
+    items: [
+      { id: 'p1', tag: 'Nivel 1', rango: '10 a 50 u.', off: '−5 %', desc: 'Descuento inicial.', topColor: '#c6ccd8' },
+      { id: 'p2', tag: 'Nivel 2', rango: '51 a 200 u.', off: '−12 %', desc: 'Para pedidos grandes.', topColor: '#c9a227' },
+    ],
+  },
+  'pedido-mayorista': {
+    items: [
+      { id: 'p1', sku: 'SKU-001', nombre: 'Producto A', categoria: 'Categoría 1', unidad: 'Bulto x 10', precio: 1200, stockN: 80 },
+      { id: 'p2', sku: 'SKU-002', nombre: 'Producto B', categoria: 'Categoría 2', unidad: 'Bulto x 6', precio: 2400, stockN: 40 },
+    ],
+    tiers: [{ id: 'p1', umbral: 20, descuento: 5, etiqueta: 'Nivel 1' }, { id: 'p2', umbral: 50, descuento: 10, etiqueta: 'Nivel 2' }],
+  },
+  'logistica-zonas': {
+    zonas: [
+      { id: 'p1', zona: 'CABA', dias: 'Lun a Vie', minimo: '$50.000', flete: 'Gratis', gratis: true },
+      { id: 'p2', zona: 'GBA', dias: 'Mar y Jue', minimo: '$80.000', flete: '$3.500', gratis: false },
+    ],
+  },
+  condiciones: {
+    items: [
+      { id: 'p1', titulo: 'Cambios', desc: 'Hasta 10 días con el comprobante.' },
+      { id: 'p2', titulo: 'Envíos', desc: 'A todo el país por correo.' },
+    ],
+  },
+  'proceso-taller': {
+    pasos: [
+      { id: 'p1', titulo: 'Modelado', desc: 'Se arma la pieza a mano.', imagen: img('preview-taller-1') },
+      { id: 'p2', titulo: 'Horneado', desc: 'Cocción en horno propio.', imagen: img('preview-taller-2') },
+    ],
+  },
+  turnos: {
+    barberos: [{ id: 'p1', nombre: 'Franco', especialidad: 'Fade y barba', imagen: img('preview-barbero-1') }, { id: 'p2', nombre: 'Lucas', especialidad: 'Clásico', imagen: img('preview-barbero-2') }],
+    servicios: [{ id: 'p1', nombre: 'Corte', minutos: 30, precio: 8000 }, { id: 'p2', nombre: 'Corte + Barba', minutos: 45, precio: 12000 }],
+  },
+  'precios-barberia': {
+    servicios: [
+      { id: 'p1', nombre: 'Corte clásico', desc: 'Con máquina y tijera.', minutos: 30, precio: 8000 },
+      { id: 'p2', nombre: 'Barba', desc: 'Perfilado con navaja.', minutos: 20, precio: 5000 },
+    ],
+  },
+  barberos: {
+    barberos: [
+      { id: 'p1', nombre: 'Franco', especialidad: 'Fade y diseños', anios: '8 años', bio: 'Especialista en cortes modernos.', foto: img('preview-barbero-3') },
+      { id: 'p2', nombre: 'Lucas', especialidad: 'Clásico y barba', anios: '5 años', bio: 'Estilo prolijo de toda la vida.', foto: img('preview-barbero-4') },
+    ],
+  },
+  'reviews-barberia': {
+    reviews: [
+      { id: 'p1', cita: 'El mejor corte que me hice en años.', persona: 'Martín', meta: 'Cliente desde 2022' },
+      { id: 'p2', cita: 'Atención impecable, quedé recontento.', persona: 'Diego', meta: 'Cliente desde 2023' },
+    ],
+  },
+  artesanas: {
+    artesanas: [
+      { id: 'p1', nombre: 'María López', oficio: 'Ceramista', anios: '12 años', bio: 'Trabaja el gres desde el 2012.', firma: 'Esmaltados propios', badgeBg: '#b5502f' },
+      { id: 'p2', nombre: 'Carla Ruiz', oficio: 'Torneras', anios: '7 años', bio: 'Especialista en piezas utilitarias.', firma: 'Piezas únicas', badgeBg: '#6b7f5e' },
+    ],
+  },
+  ferias: {
+    ferias: [
+      { id: 'p1', fechas: '14—16 AGO', nombre: 'Feria de Diseño', ciudad: 'Palermo, CABA', stand: 'B-12', destacada: true },
+      { id: 'p2', fechas: '2—3 SEP', nombre: 'Mercado de Artesanos', ciudad: 'San Telmo, CABA', stand: 'A-4', destacada: false },
+    ],
+  },
+  'citas-rotativas': {
+    citas: [
+      { id: 'p1', frase: 'Un trabajo hermoso, superó lo que esperaba.', persona: 'Julieta', ciudad: 'CABA' },
+      { id: 'p2', frase: 'Atención personalizada de principio a fin.', persona: 'Nico', ciudad: 'Rosario' },
+    ],
+  },
+  'visita-taller': { filas: [{ id: 'p1', label: 'Horario de visitas', value: 'Sáb 10 a 13 hs' }, { id: 'p2', label: 'Cupo', value: 'Hasta 6 personas' }] },
+  estadisticas: { items: [{ id: 'p1', label: 'Años en el rubro', target: 15 }, { id: 'p2', label: 'Clientes', target: 850 }, { id: 'p3', label: 'Proyectos', target: 320 }] },
+  vidriera: {
+    items: [
+      { id: 'p1', nombre: 'Torta de chocolate', precio: 'Desde $18.000', imagen: img('preview-vidriera-1') },
+      { id: 'p2', nombre: 'Torta de frutas', precio: 'Desde $20.000', imagen: img('preview-vidriera-2') },
+    ],
+  },
+  materiales: {
+    materiales: [
+      { id: 'p1', nombre: 'Roble claro', desc: 'Madera cálida, ideal para interiores.', imagen: img('preview-material-1') },
+      { id: 'p2', nombre: 'Nogal oscuro', desc: 'Más resistente, terminación premium.', imagen: img('preview-material-2') },
+    ],
+  },
+  zonas: { zonas: [{ id: 'p1', nombre: 'Palermo' }, { id: 'p2', nombre: 'Belgrano' }, { id: 'p3', nombre: 'Recoleta' }] },
+  reservas: { servicios: [{ id: 'p1', nombre: 'Corte de pelo' }, { id: 'p2', nombre: 'Manicura' }] },
+};
+
 // Catálogo de "objetos" que se pueden agregar dentro de una Zona (ver
 // variante "zonas" de Hero) — primer paso del sistema de Zonas + Objetos:
 // en vez de una distribución fija por sección, el usuario arma el

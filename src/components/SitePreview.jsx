@@ -64,6 +64,17 @@ import {
   BUTTON_FUNCTIONS,
   MEDIA_ANIMATIONS,
   TEXT_ANIMATIONS,
+  SECTION_PREVIEW_TEMPLATE,
+  SECTION_PREVIEW_SITE_DATA,
+  SECTION_PREVIEW_DATA,
+  seedProductos,
+  seedFaqs,
+  seedTestimonios,
+  seedPlanes,
+  seedEquipo,
+  seedMenu,
+  seedMarcas,
+  seedPosts,
   getTemplatePalette,
   slugify,
 } from '../data/mockData';
@@ -3117,16 +3128,28 @@ function FixedPopover({ anchorRef, align = 'end', gap = 8, className = '', onClo
 // `variant`, que es lo único que decide cómo se acomoda el contenido existente.
 function SectionVariantPicker({ type, variant, onChange, onClose, anchorRef, align }) {
   const variantes = SECTION_VARIANTS[type] ?? [];
+  const [hovered, setHovered] = useState(null);
+  const previewVariant = variantes.some((v) => v.id === hovered) ? hovered : (variant ?? variantes[0]?.id);
 
   return (
     <FixedPopover
       anchorRef={anchorRef}
       align={align}
       onClose={onClose}
-      className="w-64 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left"
+      className="rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left flex gap-3 w-[560px]"
     >
-      <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2 px-1">Distribución</p>
-      <VariantGrid items={variantes} selected={variant} onSelect={onChange} previewHeight="h-12" />
+      <div className="w-56 shrink-0 min-w-0" onMouseLeave={() => setHovered(null)}>
+        <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2 px-1">Distribución</p>
+        <div className="max-h-72 overflow-y-auto">
+          <VariantGrid items={variantes} selected={variant} onSelect={onChange} onHover={setHovered} previewHeight="h-12" />
+        </div>
+      </div>
+      <div className="w-[280px] shrink-0 border-l border-neutral-100 pl-2 flex flex-col">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">Vista previa</p>
+        <div className="flex-1 min-h-[200px] rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">
+          <SectionLivePreview type={type} variant={previewVariant} />
+        </div>
+      </div>
     </FixedPopover>
   );
 }
@@ -4421,7 +4444,7 @@ function VariantSkeleton({ kind }) {
 // (distribución de sección, paso 2 de "agregar sección", animación de foto),
 // cada una divergiendo un poco en tamaño/estilo. Ahora es una sola fuente:
 // agrupa por `group` si algún ítem lo declaró, si no muestra la grilla plana.
-function VariantGrid({ items, selected, onSelect, previewHeight = 'h-12' }) {
+function VariantGrid({ items, selected, onSelect, onHover, previewHeight = 'h-12' }) {
   const hasGroups = items.some((v) => v.group);
   const grupos = items.reduce((acc, v) => {
     const g = v.group || '';
@@ -4436,6 +4459,7 @@ function VariantGrid({ items, selected, onSelect, previewHeight = 'h-12' }) {
           key={v.id}
           type="button"
           onClick={() => onSelect(v.id)}
+          onMouseEnter={() => onHover?.(v.id)}
           aria-label={v.label}
           title={v.desc}
           className={`rounded-lg border transition-colors p-2 text-center ${
@@ -4466,6 +4490,48 @@ function VariantGrid({ items, selected, onSelect, previewHeight = 'h-12' }) {
   );
 }
 
+// Para las 8 listas "globales" (las mismas que vive el resto del sitio como
+// productos/testimonios/etc, no adentro de la sección) la vista previa usa
+// directo sus seed*() de siempre en vez de duplicar contenido de ejemplo acá.
+const SECTION_PREVIEW_SEED_PROPS = {
+  productos: () => ({ productos: seedProductos() }),
+  faq: () => ({ faqs: seedFaqs() }),
+  testimonios: () => ({ testimonios: seedTestimonios() }),
+  precios: () => ({ planes: seedPlanes() }),
+  equipo: () => ({ equipo: seedEquipo() }),
+  menu: () => ({ menuItems: seedMenu() }),
+  marcas: () => ({ marcas: seedMarcas() }),
+  blog: () => ({ posts: seedPosts() }),
+};
+
+// Vista previa en vivo de un tipo/distribución de sección: arma una página
+// de UNA sola sección con contenido de ejemplo (SECTION_PREVIEW_DATA) y
+// renderiza el <SitePreview> real (no un dibujo) — mismo truco de escala que
+// ya usa la miniatura de página en Dashboard.jsx (renderiza a un ancho real
+// de escritorio y lo achica con `transform: scale`, así los breakpoints por
+// contenedor de cada sección disparan igual que en el sitio publicado).
+function SectionLivePreview({ type, variant }) {
+  if (!type) return null;
+  const resolvedVariant = variant ?? SECTION_VARIANTS[type]?.[0]?.id;
+  const section = { id: 'preview', type, variant: resolvedVariant, ...(SECTION_PREVIEW_DATA[type] || {}) };
+  const seedProps = SECTION_PREVIEW_SEED_PROPS[type]?.() ?? {};
+
+  return (
+    <div className="w-full h-full bg-white overflow-hidden relative">
+      <div className="absolute inset-0 origin-top-left scale-[0.3] w-[333%]">
+        <SitePreview
+          template={SECTION_PREVIEW_TEMPLATE}
+          siteData={SECTION_PREVIEW_SITE_DATA}
+          theme={{ accent: SECTION_PREVIEW_TEMPLATE.accent, accentSoft: SECTION_PREVIEW_TEMPLATE.accentSoft }}
+          sections={[section]}
+          widgets={{ whatsappFloating: false }}
+          {...seedProps}
+        />
+      </div>
+    </div>
+  );
+}
+
 // Agregar una sección es de dos pasos cuando tiene más de una disposición posible:
 // 1) elegir el tipo de sección, 2) elegir cómo se acomoda por dentro (con esqueletos).
 // `prominent` se usa cuando la página quedó sin ninguna sección: en vez del "+"
@@ -4478,6 +4544,8 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
   const [open, setOpen] = useState(false);
   const [pickedType, setPickedType] = useState(null);
   const [query, setQuery] = useState('');
+  const [hoveredType, setHoveredType] = useState(null);
+  const [hoveredVariant, setHoveredVariant] = useState(null);
   const [showVariantHint, setShowVariantHint] = useState(() => {
     try {
       return localStorage.getItem(VARIANT_HINT_KEY) !== '1';
@@ -4499,6 +4567,8 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
     setOpen(false);
     setPickedType(null);
     setQuery('');
+    setHoveredType(null);
+    setHoveredVariant(null);
   };
 
   // El catálogo ya pasa de 45 tipos de sección — sin buscador, encontrar uno
@@ -4507,11 +4577,16 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
   const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const q = norm(query);
   const filtrados = q ? disponibles.filter((c) => norm(c.label).includes(q) || norm(c.desc).includes(q)) : disponibles;
+  // La vista previa siempre muestra algo — el tipo que se está pasando el
+  // mouse por encima, o si todavía no se pasó ninguno, el primero de la
+  // lista filtrada (así nunca aparece un panel vacío al abrir el menú).
+  const previewType = filtrados.some((c) => c.id === hoveredType) ? hoveredType : filtrados[0]?.id;
 
   const chooseType = (typeId) => {
     const variants = SECTION_VARIANTS[typeId];
     if (variants && variants.length > 1) {
       setPickedType(typeId);
+      setHoveredVariant(null);
     } else {
       onAdd(typeId, variants?.[0]?.id);
       close();
@@ -4519,6 +4594,8 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
   };
 
   const pickedMeta = disponibles.find((c) => c.id === pickedType);
+  const pickedVariantes = pickedType ? SECTION_VARIANTS[pickedType] ?? [] : [];
+  const previewVariant = pickedVariantes.some((v) => v.id === hoveredVariant) ? hoveredVariant : pickedVariantes[0]?.id;
 
   return (
     <div className={prominent ? 'relative flex justify-center py-16 px-6 bg-neutral-50' : 'relative group/insert py-2 -my-2 z-10'}>
@@ -4562,87 +4639,113 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
         </button>
       )}
       {open && !pickedType && (
-        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5 text-left">
+        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="rounded-xl border border-neutral-200 bg-white shadow-xl p-1.5 text-left flex w-[600px]">
           {disponibles.length === 0 ? (
             <p className="text-xs text-neutral-400 px-3 py-2.5">Ya agregaste todas las secciones.</p>
           ) : (
             <>
-              <div className="px-1.5 pt-1 pb-1.5">
-                <input
-                  autoFocus
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar sección..."
-                  className="w-full border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-gold-500"
-                />
+              <div className="w-64 shrink-0 flex flex-col min-w-0">
+                <div className="px-1.5 pt-1 pb-1.5">
+                  <input
+                    autoFocus
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Buscar sección..."
+                    className="w-full border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-gold-500"
+                  />
+                </div>
+                <div className="max-h-80 overflow-y-auto" onMouseLeave={() => setHoveredType(null)}>
+                  {filtrados.length === 0 ? (
+                    <p className="text-xs text-neutral-400 px-3 py-2.5">Ninguna sección coincide con "{query}".</p>
+                  ) : (
+                    filtrados.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => chooseType(c.id)}
+                        onMouseEnter={() => setHoveredType(c.id)}
+                        className={`w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-lg transition-colors ${
+                          c.id === previewType ? 'bg-neutral-100' : 'hover:bg-neutral-100'
+                        }`}
+                      >
+                        <div className="w-10 h-10 shrink-0 rounded-md bg-neutral-50 border border-neutral-100 p-1.5 flex items-center justify-center overflow-hidden">
+                          <VariantSkeleton kind={SECTION_VARIANTS[c.id]?.[0]?.skeleton} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="block text-sm font-semibold text-neutral-800">{c.label}</span>
+                          <span className="block text-xs text-neutral-400">{c.desc}</span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-              <div className="max-h-80 overflow-y-auto">
-                {filtrados.length === 0 ? (
-                  <p className="text-xs text-neutral-400 px-3 py-2.5">Ninguna sección coincide con "{query}".</p>
-                ) : (
-                  filtrados.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => chooseType(c.id)}
-                      className="w-full flex items-start gap-2.5 text-left px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
-                    >
-                      <div className="w-10 h-10 shrink-0 rounded-md bg-neutral-50 border border-neutral-100 p-1.5 flex items-center justify-center overflow-hidden">
-                        <VariantSkeleton kind={SECTION_VARIANTS[c.id]?.[0]?.skeleton} />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block text-sm font-semibold text-neutral-800">{c.label}</span>
-                        <span className="block text-xs text-neutral-400">{c.desc}</span>
-                      </div>
-                    </button>
-                  ))
-                )}
+              <div className="w-[300px] shrink-0 border-l border-neutral-100 pl-2 ml-1 flex flex-col">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">
+                  Vista previa
+                </p>
+                <div className="flex-1 min-h-[220px] rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">
+                  <SectionLivePreview type={previewType} />
+                </div>
               </div>
             </>
           )}
         </FixedPopover>
       )}
       {open && pickedType && (
-        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left">
-          <div className="flex items-center gap-2 mb-2.5">
-            <button
-              type="button"
-              onClick={() => setPickedType(null)}
-              aria-label="Volver"
-              className="text-neutral-400 hover:text-neutral-700 transition-colors"
-            >
-              <ChevronLeftIcon className="w-4 h-4" />
-            </button>
-            <p className="text-xs font-bold uppercase tracking-wide text-neutral-500">
-              {pickedMeta?.label} · elegí la disposición
-            </p>
-          </div>
-          {showVariantHint && (
-            <div className="mb-2.5 rounded-lg bg-gold-500/10 border border-gold-500/25 px-2.5 py-2 flex items-start gap-2">
-              <p className="text-[11px] text-neutral-600 leading-snug flex-1">
-                Esta es la <strong>distribución</strong>: cómo se acomoda el contenido por dentro. Elegí la que
-                más te guste — después la podés cambiar sacando y volviendo a agregar la sección.
-              </p>
+        <FixedPopover anchorRef={btnRef} align="center" onClose={close} className="rounded-xl border border-neutral-200 bg-white shadow-xl p-3 text-left flex gap-3 w-[600px]">
+          <div className="w-64 shrink-0 min-w-0" onMouseLeave={() => setHoveredVariant(null)}>
+            <div className="flex items-center gap-2 mb-2.5">
               <button
                 type="button"
-                onClick={dismissVariantHint}
-                aria-label="Cerrar"
-                className="text-neutral-400 hover:text-neutral-700 transition-colors shrink-0"
+                onClick={() => setPickedType(null)}
+                aria-label="Volver"
+                className="text-neutral-400 hover:text-neutral-700 transition-colors"
               >
-                <XIcon className="w-3 h-3" />
+                <ChevronLeftIcon className="w-4 h-4" />
               </button>
+              <p className="text-xs font-bold uppercase tracking-wide text-neutral-500">
+                {pickedMeta?.label} · elegí la disposición
+              </p>
             </div>
-          )}
-          <VariantGrid
-            items={SECTION_VARIANTS[pickedType]}
-            selected={null}
-            onSelect={(id) => {
-              onAdd(pickedType, id);
-              dismissVariantHint();
-              close();
-            }}
-            previewHeight="h-14"
-          />
+            {showVariantHint && (
+              <div className="mb-2.5 rounded-lg bg-gold-500/10 border border-gold-500/25 px-2.5 py-2 flex items-start gap-2">
+                <p className="text-[11px] text-neutral-600 leading-snug flex-1">
+                  Esta es la <strong>distribución</strong>: cómo se acomoda el contenido por dentro. Elegí la que
+                  más te guste — después la podés cambiar sacando y volviendo a agregar la sección.
+                </p>
+                <button
+                  type="button"
+                  onClick={dismissVariantHint}
+                  aria-label="Cerrar"
+                  className="text-neutral-400 hover:text-neutral-700 transition-colors shrink-0"
+                >
+                  <XIcon className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            <div className="max-h-72 overflow-y-auto">
+              <VariantGrid
+                items={pickedVariantes}
+                selected={null}
+                onSelect={(id) => {
+                  onAdd(pickedType, id);
+                  dismissVariantHint();
+                  close();
+                }}
+                onHover={setHoveredVariant}
+                previewHeight="h-14"
+              />
+            </div>
+          </div>
+          <div className="w-[300px] shrink-0 border-l border-neutral-100 pl-2 flex flex-col">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 mb-1.5 px-1">
+              Vista previa
+            </p>
+            <div className="flex-1 min-h-[220px] rounded-lg border border-neutral-100 overflow-hidden bg-neutral-50">
+              <SectionLivePreview type={pickedType} variant={previewVariant} />
+            </div>
+          </div>
         </FixedPopover>
       )}
     </div>

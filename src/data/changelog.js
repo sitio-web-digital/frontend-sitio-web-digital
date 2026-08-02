@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.38.0',
+    date: '2026-08-02',
+    changes: [
+      { type: 'nuevo', text: 'Vista previa en vivo en el menú de secciones: al pasar el cursor sobre un tipo de sección o una distribución, aparece un panel que muestra esa sección de verdad, con contenido de ejemplo — ya no hace falta agregarla para saber cómo se ve.' },
+    ],
+  },
+  {
     version: '1.37.0',
     date: '2026-08-02',
     changes: [
