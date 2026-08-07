@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.42.0',
+    date: '2026-08-07',
+    changes: [
+      { type: 'nuevo', text: 'Dashboard > Configuración: ahora se puede elegir un subdominio real para tu página — antes el subdominio que se mostraba en Checkout y Dashboard era solo un cálculo visual que nunca se guardaba de verdad.' },
+      { type: 'nuevo', text: 'Cualquier visitante puede entrar directo a tu-subdominio.sitiowebdigital.com.ar y ver tu página publicada — antes no existía ninguna forma pública de verla, solo la vista previa interna del editor (que necesitaba estar logueado).' },
+      { type: 'fix', text: 'El botón "Cancelar" de una suscripción paga fallaba siempre con un error — la app le mandaba a Mercado Pago un estado que ya no acepta. Ahora cancela bien, tanto desde el Dashboard del cliente como desde Admin > Suscripciones.' },
+      { type: 'fix', text: 'Si una suscripción se cancelaba o se pausaba directo desde Mercado Pago (sin tocar el botón "Cancelar" de acá), la página se quedaba publicada para siempre igual — ahora se despublica sola apenas nos enteramos.' },
+      { type: 'mejora', text: 'Admin > Suscripciones: las cuentas que se dan de baja ya no desaparecen de la lista — quedan marcadas como "Cancelada" con la fecha, para poder recontactarlas más adelante. Se suma un contador de activas vs. dadas de baja arriba de la tabla.' },
+      { type: 'mejora', text: 'Admin > Resumen: nuevo KPI de cuántas cuentas se dieron de baja. Admin > Analytics: nuevo bloque con suscriptores activos, pausados y dados de baja.' },
+      { type: 'mejora', text: 'Se endureció el armado de la suscripción en Mercado Pago (cambio interno de cómo se crea del lado del servidor) — mismo precio y flujo para quien paga, pero más estable.' },
+    ],
+  },
+  {
     version: '1.41.0',
     date: '2026-08-02',
     changes: [

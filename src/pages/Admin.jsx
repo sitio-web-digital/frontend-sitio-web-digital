@@ -207,7 +207,12 @@ export default function Admin() {
   const cancelSubscription = async (siteId, isFree) => {
     const result = isFree ? await setPagePublished(siteId, false) : await apiAdminCancelSubscription(siteId);
     if (!result.ok) return result;
-    setSubscriptions((list) => list.filter((s) => s.id !== siteId));
+    // Se actualiza en vez de sacarla de la lista: queda visible como
+    // "Cancelada" para poder recontactar a esa cuenta más adelante, en vez de
+    // desaparecer apenas se da de baja.
+    setSubscriptions((list) =>
+      list.map((s) => (s.id === siteId ? { ...s, published: false, mpStatus: isFree ? s.mpStatus : 'cancelled' } : s))
+    );
     return { ok: true };
   };
 
@@ -423,6 +428,7 @@ function ResumenSection({ summary, tickets }) {
   const kpis = [
     { label: 'Cuentas registradas', value: summary?.totalUsers },
     { label: 'Suscripciones activas', value: summary?.publishedSites },
+    { label: 'Dadas de baja', value: summary?.cancelledSites },
     {
       label: 'Ingreso mensual estimado',
       value: summary ? `$${ingresoMensual.toLocaleString('es-AR')}` : undefined,
@@ -503,8 +509,17 @@ export function AnalyticsSection() {
     );
   }
 
-  const { totalSessions, funnel, topClicks, topPages, dailySessions, weeklySessions, monthlySessions, hourlyDistribution } =
-    analytics;
+  const {
+    totalSessions,
+    funnel,
+    topClicks,
+    topPages,
+    dailySessions,
+    weeklySessions,
+    monthlySessions,
+    hourlyDistribution,
+    subscribers,
+  } = analytics;
   const primerPaso = funnel[0]?.count || 0;
   const conversionTotal = primerPaso > 0 ? Math.round((funnel[funnel.length - 1].count / primerPaso) * 100) : 0;
 
@@ -531,6 +546,17 @@ export function AnalyticsSection() {
           { label: 'Sesiones registradas', value: totalSessions },
           { label: 'Páginas publicadas (del embudo)', value: funnel[funnel.length - 1]?.count ?? 0 },
           { label: 'Conversión landing → publicada', value: `${conversionTotal}%` },
+        ]}
+        cols={3}
+      />
+
+      {/* Estado actual de suscriptores — no depende del filtro de período de
+          arriba, es una foto de ahora (ver GET /admin/analytics/summary). */}
+      <StatStrip
+        items={[
+          { label: 'Suscriptores activos', value: subscribers?.active ?? 0 },
+          { label: 'Pausados', value: subscribers?.paused ?? 0 },
+          { label: 'Dados de baja', value: subscribers?.cancelled ?? 0 },
         ]}
         cols={3}
       />
@@ -1196,20 +1222,33 @@ const MP_STATUS_INFO = {
 };
 
 function SuscripcionesSection({ subscriptions, onCancel }) {
-  const total = subscriptions.filter((s) => (s.freeSubscriptions ?? 0) <= 0).length * PLAN.precio;
+  // Incluye tanto activas como dadas de baja (ver GET /admin/subscriptions) —
+  // el ingreso mensual solo cuenta las que siguen publicadas y no son
+  // cuentas de prueba gratis.
+  const activas = subscriptions.filter((s) => s.published);
+  const bajas = subscriptions.filter((s) => !s.published);
+  const total = activas.filter((s) => (s.freeSubscriptions ?? 0) <= 0).length * PLAN.precio;
 
   return (
-    <Panel title="Suscripciones activas">
+    <Panel title="Suscripciones">
       <p className="text-sm text-ink-300 mb-1">
         {PLAN.nombre} — ${PLAN.precio.toLocaleString('es-AR')} {PLAN.moneda}/{PLAN.ciclo} por página publicada.
       </p>
-      <p className="font-display text-2xl font-bold mt-2 mb-6">
+      <p className="font-display text-2xl font-bold mt-2 mb-4">
         ${total.toLocaleString('es-AR')}
         <span className="text-sm font-medium text-ink-400"> {PLAN.moneda}/mes en total</span>
       </p>
 
+      <StatStrip
+        items={[
+          { label: 'Activas', value: activas.length },
+          { label: 'Dadas de baja', value: bajas.length },
+        ]}
+        cols={2}
+      />
+
       {subscriptions.length === 0 ? (
-        <p className="text-sm text-ink-400">Todavía no hay páginas publicadas.</p>
+        <p className="text-sm text-ink-400">Todavía no hay ninguna suscripción, activa ni dada de baja.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -1259,7 +1298,9 @@ function SuscripcionRow({ s, onCancel }) {
       <td className="py-2.5 pr-4 font-semibold">{s.nombre || '—'}</td>
       <td className="py-2.5 pr-4 text-ink-300">{s.email}</td>
       <td className="py-2.5 pr-4">
-        {isFree ? (
+        {!s.published ? (
+          <span className="font-semibold text-xs text-red-400">{isFree ? 'Gratis (baja)' : mpInfo?.label || 'Dada de baja'}</span>
+        ) : isFree ? (
           <span className="text-emerald-400 font-semibold text-xs">Gratis</span>
         ) : mpInfo ? (
           <span className={`font-semibold text-xs ${mpInfo.className}`}>{mpInfo.label}</span>
@@ -1268,7 +1309,7 @@ function SuscripcionRow({ s, onCancel }) {
         )}
       </td>
       <td className="py-2.5 pr-4 text-ink-500 text-xs">
-        {s.nextPaymentDate ? new Date(s.nextPaymentDate).toLocaleDateString('es-AR') : '—'}
+        {s.published && s.nextPaymentDate ? new Date(s.nextPaymentDate).toLocaleDateString('es-AR') : '—'}
       </td>
       <td className="py-2.5 pr-4 text-right">
         {isFree ? (
@@ -1278,7 +1319,13 @@ function SuscripcionRow({ s, onCancel }) {
         )}
       </td>
       <td className="py-2.5 text-right">
-        {confirming ? (
+        {!s.published ? (
+          // Ya está de baja — se deja el contacto (mail, nombre de página) visible
+          // en la tabla arriba para poder recontactarla, no hay más acción posible acá.
+          <span className="text-ink-500 text-xs whitespace-nowrap">
+            Baja: {new Date(s.updatedAt).toLocaleDateString('es-AR')}
+          </span>
+        ) : confirming ? (
           <div className="flex items-center justify-end gap-2">
             {error && <span className="text-xs text-red-400">{error}</span>}
             <button
