@@ -1,13 +1,14 @@
-# SitioWeb Digital — Prototipo visual
+# SitioWeb Digital — Frontend
 
-Prototipo clickeable de punta a punta (solo frontend, sin backend ni base de
-datos) que simula el flujo completo de una plataforma donde emprendedores
-crean su propia página web por subdominio. Pensado para validar la
-experiencia antes de construir la versión real.
+Plataforma donde emprendedores crean su propia página web por subdominio:
+eligen una plantilla, la editan con preview en vivo, y publican. El backend
+real vive en [`backend-sitio-web-digital`](https://github.com/sitio-web-digital/backend-sitio-web-digital)
+(Node/Express + Postgres) — este repo es solo el frontend (React + Vite).
 
-Todo el estado vive en memoria (React Context) y se pierde al refrescar.
-El pago, el registro del subdominio y el hosting están simulados — buscá el
-comentario `// MOCK:` en [src/pages/Checkout.jsx](src/pages/Checkout.jsx).
+El deploy a producción (self-hosted runner + Docker + Cloudflare Tunnel) lo
+administra el repo aparte [`infraestructura-sitio-web-digital-`](https://github.com/sitio-web-digital/infraestructura-sitio-web-digital-)
+(Terraform + Ansible) — ver ese repo para levantar o reconfigurar el
+servidor.
 
 ## Correr el proyecto
 
@@ -15,6 +16,10 @@ comentario `// MOCK:` en [src/pages/Checkout.jsx](src/pages/Checkout.jsx).
 npm install
 npm run dev
 ```
+
+Necesita el backend corriendo en paralelo (ver el README de
+`backend-sitio-web-digital`) para el login, el editor guardando de verdad,
+y el resto de las páginas que ya no son solo mock.
 
 ## Flujo
 
