@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.44.1',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Los mails de suscripción podían mostrar "null" en vez del nombre del negocio si faltaba el dato — ahora siempre muestran algo legible.' },
+      { type: 'mejora', text: 'Se configuró un dominio de retorno propio (MAIL FROM) para los mails de suscripción — mejora que no caigan en spam.' },
+    ],
+  },
+  {
     version: '1.44.0',
     date: '2026-08-08',
     changes: [
