@@ -439,6 +439,13 @@ export async function apiAdminDeleteUser(userId) {
   return request(`/admin/users/${userId}`, { method: 'DELETE', token });
 }
 
+// Mail manual a todos los usuarios o a uno en particular (scope: 'all' | 'one').
+export async function apiAdminSendMail({ scope, userId, subject, message }) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request('/admin/mail', { method: 'POST', body: { scope, userId, subject, message }, token });
+}
+
 // Telemetría (ver src/utils/analytics.js): pública, no requiere sesión — la
 // mayoría de los eventos pasan mientras todavía es un visitante anónimo. Si
 // hay sesión iniciada, mandamos el token igual para que el backend asocie el

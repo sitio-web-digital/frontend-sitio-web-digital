@@ -622,3 +622,14 @@ export function RedoIcon({ className = 'w-4 h-4' }) {
     </svg>
   );
 }
+
+export function RefreshIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M20 11A8 8 0 006.3 6.3L4 8.6" />
+      <path d="M4 4v4.6h4.6" />
+      <path d="M4 13a8 8 0 0013.7 4.7l2.3-2.3" />
+      <path d="M20 20v-4.6h-4.6" />
+    </svg>
+  );
+}

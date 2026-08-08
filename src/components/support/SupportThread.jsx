@@ -6,6 +6,7 @@ import {
   apiCloseSupportTicket,
 } from '../../api/client';
 import { validateImageFiles } from '../../utils/imageValidation';
+import { SUPPORT_CANNED_REPLIES } from '../../data/supportCannedReplies';
 
 const POLL_MS = 4000;
 
@@ -187,6 +188,20 @@ export default function SupportThread({ ticketId, currentUserId, isAdmin = false
         </p>
       ) : (
         <form onSubmit={submit} className="px-4 py-3 border-t border-white/10 space-y-2">
+          {isAdmin && (
+            <div className="flex flex-wrap gap-1.5">
+              {SUPPORT_CANNED_REPLIES.map((r) => (
+                <button
+                  key={r.label}
+                  type="button"
+                  onClick={() => setText(r.text)}
+                  className="px-2 py-1 border border-white/15 hover:border-gold-500/60 hover:text-gold-400 transition-colors text-[0.7rem] text-ink-300"
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          )}
           {adjuntos.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {adjuntos.map((a, i) => (

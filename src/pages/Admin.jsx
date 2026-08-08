@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { SearchIcon, PlusIcon, XIcon, DownloadIcon, EyeIcon, EyeOffIcon } from '../components/icons';
+import {
+  SearchIcon,
+  PlusIcon,
+  XIcon,
+  DownloadIcon,
+  EyeIcon,
+  EyeOffIcon,
+  RefreshIcon,
+  SendIcon,
+} from '../components/icons';
 import { useApp } from '../context/AppContext';
 import {
   apiAdminSummary,
@@ -27,6 +36,7 @@ import {
   apiGetTerms,
   apiAdminUpdateTerms,
   apiAdminCancelSubscription,
+  apiAdminSendMail,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
@@ -46,6 +56,29 @@ const NAV_ITEMS = [
 ];
 
 const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+// Aviso sonoro de mensaje nuevo de soporte — un beep corto sintetizado, sin
+// ningún archivo de audio que embeber. Los navegadores pueden bloquear audio
+// antes de la primera interacción del usuario con la página; una vez que el
+// admin ya hizo clic en algo (entrar, cambiar de sección, etc.) deja de
+// aplicar, así que no hace falta ningún manejo especial para eso acá.
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch {
+    // Sin Web Audio disponible (navegador viejo, política de autoplay,
+    // etc.) — el cartel visual que ya existe sigue avisando igual.
+  }
+}
 
 // Nombres legibles para los data-track que se van agregando en el resto de
 // la app (ver src/utils/analytics.js) — si aparece uno que no está acá, se
@@ -145,7 +178,10 @@ export default function Admin() {
       const result = await apiAdminGetSupportUnread();
       if (cancelado) return;
       setUnreadSupport((prev) => {
-        if (result.count > prev.count) setSupportToast(result);
+        if (result.count > prev.count) {
+          setSupportToast(result);
+          playNotificationSound();
+        }
         return result;
       });
     };
@@ -168,6 +204,20 @@ export default function Admin() {
     apiAdminMarkSupportSeen();
     apiAdminSupportTickets().then(setTickets);
   }, [section, user]);
+
+  // Botón "Refrescar" de cada sección — una función por recurso en vez de
+  // reusar el Promise.all de arriba, para poder traer solo lo que cambió sin
+  // recargar el resto de las pestañas que no se están mirando.
+  const refreshResumen = () => apiAdminSummary().then(setSummary);
+  const refreshSites = () => apiAdminListSites().then(setSites);
+  const refreshPlantillas = () =>
+    Promise.all([apiAdminListCatalogTemplates(), apiAdminListCatalogRubros()]).then(([t, r]) => {
+      setCustomTemplatesList(t);
+      setCustomRubrosList(r);
+    });
+  const refreshSubscriptions = () => apiAdminSubscriptions().then(setSubscriptions);
+  const refreshUsers = () => apiAdminListUsers().then(setUsers);
+  const refreshTickets = () => apiAdminSupportTickets().then(setTickets);
 
   const editSite = async (siteId) => {
     const result = await startAdminEditSite(siteId);
@@ -239,6 +289,9 @@ export default function Admin() {
     return result;
   };
 
+  const sendMailToUsers = async ({ scope, userId, subject, message }) =>
+    apiAdminSendMail({ scope, userId, subject, message });
+
   // Publica/despublica una plantilla creada por el admin — mientras no esté
   // publicada, no la ve ningún usuario en la galería ni se la recomienda el quiz.
   const toggleTemplatePublished = async (templateId, currentlyPublished) => {
@@ -300,11 +353,19 @@ export default function Admin() {
 
         <div className="min-w-0 animate-fade-in-up">
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
-          {section === 'resumen' && <ResumenSection summary={summary} tickets={tickets} />}
+          {section === 'resumen' && (
+            <ResumenSection summary={summary} tickets={tickets} onRefresh={refreshResumen} />
+          )}
           {section === 'analytics' && <AnalyticsSection />}
           {section === 'leads' && <LeadsSection />}
           {section === 'paginas' && (
-            <PaginasSection sites={sites} onEdit={editSite} onToggleLock={toggleLock} onTogglePublish={togglePublish} />
+            <PaginasSection
+              sites={sites}
+              onEdit={editSite}
+              onToggleLock={toggleLock}
+              onTogglePublish={togglePublish}
+              onRefresh={refreshSites}
+            />
           )}
           {section === 'plantillas' && (
             <PlantillasSection
@@ -313,10 +374,15 @@ export default function Admin() {
               onTogglePublished={toggleTemplatePublished}
               onDeleteTemplate={deleteTemplate}
               onDeleteRubro={deleteRubro}
+              onRefresh={refreshPlantillas}
             />
           )}
           {section === 'suscripciones' && (
-            <SuscripcionesSection subscriptions={subscriptions} onCancel={cancelSubscription} />
+            <SuscripcionesSection
+              subscriptions={subscriptions}
+              onCancel={cancelSubscription}
+              onRefresh={refreshSubscriptions}
+            />
           )}
           {section === 'usuarios' && (
             <UsuariosSection
@@ -324,6 +390,8 @@ export default function Admin() {
               onCreate={createUser}
               onSetFreeSubscriptions={setFreeSubscriptions}
               onDelete={deleteUser}
+              onSendMail={sendMailToUsers}
+              onRefresh={refreshUsers}
             />
           )}
           {section === 'soporte' && (
@@ -334,6 +402,7 @@ export default function Admin() {
               onTicketUpdated={(ticketId, patch) =>
                 setTickets((list) => list.map((t) => (t.id === ticketId ? { ...t, ...patch } : t)))
               }
+              onRefresh={refreshTickets}
             />
           )}
           {section === 'terminos' && <TerminosSection />}
@@ -422,7 +491,7 @@ function SupportToast({ data, onVer, onClose }) {
   );
 }
 
-function ResumenSection({ summary, tickets }) {
+function ResumenSection({ summary, tickets, onRefresh }) {
   const ingresoMensual = (summary?.paidSites ?? 0) * PLAN.precio;
 
   const kpis = [
@@ -438,9 +507,12 @@ function ResumenSection({ summary, tickets }) {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-balance">Panel de administración</h1>
-        <p className="text-ink-400 text-sm mt-1">KPIs generales de SitioWeb Digital.</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-balance">Panel de administración</h1>
+          <p className="text-ink-400 text-sm mt-1">KPIs generales de SitioWeb Digital.</p>
+        </div>
+        <RefreshButton onRefresh={onRefresh} />
       </div>
 
       <StatStrip items={kpis} cols={4} />
@@ -496,9 +568,13 @@ export function AnalyticsSection() {
   const [analytics, setAnalytics] = useState(null);
   const [period, setPeriod] = useState('all');
 
+  const fetchAnalytics = () =>
+    apiAdminAnalyticsSummary({ period: period === 'all' ? undefined : period }).then(setAnalytics);
+
   useEffect(() => {
     setAnalytics(null);
-    apiAdminAnalyticsSummary({ period: period === 'all' ? undefined : period }).then(setAnalytics);
+    fetchAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   if (!analytics) {
@@ -538,6 +614,7 @@ export function AnalyticsSection() {
             onDownload={() => apiDownloadAnalyticsReport({ period: period === 'all' ? undefined : period })}
             label="Descargar PDF"
           />
+          <RefreshButton onRefresh={fetchAnalytics} />
         </div>
       </div>
 
@@ -810,8 +887,7 @@ export function LeadsSection() {
     setPage(1);
   }, [period, query]);
 
-  useEffect(() => {
-    setLoading(true);
+  const fetchLeads = () =>
     apiAdminListLeads({
       page,
       pageSize: LEADS_PAGE_SIZE,
@@ -822,6 +898,11 @@ export function LeadsSection() {
       setTotal(result.total);
       setLoading(false);
     });
+
+  useEffect(() => {
+    setLoading(true);
+    fetchLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, period, query]);
 
   const totalPages = Math.max(1, Math.ceil(total / LEADS_PAGE_SIZE));
@@ -842,6 +923,7 @@ export function LeadsSection() {
             }
             label="Descargar PDF"
           />
+          <RefreshButton onRefresh={fetchLeads} />
         </div>
       </div>
       <div className="relative mb-4 max-w-sm">
@@ -943,7 +1025,7 @@ export function LeadsSection() {
 // como plantilla", ver Editor.jsx) y los rubros nuevos que se hayan creado
 // junto con ellas, además de los 6 de fábrica. Publicar/despublicar decide
 // si la ve algún usuario real en la galería o se la recomienda el quiz.
-function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTemplate, onDeleteRubro }) {
+function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTemplate, onDeleteRubro, onRefresh }) {
   const navigate = useNavigate();
   const { startBlankTemplate, editTemplate } = useApp();
   const [editingId, setEditingId] = useState(null);
@@ -968,7 +1050,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
 
   return (
     <div className="space-y-6">
-      <Panel title="Plantillas creadas por el admin">
+      <Panel title="Plantillas creadas por el admin" action={<RefreshButton onRefresh={onRefresh} />}>
         <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
           <p className="text-sm text-ink-400 max-w-2xl">
             Te lleva directo al editor con una página completamente vacía — armala sección por sección con el
@@ -1100,7 +1182,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
 // Todas las páginas de todas las cuentas, publicadas o no — con buscador
 // (por id, email o nombre) y acción para entrar a editarla directamente en
 // caso de que alguien necesite ayuda.
-function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish }) {
+function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish, onRefresh }) {
   const [query, setQuery] = useState('');
 
   const norm = (v) => (v ?? '').toString().toLowerCase();
@@ -1110,7 +1192,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish }) {
     : sites;
 
   return (
-    <Panel title="Todas las páginas">
+    <Panel title="Todas las páginas" action={<RefreshButton onRefresh={onRefresh} />}>
       <div className="relative mb-4 max-w-sm">
         <SearchIcon className="w-4 h-4 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
@@ -1221,7 +1303,7 @@ const MP_STATUS_INFO = {
   cancelled: { label: 'Cancelada', className: 'text-red-400' },
 };
 
-function SuscripcionesSection({ subscriptions, onCancel }) {
+function SuscripcionesSection({ subscriptions, onCancel, onRefresh }) {
   // Incluye tanto activas como dadas de baja (ver GET /admin/subscriptions) —
   // el ingreso mensual solo cuenta las que siguen publicadas y no son
   // cuentas de prueba gratis.
@@ -1230,7 +1312,7 @@ function SuscripcionesSection({ subscriptions, onCancel }) {
   const total = activas.filter((s) => (s.freeSubscriptions ?? 0) <= 0).length * PLAN.precio;
 
   return (
-    <Panel title="Suscripciones">
+    <Panel title="Suscripciones" action={<RefreshButton onRefresh={onRefresh} />}>
       <p className="text-sm text-ink-300 mb-1">
         {PLAN.nombre} — ${PLAN.precio.toLocaleString('es-AR')} {PLAN.moneda}/{PLAN.ciclo} por página publicada.
       </p>
@@ -1358,12 +1440,20 @@ function SuscripcionRow({ s, onCancel }) {
 // Alta de cuentas y gestión de suscripciones gratuitas (cuentas de prueba a
 // las que se les regala el servicio) — no cuentan como ingreso en
 // Suscripciones/Resumen mientras freeSubscriptions sea >= 1.
-function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete }) {
+const BLANK_MAIL_FORM = { scope: 'all', userId: '', subject: '', message: '' };
+
+function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, onSendMail, onRefresh }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', freeSubscriptions: 0 });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailForm, setMailForm] = useState(BLANK_MAIL_FORM);
+  const [mailSaving, setMailSaving] = useState(false);
+  const [mailError, setMailError] = useState('');
+  const [mailSuccess, setMailSuccess] = useState('');
 
   const submit = async (e) => {
     e.preventDefault();
@@ -1385,20 +1475,124 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete }) 
     setShowForm(false);
   };
 
+  const openMail = (userId) => {
+    setShowForm(false);
+    setMailError('');
+    setMailSuccess('');
+    setMailForm(userId ? { ...BLANK_MAIL_FORM, scope: 'one', userId } : BLANK_MAIL_FORM);
+    setMailOpen(true);
+  };
+
+  const submitMail = async (e) => {
+    e.preventDefault();
+    setMailError('');
+    setMailSuccess('');
+    setMailSaving(true);
+    const result = await onSendMail({
+      scope: mailForm.scope,
+      userId: mailForm.scope === 'one' ? Number(mailForm.userId) : undefined,
+      subject: mailForm.subject,
+      message: mailForm.message,
+    });
+    setMailSaving(false);
+    if (!result.ok) {
+      setMailError(result.error || 'No se pudo mandar el mail.');
+      return;
+    }
+    setMailSuccess(`Mail enviado a ${result.count} cuenta${result.count === 1 ? '' : 's'}.`);
+    setMailForm((f) => ({ ...f, subject: '', message: '' }));
+  };
+
   return (
-    <Panel title="Usuarios">
-      <div className="flex items-center justify-between mb-4">
+    <Panel title="Usuarios" action={<RefreshButton onRefresh={onRefresh} />}>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <p className="text-sm text-ink-400">
           Creá cuentas directo (por ejemplo para clientes de prueba) y asigná suscripciones gratuitas.
         </p>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
-        >
-          {showForm ? <XIcon className="w-3.5 h-3.5" /> : <PlusIcon className="w-3.5 h-3.5" />}
-          {showForm ? 'Cancelar' : 'Crear usuario'}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => {
+              setMailOpen(false);
+              setShowForm((v) => !v);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
+          >
+            {showForm ? <XIcon className="w-3.5 h-3.5" /> : <PlusIcon className="w-3.5 h-3.5" />}
+            {showForm ? 'Cancelar' : 'Crear usuario'}
+          </button>
+          <button
+            onClick={() => (mailOpen ? setMailOpen(false) : openMail(null))}
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-white/15 hover:bg-white/5 transition-colors text-white font-bold text-xs"
+          >
+            {mailOpen ? <XIcon className="w-3.5 h-3.5" /> : <SendIcon className="w-3.5 h-3.5" />}
+            {mailOpen ? 'Cancelar' : 'Mandar mail'}
+          </button>
+        </div>
       </div>
+
+      {mailOpen && (
+        <form onSubmit={submitMail} className="border border-white/10 bg-navy-900 p-4 mb-5 space-y-3">
+          <div>
+            <label className="text-xs text-ink-400 block mb-1">Destinatarios</label>
+            <select
+              value={mailForm.scope}
+              onChange={(e) => setMailForm((f) => ({ ...f, scope: e.target.value }))}
+              className="w-full sm:w-64 border border-white/10 bg-navy-850 px-3 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors"
+            >
+              <option value="all">Todos los usuarios</option>
+              <option value="one">Un usuario en particular</option>
+            </select>
+          </div>
+          {mailForm.scope === 'one' && (
+            <div>
+              <label className="text-xs text-ink-400 block mb-1">Cuenta</label>
+              <select
+                required
+                value={mailForm.userId}
+                onChange={(e) => setMailForm((f) => ({ ...f, userId: e.target.value }))}
+                className="w-full sm:w-64 border border-white/10 bg-navy-850 px-3 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors"
+              >
+                <option value="" disabled>
+                  Elegí una cuenta...
+                </option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} — {u.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="text-xs text-ink-400 block mb-1">Asunto</label>
+            <input
+              required
+              value={mailForm.subject}
+              onChange={(e) => setMailForm((f) => ({ ...f, subject: e.target.value }))}
+              className="w-full border border-white/10 bg-navy-850 px-3 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-ink-400 block mb-1">Mensaje</label>
+            <textarea
+              required
+              rows={5}
+              value={mailForm.message}
+              onChange={(e) => setMailForm((f) => ({ ...f, message: e.target.value }))}
+              className="w-full border border-white/10 bg-navy-850 px-3 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors resize-y"
+            />
+          </div>
+          {mailError && <p className="text-sm text-red-400">{mailError}</p>}
+          {mailSuccess && <p className="text-sm text-emerald-400">{mailSuccess}</p>}
+          <button
+            type="submit"
+            disabled={mailSaving}
+            className="px-4 py-2 bg-gold-500 hover:bg-gold-400 disabled:opacity-60 transition-colors text-navy-950 font-bold text-xs"
+          >
+            {mailSaving ? 'Enviando...' : 'Enviar'}
+          </button>
+        </form>
+      )}
 
       {showForm && (
         <form onSubmit={submit} className="border border-white/10 bg-navy-900 p-4 mb-5 grid sm:grid-cols-2 gap-3">
@@ -1497,7 +1691,13 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete }) 
             </thead>
             <tbody>
               {users.map((u) => (
-                <UserRow key={u.id} u={u} onSetFreeSubscriptions={onSetFreeSubscriptions} onDelete={onDelete} />
+                <UserRow
+                  key={u.id}
+                  u={u}
+                  onSetFreeSubscriptions={onSetFreeSubscriptions}
+                  onDelete={onDelete}
+                  onOpenMail={openMail}
+                />
               ))}
             </tbody>
           </table>
@@ -1507,7 +1707,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete }) 
   );
 }
 
-function UserRow({ u, onSetFreeSubscriptions, onDelete }) {
+function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
   const [value, setValue] = useState(u.freeSubscriptions);
   const dirty = Number(value) !== Number(u.freeSubscriptions);
   const [confirming, setConfirming] = useState(false);
@@ -1560,6 +1760,14 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete }) {
         </div>
       </td>
       <td className="py-2.5 text-right">
+        {!confirming && (
+          <button
+            onClick={() => onOpenMail(u.id)}
+            className="mr-2 px-2.5 py-1.5 border border-white/15 hover:bg-white/5 transition-colors text-xs font-semibold text-white"
+          >
+            Mandar mail
+          </button>
+        )}
         {u.role === 'admin' ? (
           <span className="text-xs text-ink-500 italic">No se puede eliminar</span>
         ) : confirming ? (
@@ -1596,11 +1804,11 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete }) {
 // Todas las consultas de soporte de todos los usuarios (a diferencia del
 // Dashboard del usuario, que solo ve las propias). Al abrir una, el admin
 // puede seguir el chat completo y responderle directo a esa cuenta.
-function SoporteSection({ tickets, currentUserId, unreadIds = [], onTicketUpdated }) {
+function SoporteSection({ tickets, currentUserId, unreadIds = [], onTicketUpdated, onRefresh }) {
   const [expandedId, setExpandedId] = useState(null);
 
   return (
-    <Panel title="Todas las consultas de soporte">
+    <Panel title="Todas las consultas de soporte" action={<RefreshButton onRefresh={onRefresh} />}>
       {tickets.length === 0 ? (
         <p className="text-sm text-ink-400">Todavía no hay consultas de soporte.</p>
       ) : (
@@ -1932,6 +2140,32 @@ function DownloadReportButton({ onDownload, label }) {
       </button>
       {error && <span className="text-xs text-red-400">{error}</span>}
     </div>
+  );
+}
+
+// Botón "Refrescar" de cada sección del admin — trae lo nuevo sin esperar al
+// sondeo automático (que solo existe para Soporte) ni recargar la página
+// entera. `onRefresh` es la función específica de esa sección (ver
+// refreshResumen/refreshSites/etc. en Admin()).
+function RefreshButton({ onRefresh }) {
+  const [busy, setBusy] = useState(false);
+
+  const handleClick = async () => {
+    setBusy(true);
+    await onRefresh();
+    setBusy(false);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={busy}
+      aria-label="Refrescar"
+      title="Refrescar"
+      className="inline-flex items-center gap-1.5 px-2.5 py-2 border border-white/15 hover:bg-white/5 disabled:opacity-50 transition-colors text-xs font-semibold text-white shrink-0"
+    >
+      <RefreshIcon className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
+    </button>
   );
 }
 

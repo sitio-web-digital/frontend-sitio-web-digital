@@ -5,6 +5,17 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.0',
+    date: '2026-08-08',
+    changes: [
+      { type: 'nuevo', text: 'Respuestas predefinidas en Soporte: un click autocompleta el mensaje con las consultas más típicas, se puede editar antes de mandar.' },
+      { type: 'nuevo', text: 'Los mensajes de soporte ahora avisan por mail — al usuario cuando le responde un admin, y a los admins cuando responde el usuario (a todos si el ticket no está tomado, solo al que lo tomó si ya lo está).' },
+      { type: 'nuevo', text: 'Sonido de aviso en Admin cuando llega un mensaje de soporte nuevo.' },
+      { type: 'nuevo', text: 'Admin > Usuarios: mandar un mail a todos los usuarios o a uno en particular.' },
+      { type: 'mejora', text: 'Botón de refrescar en cada sección de Admin, para traer lo nuevo sin esperar al sondeo automático ni recargar la página.' },
+    ],
+  },
+  {
     version: '1.45.0',
     date: '2026-08-08',
     changes: [
