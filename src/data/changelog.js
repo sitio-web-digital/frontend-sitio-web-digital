@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.2',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'El fix del dominio de retorno (v1.46.1) rompió sin querer el botón "Pagar" de una segunda página — Mercado Pago rechazaba de una la URL de retorno con path por no estar todavía registrada en la cuenta. Mientras se registra del lado de Mercado Pago, se manda sin path para no bloquear el pago.' },
+    ],
+  },
+  {
     version: '1.46.1',
     date: '2026-08-08',
     changes: [
