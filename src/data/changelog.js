@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.44.2',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'El botón "Volver a suscribirme" del mail de cancelación mandaba a Checkout, que no sabe qué hacer sin una sesión ya iniciada en ese navegador — ahora manda al Dashboard, que primero pide login si hace falta.' },
+    ],
+  },
+  {
     version: '1.44.1',
     date: '2026-08-08',
     changes: [
