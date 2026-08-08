@@ -2,19 +2,21 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
-import { apiGetSubscription, apiRefreshSubscription } from '../api/client';
 import { trackEvent } from '../utils/analytics';
 
 const POLL_MS = 3000;
 
 // A esta pantalla vuelve quien terminó de pagar en Mercado Pago (es el
-// back_url configurado en el plan — ver server/src/utils/mercadopago.js).
-// Como el pago pasa por fuera de nuestra web, no hay forma de saber el
-// resultado ahí mismo: acá se sondea nuestro propio backend hasta que el
-// webhook (o el respaldo manual de abajo) confirme que la suscripción quedó
-// autorizada, recién ahí se marca la página como publicada de verdad.
+// back_url que arma cada suscripción — ver server/src/utils/mercadopago.js).
+// Como esa redirección es un reload completo de la página (se sale del todo
+// a mercadopago.com y vuelve), activeSiteId se restaura solo al montar (ver
+// el efecto de restauración de sesión en AppContext.jsx, que persiste cuál
+// era la página activa en localStorage antes de mandar a pagar). Acá se
+// sondea nuestro propio backend hasta que el webhook (o el respaldo manual
+// de abajo) confirme que la suscripción quedó autorizada, recién ahí se
+// marca la página como publicada de verdad.
 export default function SuscripcionConfirmar() {
-  const { user, authReady, refreshSiteStatus } = useApp();
+  const { user, authReady, activeSiteId, refreshSiteStatus, getSubscription, refreshSubscription } = useApp();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(false);
   const [tries, setTries] = useState(0);
@@ -25,9 +27,10 @@ export default function SuscripcionConfirmar() {
       navigate('/login', { replace: true });
       return;
     }
+    if (!activeSiteId) return undefined;
     let cancelado = false;
     const check = async () => {
-      const sub = await apiGetSubscription();
+      const sub = await getSubscription();
       if (cancelado) return;
       if (sub.status === 'authorized') {
         await refreshSiteStatus();
@@ -43,15 +46,15 @@ export default function SuscripcionConfirmar() {
       cancelado = true;
       clearInterval(interval);
     };
-  }, [authReady, user, navigate, refreshSiteStatus]);
+  }, [authReady, user, activeSiteId, navigate, refreshSiteStatus, getSubscription]);
 
   // Respaldo mientras no haya webhook andando (sin DNS pública todavía): le
   // pide al backend que busque directo en Mercado Pago, en vez de esperar a
   // que llegue el aviso solo.
   const revisarAhora = async () => {
     setChecking(true);
-    await apiRefreshSubscription();
-    const fresh = await apiGetSubscription();
+    await refreshSubscription();
+    const fresh = await getSubscription();
     setChecking(false);
     if (fresh.status === 'authorized') {
       await refreshSiteStatus();

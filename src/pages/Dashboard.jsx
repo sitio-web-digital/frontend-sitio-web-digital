@@ -6,14 +6,9 @@ import SupportTicketList from '../components/support/SupportTicketList';
 import NewTicketModal from '../components/support/NewTicketModal';
 import SupportToast from '../components/support/SupportToast';
 import { useApp } from '../context/AppContext';
-import { PLAN, slugify } from '../data/mockData';
-import {
-  apiGetSubscription,
-  apiCancelSubscription,
-  apiGetSupportUnread,
-  apiMarkSupportSeen,
-  apiGetSiteStats,
-} from '../api/client';
+import { PLAN, slugify, getTemplateById } from '../data/mockData';
+import { hydrateSite } from '../utils/siteSchema';
+import { apiGetSupportUnread, apiMarkSupportSeen } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const PREVIEW_SECTIONS = [
@@ -28,9 +23,9 @@ const NAV_ITEMS = [
   { id: 'cuenta', label: 'Configuración' },
 ];
 
-// Código corto para identificar cada página en la tabla — no es un ID real
-// de backend todavía (el backend guarda una sola página por cuenta), pero se
-// deriva de forma estable del id de cada página para que no cambie entre renders.
+// Código corto para identificar cada página en la tabla (más fácil de leer
+// en voz alta que el id crudo) — se deriva de forma estable del id real de
+// cada página, así no cambia entre renders.
 function codigoPagina(id) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -52,17 +47,16 @@ export default function Dashboard() {
     logout,
     updateProfile,
     updateSubdomain,
-    template,
-    siteData,
-    subdomain,
-    published,
-    theme,
-    logoUrl,
     setPublished,
     saveSiteToBackend,
     supportTickets,
     addSupportTicket,
-    siteLocked,
+    templates,
+    mySites,
+    fetchMySites,
+    switchSite,
+    startNewSite,
+    cancelSubscription,
   } = useApp();
   const navigate = useNavigate();
   const [section, setSection] = useState('resumen');
@@ -117,71 +111,43 @@ export default function Dashboard() {
     if (user.role === 'analytics') navigate('/analytics', { replace: true });
   }, [authReady, user, navigate]);
 
-  const hasSite = !!(template && siteData);
-
-  // Estado real de la suscripción de Mercado Pago (no solo el `published`
-  // local) — se sondea mientras el Dashboard está abierto, para que si el
-  // webhook confirma el pago (o si soporte cancela algo del otro lado)
-  // se note sin tener que recargar la página.
-  const [mpSubscription, setMpSubscription] = useState({ status: 'none' });
+  // Todas las páginas de la cuenta — se trae al entrar y se vuelve a
+  // sondear cada 10s mientras el Dashboard está abierto (mismo motivo que
+  // antes: si el webhook confirma un pago o soporte cancela algo del otro
+  // lado, se nota sin tener que recargar). GET /api/sites ya trae el estado
+  // real de Mercado Pago y los totales de visitas/WhatsApp de cada una, así
+  // que no hace falta un sondeo aparte por fila.
   useEffect(() => {
-    if (!user || !hasSite) return undefined;
-    let cancelado = false;
-    const check = async () => {
-      const sub = await apiGetSubscription();
-      if (!cancelado) setMpSubscription(sub);
-    };
-    check();
-    const interval = setInterval(check, 10000);
-    return () => {
-      cancelado = true;
-      clearInterval(interval);
-    };
-  }, [user, hasSite]);
+    if (!user) return undefined;
+    fetchMySites();
+    const interval = setInterval(fetchMySites, 10000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-  // KPIs reales de la página publicada (visitas y clics de WhatsApp de
-  // verdad, ver server/src/routes/sites.js > GET /me/stats) — antes
-  // hardcodeado. Se sondea igual que la suscripción, para que una visita
-  // recién llegada se refleje sin recargar.
-  const [siteStats, setSiteStats] = useState({ totalVisitas: 0, totalWhatsapp: 0 });
-  useEffect(() => {
-    if (!user || !hasSite) return undefined;
-    let cancelado = false;
-    const check = async () => {
-      const stats = await apiGetSiteStats();
-      if (!cancelado) setSiteStats(stats);
-    };
-    check();
-    const interval = setInterval(check, 10000);
-    return () => {
-      cancelado = true;
-      clearInterval(interval);
-    };
-  }, [user, hasSite]);
-
-  // El backend hoy guarda una sola página por cuenta — cuando soporte
-  // varias, esta lista pasa a traerlas todas en vez de armar solo esta.
-  const pages = useMemo(() => {
-    const real = hasSite
-      ? [
-          {
-            id: 'real',
-            nombreNegocio: siteData.nombreNegocio,
-            subdomain,
-            status: published ? 'publicada' : 'borrador',
-            mpStatus: mpSubscription.status,
-            nextPaymentDate: mpSubscription.nextPaymentDate,
-            locked: siteLocked,
-            template,
-            siteData,
-            theme,
-            logoUrl,
-            kpis: { visitas: siteStats.totalVisitas, whatsapp: siteStats.totalWhatsapp },
-          },
-        ]
-      : [];
-    return real.map((p) => ({ ...p, codigo: codigoPagina(p.id) }));
-  }, [hasSite, siteData, subdomain, published, siteLocked, template, theme, logoUrl, mpSubscription, siteStats]);
+  const pages = useMemo(
+    () =>
+      mySites.map((s) => {
+        const hydrated = hydrateSite(s.data);
+        const tmpl = hydrated?.templateId ? getTemplateById(hydrated.templateId, templates) : null;
+        return {
+          id: s.id,
+          nombreNegocio: hydrated?.siteData?.nombreNegocio || '(sin nombre)',
+          subdomain: s.subdomain,
+          status: s.published ? 'publicada' : 'borrador',
+          mpStatus: s.mpStatus,
+          nextPaymentDate: s.nextPaymentDate,
+          locked: s.locked,
+          template: tmpl,
+          siteData: hydrated?.siteData,
+          theme: hydrated?.theme,
+          logoUrl: hydrated?.logoUrl,
+          kpis: { visitas: s.totalVisitas, whatsapp: s.totalWhatsapp },
+          codigo: codigoPagina(String(s.id)),
+        };
+      }),
+    [mySites, templates]
+  );
 
   if (!user) return null;
 
@@ -209,15 +175,20 @@ export default function Dashboard() {
               pages={pages}
               navigate={navigate}
               updateSubdomain={updateSubdomain}
+              switchSite={switchSite}
+              startNewSite={startNewSite}
               isFree={(user.freeSubscriptions ?? 0) > 0}
             />
           )}
           {section === 'suscripcion' && (
             <SubscriptionSection
               pages={pages}
-              hasSite={hasSite}
               setPublished={setPublished}
               saveSiteToBackend={saveSiteToBackend}
+              switchSite={switchSite}
+              startNewSite={startNewSite}
+              cancelSubscription={cancelSubscription}
+              onChanged={fetchMySites}
               navigate={navigate}
               freeSubscriptions={user.freeSubscriptions ?? 0}
             />
@@ -300,7 +271,7 @@ function SideNav({ section, onChange, unreadCount = 0 }) {
 // KPIs primero (arriba de todo, antes de la lista de páginas): son agregados
 // de las páginas publicadas, mismos íconos que /estadisticas para que se
 // sienta el mismo dato en los dos lugares.
-function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, isFree }) {
+function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switchSite, startNewSite, isFree }) {
   const publicadas = pages.filter((p) => p.status === 'publicada');
   const visitas = publicadas.reduce((acc, p) => acc + p.kpis.visitas, 0);
   const whatsapp = publicadas.reduce((acc, p) => acc + p.kpis.whatsapp, 0);
@@ -323,7 +294,10 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, isFree
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Tus páginas</p>
         <button
-          onClick={() => navigate('/quiz')}
+          onClick={() => {
+            startNewSite();
+            navigate('/quiz');
+          }}
           data-track="dashboard_crear_pagina"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
         >
@@ -332,13 +306,16 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, isFree
       </div>
       <div className="space-y-3">
         {pages.map((p) => (
-          <PageRow key={p.id} page={p} navigate={navigate} updateSubdomain={updateSubdomain} isFree={isFree} />
+          <PageRow key={p.id} page={p} navigate={navigate} updateSubdomain={updateSubdomain} switchSite={switchSite} isFree={isFree} />
         ))}
         {pages.length === 0 && (
           <div className="border border-dashed border-white/15 bg-navy-850 p-6 text-center">
             <p className="text-ink-400 text-sm mb-4">Todavía no tenés una página propia.</p>
             <button
-              onClick={() => navigate('/quiz')}
+              onClick={() => {
+                startNewSite();
+                navigate('/quiz');
+              }}
               className="px-5 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
             >
               Crear mi página web
@@ -374,7 +351,7 @@ function StatStrip({ items, cols = 3 }) {
   );
 }
 
-function PageRow({ page, navigate, updateSubdomain, isFree }) {
+function PageRow({ page, navigate, updateSubdomain, switchSite, isFree }) {
   const status = STATUS_INFO[page.status];
   const proximoCobro =
     page.status === 'publicada' && !isFree && page.mpStatus === 'authorized' && page.nextPaymentDate
@@ -441,19 +418,46 @@ function PageRow({ page, navigate, updateSubdomain, isFree }) {
               {page.locked ? (
                 <span className="px-3 py-2 text-xs font-semibold text-ink-500 italic">Edición pausada</span>
               ) : (
-                <RowButton onClick={() => navigate('/editor')}>Editar</RowButton>
+                <RowButton
+                  onClick={async () => {
+                    await switchSite(page.id);
+                    navigate('/editor');
+                  }}
+                >
+                  Editar
+                </RowButton>
               )}
-              <RowButton onClick={() => navigate('/estadisticas')}>Estadísticas</RowButton>
+              <RowButton
+                onClick={async () => {
+                  await switchSite(page.id);
+                  navigate('/estadisticas');
+                }}
+              >
+                Estadísticas
+              </RowButton>
             </>
           ) : (
             <>
-              <RowButton onClick={() => navigate('/checkout')} primary>
+              <RowButton
+                onClick={async () => {
+                  await switchSite(page.id);
+                  navigate('/checkout');
+                }}
+                primary
+              >
                 Publicar
               </RowButton>
               {page.locked ? (
                 <span className="px-3 py-2 text-xs font-semibold text-ink-500 italic">Edición pausada</span>
               ) : (
-                <RowButton onClick={() => navigate('/editor')}>Editar</RowButton>
+                <RowButton
+                  onClick={async () => {
+                    await switchSite(page.id);
+                    navigate('/editor');
+                  }}
+                >
+                  Editar
+                </RowButton>
               )}
             </>
           )}
@@ -481,7 +485,17 @@ function RowButton({ children, onClick, primary = false }) {
 // El plan es por página: cada página publicada tiene su propia suscripción
 // de $15.000/mes — no es un único plan por cuenta. "Cancelar" acá sólo
 // despublica esa página (sin pasarela de pago real detrás, ver Checkout.jsx).
-function SubscriptionSection({ pages, hasSite, setPublished, saveSiteToBackend, navigate, freeSubscriptions }) {
+function SubscriptionSection({
+  pages,
+  setPublished,
+  saveSiteToBackend,
+  switchSite,
+  startNewSite,
+  cancelSubscription,
+  onChanged,
+  navigate,
+  freeSubscriptions,
+}) {
   const isFree = (freeSubscriptions ?? 0) > 0;
   const publicadas = pages.filter((p) => p.status === 'publicada');
   const total = isFree ? 0 : publicadas.length * PLAN.precio;
@@ -521,16 +535,22 @@ function SubscriptionSection({ pages, hasSite, setPublished, saveSiteToBackend, 
             page={p}
             setPublished={setPublished}
             saveSiteToBackend={saveSiteToBackend}
+            switchSite={switchSite}
+            cancelSubscription={cancelSubscription}
+            onChanged={onChanged}
             navigate={navigate}
             isFree={isFree}
           />
         ))}
       </div>
 
-      {!hasSite && <p className="text-xs text-ink-500 mt-4">Creá tu página para activar un plan.</p>}
+      {pages.length === 0 && <p className="text-xs text-ink-500 mt-4">Creá tu página para activar un plan.</p>}
 
       <button
-        onClick={() => navigate('/quiz')}
+        onClick={() => {
+          startNewSite();
+          navigate('/quiz');
+        }}
         data-track="dashboard_crear_pagina"
         className="inline-flex items-center gap-1.5 mt-5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
       >
@@ -540,7 +560,7 @@ function SubscriptionSection({ pages, hasSite, setPublished, saveSiteToBackend, 
   );
 }
 
-function SubscriptionRow({ page, setPublished, saveSiteToBackend, navigate, isFree }) {
+function SubscriptionRow({ page, setPublished, saveSiteToBackend, switchSite, cancelSubscription, onChanged, navigate, isFree }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -552,18 +572,20 @@ function SubscriptionRow({ page, setPublished, saveSiteToBackend, navigate, isFr
     if (isFree) {
       // Cuenta de prueba (free_subscriptions, la regala un admin) — nunca
       // hubo una suscripción real de Mercado Pago detrás, alcanza con
-      // despublicar.
+      // despublicar. Esta fila puede no ser la que está cargada en el
+      // editor ahora mismo — hay que engancharse a ELLA primero.
+      await switchSite(page.id);
       setPublished(false);
       await saveSiteToBackend({ published: false });
     } else {
-      const result = await apiCancelSubscription();
+      const result = await cancelSubscription(page.id);
       if (!result.ok) {
         setError(result.error || 'No se pudo cancelar la suscripción. Probá de nuevo.');
         setBusy(false);
         return;
       }
-      setPublished(false);
     }
+    await onChanged?.();
     setBusy(false);
     setConfirming(false);
   };
@@ -601,7 +623,13 @@ function SubscriptionRow({ page, setPublished, saveSiteToBackend, navigate, isFr
               Cancelar
             </button>
           ) : (
-            <RowButton onClick={() => navigate('/checkout')} primary>
+            <RowButton
+              onClick={async () => {
+                await switchSite(page.id);
+                navigate('/checkout');
+              }}
+              primary
+            >
               Publicar
             </RowButton>
           )}
@@ -730,7 +758,7 @@ function DomainEditor({ page, updateSubdomain }) {
     e.preventDefault();
     setBusy(true);
     setStatus(null);
-    const result = await updateSubdomain(value.trim());
+    const result = await updateSubdomain(page.id, value.trim());
     setBusy(false);
     if (result.ok) {
       setStatus(null);

@@ -22,8 +22,10 @@ import {
   apiRegister,
   apiMe,
   apiLogoutLocal,
-  apiSaveSite,
-  apiLoadSite,
+  apiListMySites,
+  apiCreateSite,
+  apiGetSite,
+  apiUpdateSite,
   apiSetSubdomain,
   apiUpdateMe,
   apiListSupportTickets,
@@ -33,6 +35,12 @@ import {
   apiAdminSetSiteLock,
   apiAdminSetSitePublished,
   apiGetSiteStatus,
+  apiGetSiteStats,
+  apiGetSubscription,
+  apiStartSubscription,
+  apiPublishFree,
+  apiRefreshSubscription,
+  apiCancelSubscription,
   apiListCatalogTemplates,
   apiListCatalogRubros,
   apiAdminGetTemplate,
@@ -44,6 +52,12 @@ import { extractPalette } from '../utils/extractColor';
 import { trackEvent } from '../utils/analytics';
 
 const AppCtx = createContext(null);
+
+// Qué página (de las N que puede tener una cuenta) está cargada en el
+// editor/checkout/estadísticas ahora mismo — persistido para sobrevivir un
+// refresh de página (ver switchSite/resetAll y el efecto de restauración
+// de sesión más abajo).
+const ACTIVE_SITE_KEY = 'sitiowebdigital.activeSiteId';
 
 // Se lee una sola vez al cargar el módulo: si el navegador ya tenía un sitio
 // guardado (de una sesión anterior), arrancamos con ese contenido en vez de
@@ -123,6 +137,14 @@ export function AppProvider({ children }) {
   // puede editarla ni guardar cambios — se ignora cuando un admin la está
   // editando (adminEditingSite), que siempre puede seguir trabajando en ella.
   const [siteLocked, setSiteLocked] = useState(false);
+  // Todas las páginas de la cuenta logueada (Dashboard) y cuál de ellas está
+  // cargada en los slots de arriba (siteData/template/subdomain/etc.) en
+  // este momento — null significa "todavía ninguna" (recién entrando a
+  // /quiz para armar una nueva). Separado de adminEditingSite a propósito:
+  // ese es para que un admin edite la página de OTRA cuenta, esto es para
+  // que el dueño elija entre las suyas propias.
+  const [mySites, setMySites] = useState([]);
+  const [activeSiteId, setActiveSiteId] = useState(null);
   // Plantillas/rubros creados por el admin (Admin > Plantillas) — se
   // combinan con los de fábrica (TEMPLATES/RUBROS) más abajo, así el resto
   // de la app (quiz, galería, editor) los trata exactamente igual sin tener
@@ -280,9 +302,24 @@ export function AppProvider({ children }) {
     // real del admin con el contenido de la plantilla.
     const construyendoPlantilla = templateId === BLANK_TEMPLATE.id || !!editingTemplate;
     if (user && json && !construyendoPlantilla && !(siteLocked && !adminEditingSite)) {
-      backendAutosaveTimer.current = setTimeout(() => {
-        if (adminEditingSite) apiAdminUpdateSite(adminEditingSite.id, json);
-        else apiSaveSite(json);
+      backendAutosaveTimer.current = setTimeout(async () => {
+        if (adminEditingSite) {
+          apiAdminUpdateSite(adminEditingSite.id, json);
+        } else if (activeSiteId) {
+          apiUpdateSite(activeSiteId, json);
+        } else {
+          // Todavía ninguna página creada para esta cuenta (recién viniendo
+          // del quiz) — el primer autoguardado es el que la crea de verdad.
+          const result = await apiCreateSite(json);
+          if (result.ok) {
+            setActiveSiteId(result.id);
+            try {
+              localStorage.setItem(ACTIVE_SITE_KEY, String(result.id));
+            } catch {
+              // no-op
+            }
+          }
+        }
       }, 1200);
     }
     return () => clearTimeout(backendAutosaveTimer.current);
@@ -307,6 +344,7 @@ export function AppProvider({ children }) {
     adminEditingSite,
     editingTemplate,
     siteLocked,
+    activeSiteId,
   ]);
 
   // Importante: pasar `templates` (fábrica + admin combinadas) — sin esto,
@@ -896,6 +934,44 @@ export function AppProvider({ children }) {
     resetAll();
   };
 
+  // Cambia cuál de las páginas PROPIAS de la cuenta está cargada en el
+  // editor/checkout/estadísticas — mismo patrón que startAdminEditSite, pero
+  // para las páginas del propio dueño (una cuenta puede tener varias). Antes
+  // de irse, guarda cualquier cambio pendiente de la página que se estaba
+  // editando (mismo motivo que logout() ya hace lo mismo más abajo: no
+  // perder una edición que todavía no llegó a asentarse por el debounce).
+  const switchSite = async (siteId) => {
+    await saveSiteToBackend();
+    let found = mySites.find((s) => s.id === siteId);
+    let siteJson = found?.data;
+    let subdomainValue = found?.subdomain ?? null;
+    let lockedValue = found?.locked ?? false;
+    if (!found) {
+      const result = await apiGetSite(siteId);
+      if (!result) return { ok: false, error: 'No se pudo cargar esa página.' };
+      siteJson = result.site;
+      subdomainValue = result.subdomain ?? null;
+      lockedValue = result.locked ?? false;
+    }
+    applyHydratedSite(hydrateSite(siteJson));
+    setSubdomain(subdomainValue);
+    setSiteLocked(lockedValue);
+    setActiveSiteId(siteId);
+    try {
+      localStorage.setItem(ACTIVE_SITE_KEY, String(siteId));
+    } catch {
+      // no-op
+    }
+    return { ok: true };
+  };
+
+  // "Crear nueva página" (Dashboard): limpia el borrador de trabajo y
+  // desengancha de la página que estaba activa, así el próximo autoguardado
+  // crea una página nueva en vez de pisar la que se estaba editando.
+  const startNewSite = () => {
+    resetAll();
+  };
+
   // Admin > Páginas > Pausar/Reanudar edición: para al dueño en tiempo real
   // (útil mientras soporte está reparando algo puntual) sin bajarla de
   // circulación — sigue publicada, solo no se puede seguir editando.
@@ -912,30 +988,77 @@ export function AppProvider({ children }) {
 
   // El editor la llama cada pocos segundos mientras está abierto (ver
   // Editor.jsx) — si soporte pausa la edición o despublica en el medio, esto
-  // lo nota sin esperar a que el dueño recargue la pestaña.
+  // lo nota sin esperar a que el dueño recargue la pestaña. Implícitamente
+  // sobre activeSiteId: el editor siempre llega ahí después de un switchSite.
   const refreshSiteStatus = async () => {
-    const { locked, published: pub } = await apiGetSiteStatus();
+    if (!activeSiteId) return;
+    const { locked, published: pub } = await apiGetSiteStatus(activeSiteId);
     setSiteLocked(locked);
     setPublished(pub);
   };
 
+  // Todas las páginas de la cuenta logueada (Dashboard).
+  const fetchMySites = async () => {
+    const sites = await apiListMySites();
+    setMySites(sites);
+    return sites;
+  };
+
+  // Wrappers de suscripción, implícitamente sobre activeSiteId (Checkout.jsx
+  // y Stats.jsx siempre llegan ahí después de un switchSite) — salvo
+  // cancelSubscription, que el Dashboard usa sobre una fila que no
+  // necesariamente es la que está cargada en el editor.
+  const getSubscription = () =>
+    activeSiteId ? apiGetSubscription(activeSiteId) : Promise.resolve({ status: 'none', preapprovalId: null, published: false });
+  const startSubscription = () => apiStartSubscription(activeSiteId);
+  const publishFree = async () => {
+    const result = await apiPublishFree(activeSiteId);
+    if (result.ok) await refreshUser();
+    return result;
+  };
+  const refreshSubscription = () => apiRefreshSubscription(activeSiteId);
+  const cancelSubscription = (siteId) => apiCancelSubscription(siteId);
+  const getSiteStats = (siteId) => apiGetSiteStats(siteId ?? activeSiteId);
+
+  // Re-lee `user` del servidor — hace falta después de gastar una página
+  // gratis (free_subscriptions bajó del lado del servidor) para que el
+  // gate de Checkout quede al día sin tener que volver a loguearse.
+  const refreshUser = async () => {
+    const fresh = await apiMe();
+    if (fresh) setUser(fresh);
+  };
+
+  // A cuál de las páginas recién traídas de la cuenta hay que engancharse:
+  // la que estaba activa en un refresh anterior (persistida en
+  // localStorage), o si no hay ninguna guardada (o ya no existe), la
+  // primera de la lista. Devuelve null si la cuenta todavía no tiene
+  // ninguna página — arranca en blanco, como hoy.
+  const pickSiteToRestore = (sites) => {
+    let savedId = null;
+    try {
+      savedId = Number(localStorage.getItem(ACTIVE_SITE_KEY));
+    } catch {
+      // no-op
+    }
+    return sites.find((s) => s.id === savedId) ?? sites[0] ?? null;
+  };
+
   // Login/registro contra la API real (Express y Postgres, ver /server). Al
-  // loguearse, si esa cuenta ya tiene una página guardada del lado del servidor
-  // (porque la pagó alguna vez), la traemos y reemplaza al borrador local.
+  // loguearse, si esa cuenta ya tiene páginas guardadas del lado del
+  // servidor, las traemos y se carga la última activa (o la primera).
   const login = async ({ email, password }) => {
     const result = await apiLogin({ email, password });
     if (!result.ok) return result;
-    // Limpia el borrador de trabajo ANTES de mirar si esta cuenta tiene su
-    // propia página — si no, alguien que entra a /login sin haber cerrado
-    // sesión antes (sin pasar por logout()) podría heredar en memoria el
-    // sitio de la cuenta anterior, y el autoguardado se lo terminaría
-    // guardando a la cuenta nueva como si fuera propio.
+    // Limpia el borrador de trabajo ANTES de mirar qué páginas tiene esta
+    // cuenta — si no, alguien que entra a /login sin haber cerrado sesión
+    // antes (sin pasar por logout()) podría heredar en memoria el sitio de
+    // la cuenta anterior, y el autoguardado se lo terminaría guardando a la
+    // cuenta nueva como si fuera propio.
     resetAll();
     setUser(result.user);
-    const { site: savedSite, locked, subdomain: savedSubdomain } = await apiLoadSite();
-    if (savedSite) applyHydratedSite(hydrateSite(savedSite));
-    setSubdomain(savedSubdomain ?? null);
-    setSiteLocked(locked);
+    const sites = await fetchMySites();
+    const target = pickSiteToRestore(sites);
+    if (target) await switchSite(target.id);
     setSupportTickets(await apiListSupportTickets());
     trackEvent('funnel', 'login_exitoso', {});
     return { ok: true, user: result.user };
@@ -967,6 +1090,7 @@ export function AppProvider({ children }) {
     setUser(null);
     setSupportTickets([]);
     setAdminEditingSite(null);
+    setMySites([]);
     resetAll();
   };
 
@@ -1002,10 +1126,9 @@ export function AppProvider({ children }) {
         return;
       }
       setUser(restoredUser);
-      const { site: savedSite, locked, subdomain: savedSubdomain } = await apiLoadSite();
-      if (savedSite) applyHydratedSite(hydrateSite(savedSite));
-      setSubdomain(savedSubdomain ?? null);
-      setSiteLocked(locked);
+      const sites = await fetchMySites();
+      const target = pickSiteToRestore(sites);
+      if (target) await switchSite(target.id);
       setSupportTickets(await apiListSupportTickets());
       setAuthReady(true);
     })();
@@ -1047,7 +1170,21 @@ export function AppProvider({ children }) {
     // Si un admin está editando la página de otra cuenta, el guardado va
     // dirigido a esa página puntual en vez de a la propia (ver Admin > Páginas).
     if (adminEditingSite) return apiAdminUpdateSite(adminEditingSite.id, json);
-    return apiSaveSite(json);
+    if (activeSiteId) {
+      const result = await apiUpdateSite(activeSiteId, json);
+      return { ...result, id: activeSiteId };
+    }
+    // Todavía ninguna página propia cargada — este guardado la crea.
+    const result = await apiCreateSite(json);
+    if (result.ok) {
+      setActiveSiteId(result.id);
+      try {
+        localStorage.setItem(ACTIVE_SITE_KEY, String(result.id));
+      } catch {
+        // no-op
+      }
+    }
+    return result;
   };
 
   // Widgets flotantes de la página (por ahora, el botón de WhatsApp) — se pueden
@@ -1061,14 +1198,16 @@ export function AppProvider({ children }) {
     setWidgets((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Elegir/cambiar el subdominio propio (Dashboard > Configuración) — calca
-  // updateProfile: pega al backend, y solo si confirma OK actualiza el
-  // estado local (nunca optimista, para no mostrar un valor que el servidor
-  // terminó rechazando por formato o por estar ya tomado).
-  const updateSubdomain = async (value) => {
-    const result = await apiSetSubdomain(value);
+  // Elegir/cambiar el subdominio de una página puntual (Dashboard >
+  // Configuración de esa fila) — calca updateProfile: pega al backend, y
+  // solo si confirma OK actualiza el estado local. Toma el id explícito
+  // (no activeSiteId): el Dashboard puede editar el subdominio de una fila
+  // que no es la que está cargada en el editor en ese momento, y no hay que
+  // pisar ese estado por eso — solo se refleja acá si coincide con la activa.
+  const updateSubdomain = async (siteId, value) => {
+    const result = await apiSetSubdomain(siteId, value);
     if (!result.ok) return result;
-    setSubdomain(result.subdomain);
+    if (siteId === activeSiteId) setSubdomain(result.subdomain);
     return { ok: true, subdomain: result.subdomain };
   };
 
@@ -1092,6 +1231,12 @@ export function AppProvider({ children }) {
     setPosts([]);
     setSiteLocked(false);
     setEditingTemplate(null);
+    setActiveSiteId(null);
+    try {
+      localStorage.removeItem(ACTIVE_SITE_KEY);
+    } catch {
+      // no-op
+    }
   };
 
   // Guarda el sitio de ejemplo actual (secciones, contenido, colores) como
@@ -1254,6 +1399,7 @@ export function AppProvider({ children }) {
     register,
     logout,
     updateProfile,
+    refreshUser,
     updateSubdomain,
     supportTickets,
     addSupportTicket,
@@ -1266,6 +1412,18 @@ export function AppProvider({ children }) {
     refreshSiteStatus,
     saveSiteToBackend,
     resetAll,
+    // Múltiples páginas por cuenta (ver Dashboard.jsx).
+    mySites,
+    fetchMySites,
+    activeSiteId,
+    switchSite,
+    startNewSite,
+    getSubscription,
+    startSubscription,
+    publishFree,
+    refreshSubscription,
+    cancelSubscription,
+    getSiteStats,
   };
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

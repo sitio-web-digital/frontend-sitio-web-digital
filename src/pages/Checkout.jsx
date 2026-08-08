@@ -5,7 +5,6 @@ import AuthGate from '../components/AuthGate';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify } from '../data/mockData';
 import { trackEvent } from '../utils/analytics';
-import { apiStartSubscription, apiPublishFree } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 export default function Checkout() {
@@ -21,6 +20,8 @@ export default function Checkout() {
     saveSiteToBackend,
     refreshSiteStatus,
     updateSubdomain,
+    startSubscription,
+    publishFree,
   } = useApp();
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle'); // idle | processing
@@ -41,9 +42,9 @@ export default function Checkout() {
     if (!user || subdomain || !siteData?.nombreNegocio) return undefined;
     let cancelado = false;
     (async () => {
-      await saveSiteToBackend();
-      if (cancelado) return;
-      await updateSubdomain(slugify(siteData.nombreNegocio));
+      const saveResult = await saveSiteToBackend();
+      if (cancelado || !saveResult.ok) return;
+      await updateSubdomain(saveResult.id, slugify(siteData.nombreNegocio));
       if (!cancelado) setAutoAssignDone(true);
     })();
     return () => {
@@ -56,18 +57,17 @@ export default function Checkout() {
 
   const autoAssigning = !!user && !subdomain && !!siteData.nombreNegocio && !autoAssignDone;
 
-  // Suscripción real de Mercado Pago (un mismo link de checkout para todas
-  // las páginas, ver server/src/utils/mercadopago.js) — antes de mandarlo
-  // ahí, la página tiene que existir ya guardada del lado del servidor (si
-  // es la primera vez, todavía puede vivir solo en el navegador), para que
-  // el backend sepa qué fila marcar como "yendo a pagar ahora" y así poder
-  // reconocerla cuando Mercado Pago confirme la suscripción.
+  // Suscripción real de Mercado Pago — cada página arma la suya propia (ver
+  // server/src/utils/mercadopago.js). Antes de mandarla, la página tiene que
+  // existir ya guardada del lado del servidor (si es la primera vez, todavía
+  // puede vivir solo en el navegador) para tener un id real al que atar la
+  // suscripción.
   const pagar = async () => {
     if (!subdomain) return;
     setStatus('processing');
     setError('');
     await saveSiteToBackend({ published: false });
-    const result = await apiStartSubscription();
+    const result = await startSubscription();
     if (!result.ok) {
       setStatus('idle');
       setError(result.error || 'No se pudo iniciar la suscripción. Probá de nuevo en un momento.');
@@ -85,7 +85,7 @@ export default function Checkout() {
     setStatus('processing');
     setError('');
     await saveSiteToBackend({ published: false });
-    const result = await apiPublishFree();
+    const result = await publishFree();
     if (!result.ok) {
       setStatus('idle');
       setError(result.error || 'No se pudo publicar. Probá de nuevo en un momento.');

@@ -113,28 +113,40 @@ export function apiLogoutLocal() {
   setToken(null);
 }
 
-// Se llama recién después de que el pago se confirma y hay sesión iniciada —
-// antes de eso la página vive solo como borrador local (ver utils/siteSchema.js).
-export async function apiSaveSite(siteJSON) {
+// Una cuenta puede tener varias páginas — esto trae todas (Dashboard).
+export async function apiListMySites() {
+  const token = getToken();
+  if (!token) return [];
+  const result = await request('/sites', { token });
+  return result.ok ? result.sites : [];
+}
+
+// Página nueva ("Crear nueva página") — antes de esto la página vive solo
+// como borrador local (ver utils/siteSchema.js).
+export async function apiCreateSite(siteJSON) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión para guardar tu página.' };
-  return request('/sites/me', { method: 'PUT', body: { site: siteJSON }, token });
+  return request('/sites', { method: 'POST', body: { site: siteJSON }, token });
 }
 
-export async function apiLoadSite() {
+export async function apiGetSite(siteId) {
   const token = getToken();
-  if (!token) return { site: null, locked: false, subdomain: null };
-  const result = await request('/sites/me', { token });
-  return result.ok
-    ? { site: result.site, locked: result.locked, subdomain: result.subdomain }
-    : { site: null, locked: false, subdomain: null };
+  if (!token) return null;
+  const result = await request(`/sites/${siteId}`, { token });
+  return result.ok ? { site: result.site, locked: result.locked, subdomain: result.subdomain } : null;
 }
 
-// Elegir/cambiar el subdominio propio (Dashboard > Configuración).
-export async function apiSetSubdomain(subdomain) {
+export async function apiUpdateSite(siteId, siteJSON) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión para guardar tu página.' };
+  return request(`/sites/${siteId}`, { method: 'PUT', body: { site: siteJSON }, token });
+}
+
+// Elegir/cambiar el subdominio de una página puntual (Dashboard > Configuración).
+export async function apiSetSubdomain(siteId, subdomain) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión para elegir tu subdominio.' };
-  return request('/sites/me/subdomain', { method: 'PUT', body: { subdomain }, token });
+  return request(`/sites/${siteId}/subdomain`, { method: 'PUT', body: { subdomain }, token });
 }
 
 // Pública, sin sesión — la usa PublicSite.jsx para renderizar la página de un
@@ -155,21 +167,21 @@ export async function apiCheckSubdomainAvailability(value) {
 // Chequeo liviano de estado (bloqueo de edición + publicada o no), sin traer
 // el sitio completo — el editor lo usa para sondear cada pocos segundos sin
 // arriesgarse a pisar una edición en curso con datos viejos del servidor.
-export async function apiGetSiteStatus() {
+export async function apiGetSiteStatus(siteId) {
   const token = getToken();
-  if (!token) return { locked: false, published: false };
-  const result = await request('/sites/me/status', { token });
+  if (!token || !siteId) return { locked: false, published: false };
+  const result = await request(`/sites/${siteId}/status`, { token });
   return result.ok ? { locked: result.locked, published: result.published } : { locked: false, published: false };
 }
 
 const EMPTY_STATS = { totalVisitas: 0, totalWhatsapp: 0, visitasDelta: null, whatsappDelta: null, visitasPorDia: [], fuentes: [] };
 
 // KPIs reales de la página publicada (Dashboard > Resumen y Estadísticas) —
-// ver server/src/routes/sites.js > GET /me/stats.
-export async function apiGetSiteStats() {
+// ver server/src/routes/sites.js > GET /:id/stats.
+export async function apiGetSiteStats(siteId) {
   const token = getToken();
-  if (!token) return EMPTY_STATS;
-  const result = await request('/sites/me/stats', { token });
+  if (!token || !siteId) return EMPTY_STATS;
+  const result = await request(`/sites/${siteId}/stats`, { token });
   return result.ok ? result : EMPTY_STATS;
 }
 
@@ -187,45 +199,45 @@ export async function apiTrackSiteEvent(subdomain, eventType, referrerBucket) {
   }
 }
 
-// Suscripción real de Mercado Pago de la página del usuario logueado (ver
-// Checkout.jsx, SuscripcionConfirmar.jsx y Dashboard > Suscripción).
-export async function apiGetSubscription() {
+// Suscripción real de Mercado Pago de una página puntual (ver Checkout.jsx,
+// SuscripcionConfirmar.jsx y Dashboard > Suscripción).
+export async function apiGetSubscription(siteId) {
   const token = getToken();
-  if (!token) return { status: 'none', preapprovalId: null, published: false };
-  const result = await request('/subscription/me', { token });
+  if (!token || !siteId) return { status: 'none', preapprovalId: null, published: false };
+  const result = await request(`/subscription/${siteId}`, { token });
   return result.ok ? result : { status: 'none', preapprovalId: null, published: false };
 }
 
 // Se llama al tocar "Pagar" — antes de mandar al checkout de Mercado Pago,
 // avisa al backend que esta página está yendo a pagar (para poder
 // reconocerla después, ver server/src/routes/mercadopagoWebhook.js).
-export async function apiStartSubscription() {
+export async function apiStartSubscription(siteId) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión para publicar tu página.' };
-  return request('/subscription/me/start', { method: 'POST', token });
+  return request(`/subscription/${siteId}/start`, { method: 'POST', token });
 }
 
 // Publica directo, sin pasar por Mercado Pago — solo funciona si la cuenta
 // tiene una página gratis regalada por un admin (el backend revalida esto
 // mismo, nunca confiar solo en el freeSubscriptions del token).
-export async function apiPublishFree() {
+export async function apiPublishFree(siteId) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión para publicar tu página.' };
-  return request('/subscription/me/publish-free', { method: 'POST', token });
+  return request(`/subscription/${siteId}/publish-free`, { method: 'POST', token });
 }
 
 // Respaldo sin webhook: le pide al backend que consulte directo en Mercado
-// Pago si ya hay una suscripción confirmada para esta cuenta.
-export async function apiRefreshSubscription() {
+// Pago si ya hay una suscripción confirmada para esta página.
+export async function apiRefreshSubscription(siteId) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión.' };
-  return request('/subscription/me/refresh', { method: 'POST', token });
+  return request(`/subscription/${siteId}/refresh`, { method: 'POST', token });
 }
 
-export async function apiCancelSubscription() {
+export async function apiCancelSubscription(siteId) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión.' };
-  return request('/subscription/me/cancel', { method: 'POST', token });
+  return request(`/subscription/${siteId}/cancel`, { method: 'POST', token });
 }
 
 export async function apiListSupportTickets() {

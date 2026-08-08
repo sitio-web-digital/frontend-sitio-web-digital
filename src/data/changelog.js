@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.45.0',
+    date: '2026-08-08',
+    changes: [
+      { type: 'nuevo', text: 'Ahora una misma cuenta puede tener varias páginas publicadas, cada una con su propia suscripción de $15.000/mes, su propio subdominio y su propia estadística — antes solo se podía tener una.' },
+    ],
+  },
+  {
     version: '1.44.2',
     date: '2026-08-08',
     changes: [

@@ -15,13 +15,12 @@ import {
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
-import { apiGetSiteStats } from '../api/client';
 
 const FUENTE_LABELS = { instagram: 'Instagram', google: 'Google', whatsapp: 'WhatsApp', directo: 'Directo', otro: 'Otro' };
 const FUENTE_COLORS = { instagram: '#9085e9', google: '#3987e5', whatsapp: '#199e70', directo: '#c98500', otro: '#6b7590' };
 
 export default function Stats() {
-  const { siteData, template, subdomain, published } = useApp();
+  const { siteData, template, subdomain, published, activeSiteId, getSiteStats } = useApp();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 
@@ -30,8 +29,10 @@ export default function Stats() {
   }, [siteData, template, navigate]);
 
   useEffect(() => {
-    apiGetSiteStats().then(setStats);
-  }, []);
+    if (!activeSiteId) return;
+    getSiteStats(activeSiteId).then(setStats);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSiteId]);
 
   if (!siteData || !template) return null;
 
