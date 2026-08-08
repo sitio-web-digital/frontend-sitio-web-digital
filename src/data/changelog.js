@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.44.0',
+    date: '2026-08-08',
+    changes: [
+      { type: 'nuevo', text: 'La app y las páginas publicadas de los clientes ahora viven en el dominio propio (sitioweb.digital) en vez del dominio de prueba compartido — mismos links, dirección definitiva.' },
+      { type: 'nuevo', text: 'Mails automáticos por mail: cuando se publica una página (pago confirmado), cuando falla un cobro y la página se pausa, y cuando se cancela una suscripción.' },
+    ],
+  },
+  {
     version: '1.43.1',
     date: '2026-08-08',
     changes: [
