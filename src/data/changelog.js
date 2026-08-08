@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.42.1',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Checkout: el aviso "Todavía no elegiste tu subdominio" podía aparecer antes de terminar de iniciar sesión, cuando en realidad el subdominio se asigna solo (con el nombre del negocio del quiz) apenas hay una cuenta detrás — no era un error real, solo un cartel adelantado.' },
+    ],
+  },
+  {
     version: '1.42.0',
     date: '2026-08-07',
     changes: [

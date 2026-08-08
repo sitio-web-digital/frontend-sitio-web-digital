@@ -144,7 +144,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {!subdomain && !autoAssigning && (
+          {!subdomain && !autoAssigning && user && (
             <div className="border border-amber-500/30 bg-amber-500/10 p-5 mb-6 flex items-start gap-3">
               <span className="text-lg leading-none mt-0.5">⚠️</span>
               <div>
