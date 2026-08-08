@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.1',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Bug grave: después de pagar en Mercado Pago, Mercado Pago devolvía al dominio compartido viejo en vez de app.sitioweb.digital, y el aviso de pago confirmado (webhook) nunca llegaba — quien pagaba quedaba sin la página publicada aunque ya se le hubiera cobrado. Las suscripciones ahora se crean apuntando siempre al dominio correcto y avisando por webhook sin depender de configuración manual en Mercado Pago.' },
+    ],
+  },
+  {
     version: '1.46.0',
     date: '2026-08-08',
     changes: [
