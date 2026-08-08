@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.43.1',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Si alguien tocaba "Pagar" más de una vez (se arrepentía, recargaba la página, etc.) quedaban suscripciones pendientes duplicadas colgadas en Mercado Pago — ahora, antes de crear una nueva, se cancela sola cualquier intento anterior sin autorizar de esa misma página.' },
+    ],
+  },
+  {
     version: '1.43.0',
     date: '2026-08-08',
     changes: [
