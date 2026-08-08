@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.43.0',
+    date: '2026-08-08',
+    changes: [
+      { type: 'mejora', text: 'Pantalla de "página publicada": el emoji 🎉 se reemplazó por una animación de confeti de verdad al entrar. También se sacó el cartel viejo de "prototipo — pago/subdominio/hosting simulados", que ya no es cierto.' },
+    ],
+  },
+  {
     version: '1.42.1',
     date: '2026-08-08',
     changes: [

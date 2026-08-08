@@ -1,17 +1,35 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
+// Dos tandas de confeti, una de cada esquina inferior — una sola explosión
+// central se siente genérica; esto da más sensación de festejo real sin
+// pasarse de la línea del resto de la app (mismo dorado que ya usamos).
+function celebrate() {
+  const colors = ['#FFC107', '#F4B400', '#ffffff'];
+  const common = { colors, disableForReducedMotion: true };
+  confetti({ ...common, particleCount: 70, angle: 60, spread: 65, origin: { x: 0, y: 0.9 } });
+  confetti({ ...common, particleCount: 70, angle: 120, spread: 65, origin: { x: 1, y: 0.9 } });
+}
+
 export default function Success() {
   const { siteData, template, subdomain, published, theme } = useApp();
   const navigate = useNavigate();
+  const celebrated = useRef(false);
 
   useEffect(() => {
     if (!siteData || !template) navigate('/plantillas', { replace: true });
     else if (!published) navigate('/preview', { replace: true });
   }, [siteData, template, published, navigate]);
+
+  useEffect(() => {
+    if (!published || celebrated.current) return;
+    celebrated.current = true;
+    celebrate();
+  }, [published]);
 
   if (!siteData || !template || !published) return null;
 
@@ -22,11 +40,8 @@ export default function Success() {
       </div>
 
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-16 text-center animate-fade-in-up">
-        <div className="w-16 h-16 rounded-full bg-gold-500/15 border border-gold-500/30 flex items-center justify-center text-3xl mx-auto mb-6">
-          🎉
-        </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-3 text-balance">
-          ¡Felicitaciones! Tu página está publicada.
+        <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight mb-3 text-balance">
+          Tu página ya está en vivo
         </h1>
         <p className="text-ink-300 mb-12 text-balance">
           Ya podés compartir tu subdominio con tus clientes.
@@ -77,10 +92,6 @@ export default function Success() {
             </button>
           </div>
         </div>
-
-        <p className="text-xs text-ink-500 mt-10">
-          Prototipo de producto — el pago, el subdominio y el hosting son simulados.
-        </p>
       </div>
     </div>
   );
