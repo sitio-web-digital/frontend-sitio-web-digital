@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.51.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Precios y planes: nueva distribución "Con tabs de período y plan destacado", copiada directamente de los valores exactos (tamaños, colores, espaciados) del diseño original de Gimnasio Base 9, en vez de aproximarlos con la escala genérica.' },
+    ],
+  },
+  {
     version: '1.50.2',
     date: '2026-08-09',
     changes: [

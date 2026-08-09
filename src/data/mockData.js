@@ -1312,7 +1312,10 @@ export const SECTION_VARIANTS = {
     { id: 'lista', label: 'Lista con tilde', skeleton: 'zonasLista' },
     { id: 'chips', label: 'Pastillas sueltas', skeleton: 'zonasChips' },
   ],
-  precios: [{ id: 'tarjetas', label: 'Tarjetas', skeleton: 'grid3col' }],
+  precios: [
+    { id: 'tarjetas', label: 'Tarjetas', skeleton: 'grid3col' },
+    { id: 'gimnasio', label: 'Con tabs de período y plan destacado', skeleton: 'grid3col' },
+  ],
   equipo: [
     { id: 'grid', label: 'Tarjetas', skeleton: 'grid3' },
     { id: 'carousel', label: 'Carrusel', skeleton: 'carousel' },

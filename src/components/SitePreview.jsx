@@ -1571,6 +1571,7 @@ export default function SitePreview({
             )}
             {sec.type === 'precios' && (
               <SeccionPrecios
+                variant={sec.variant}
                 accent={accent}
                 palette={palette}
                 bgColor={sec.bgColor}
@@ -17222,6 +17223,7 @@ function SeccionContacto({
 // ---------------------------------------------------------------------------
 
 function SeccionPrecios({
+  variant = 'tarjetas',
   accent,
   palette = {},
   bgColor,
@@ -17265,6 +17267,244 @@ function SeccionPrecios({
   };
   const removeFeature = (plan, i) =>
     onUpdatePlan?.(plan.id, { features: (plan.features || []).filter((_, idx) => idx !== i) });
+
+  // "gimnasio" — copia directa (valores literales, no aproximados con la
+  // escala de Tailwind) de los estilos inline del diseño de referencia
+  // "Gimnasio Base 9": clamp() para los tamaños de título, colores exactos
+  // por estado (destacado/no destacado), tag "·" siempre presente (con
+  // min-height) para que las tarjetas no destacadas no salten de alto. El
+  // resto de la lógica (Editable, ButtonObject, terminos) es la misma que
+  // la variante "tarjetas".
+  if (variant === 'gimnasio') {
+    const addTermino = () =>
+      onUpdateTerminos?.([...terminos, { id: `termino-${Date.now()}`, label: 'Período', mult: 1, ahorro: '' }]);
+    return (
+      <section style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)', background: bgColor || palette.bg }}>
+        <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="div"
+              block
+              styleKey="precios.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.76rem', letterSpacing: '0.16em', color: accent, marginBottom: '0.8rem', textTransform: 'uppercase' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Precios y planes'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="precios.titulo"
+              style={{ fontFamily: palette.fonts?.serif, fontWeight: 800, textTransform: 'uppercase', margin: 0, color: headingColor || palette.ink }}
+              className="text-[clamp(2rem,4.5vw,3.2rem)]"
+              maxLength={70}
+            />
+          </div>
+          {(terminos.length > 0 || editable) && (
+            <div className="flex" style={{ border: `1px solid ${palette.line}` }}>
+              {terminos.map((t, i) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTerminoActivo(i)}
+                  style={{
+                    cursor: 'pointer',
+                    padding: '0.55rem 1.05rem',
+                    fontSize: '0.83rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    transition: 'all .2s',
+                    background: terminoActivo === i ? accent : 'transparent',
+                    color: terminoActivo === i ? palette.bg : palette.inkSoft,
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addTermino}
+                  className="px-3 text-xs font-semibold border-l flex items-center gap-1"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Período
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {planes.length === 0 && !editable ? (
+          <p className="text-center text-sm max-w-sm mx-auto" style={{ color: palette.inkSoft }}>
+            Todavía no cargaste planes.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 @lg:grid-cols-3 gap-5">
+            {(editable ? planes : planes.filter((p) => !p.oculto)).map((p, i, arr) => {
+              const featured = !!p.destacado;
+              return (
+                <div
+                  key={p.id}
+                  ref={planesDnd.registerItemRef(p.id)}
+                  className={`relative flex flex-col gap-[1.1rem] ${p.oculto ? 'opacity-40' : ''} ${
+                    planesDnd.dragId === p.id ? 'opacity-30' : ''
+                  }`}
+                  style={{
+                    border: `1px solid ${featured ? accent : palette.line}`,
+                    background: featured ? `${accent}0d` : 'transparent',
+                    padding: '1.9rem 1.7rem',
+                  }}
+                >
+                  {editable && (
+                    <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                      <button
+                        type="button"
+                        onClick={() => onUpdatePlan?.(p.id, { destacado: !p.destacado })}
+                        aria-label={p.destacado ? 'Quitar destacado' : 'Marcar como destacado'}
+                        title={p.destacado ? 'Quitar destacado' : 'Marcar como destacado'}
+                        className="w-6 h-6 flex items-center justify-center transition-colors"
+                        style={{ color: featured ? accent : palette.inkSoft }}
+                      >
+                        <StarIcon className="w-3.5 h-3.5" />
+                      </button>
+                      <ItemToolbar
+                        variant="inline"
+                        color={palette.ink}
+                        oculto={p.oculto}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => onMovePlan?.(p.id, -1)}
+                        onMoveDown={() => onMovePlan?.(p.id, 1)}
+                        onDragStart={planesDnd.startDrag(p)}
+                        onDuplicate={() => onDuplicatePlan?.(p.id)}
+                        onToggleOculto={() => onToggleOcultoPlan?.(p.id)}
+                        onRemove={() => onRemovePlan?.(p.id)}
+                        removeLabel={`Quitar ${p.nombre}`}
+                      />
+                    </div>
+                  )}
+                  <span
+                    style={{
+                      fontFamily: palette.fonts?.mono,
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: featured ? accent : 'transparent',
+                      minHeight: '1rem',
+                    }}
+                  >
+                    {featured ? 'Más elegido' : '·'}
+                  </span>
+                  <Editable
+                    editable={editable}
+                    value={p.nombre}
+                    onChange={(v) => onUpdatePlan?.(p.id, { nombre: v })}
+                    tag="div"
+                    block
+                    styleKey={`plan.${p.id}.nombre`}
+                    placeholder="Nombre del plan"
+                    style={{ fontFamily: palette.fonts?.serif, fontWeight: 800, fontSize: '1.9rem', textTransform: 'uppercase', lineHeight: 1, color: palette.ink }}
+                    maxLength={40}
+                  />
+                  <div>
+                    <div className="flex items-baseline gap-[0.35rem]">
+                      <Editable
+                        editable={editable}
+                        value={p.precio}
+                        onChange={(v) => onUpdatePlan?.(p.id, { precio: Number(v) || 0 })}
+                        tag="span"
+                        type="number"
+                        styleKey={`plan.${p.id}.precio`}
+                        format={(v) =>
+                          `$${(termino ? Math.round(((Number(v) || 0) * termino.mult) / 100) * 100 : Number(v) || 0).toLocaleString('es-AR')}`
+                        }
+                        style={{ fontFamily: palette.fonts?.serif, fontWeight: 800, fontSize: '2.6rem', lineHeight: 1, color: featured ? accent : palette.ink }}
+                      />
+                      <span style={{ fontFamily: palette.fonts?.mono, fontSize: '0.76rem', color: palette.inkSoft }}>/mes</span>
+                    </div>
+                    {termino && !p.precioTexto && (
+                      <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', color: termino.ahorro ? accent : palette.inkSoft, marginTop: '0.35rem' }}>
+                        {termino.ahorro || 'Se paga mes a mes'}
+                      </div>
+                    )}
+                  </div>
+                  <ul className="flex flex-col gap-[0.55rem] flex-1">
+                    {(p.features || []).map((f, idx) => (
+                      <li key={idx} className="flex gap-[0.6rem] items-start" style={{ fontSize: '0.88rem', color: palette.inkSoft }}>
+                        <span style={{ color: accent }}>—</span>
+                        <Editable editable={editable} value={f} onChange={(v) => updateFeature(p, idx, v)} tag="span" className="flex-1" maxLength={80} />
+                        {editable && (
+                          <button type="button" onClick={() => removeFeature(p, idx)} aria-label="Quitar característica" className="opacity-40 hover:opacity-100 transition-opacity shrink-0">
+                            <XIcon className="w-3 h-3" />
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                    {editable && (
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => addFeature(p)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold opacity-50 hover:opacity-100 transition-opacity"
+                          style={{ color: palette.inkSoft }}
+                        >
+                          <PlusIcon className="w-3 h-3" /> Agregar característica
+                        </button>
+                      </li>
+                    )}
+                  </ul>
+                  {buttonSlotVisible(editable, p.boton, 'whatsapp', whatsapp) && (
+                    <ButtonObject
+                      value={p.boton}
+                      onChange={(patch) => onUpdatePlan?.(p.id, { boton: { ...(p.boton || {}), ...patch } })}
+                      editable={editable}
+                      seccionesDisponibles={seccionesDisponibles}
+                      nombreNegocio={nombreNegocio}
+                      defaultFuncion="whatsapp"
+                      defaultLabel="Empezar"
+                      defaultColor={featured ? accent : palette.ink}
+                      defaultTarget={whatsapp}
+                      waMessage={p.nombre ? `Hola! Quiero consultar por el plan "${p.nombre}".` : undefined}
+                      outline={!featured}
+                      className="w-full justify-center"
+                    />
+                  )}
+                </div>
+              );
+            })}
+            {editable && (
+              <form
+                onSubmit={submit}
+                className="border-2 border-dashed p-7 flex flex-col justify-center gap-2"
+                style={{ borderColor: palette.line }}
+              >
+                <input
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Nombre del plan"
+                  className="w-full border px-3 py-2 text-sm outline-none"
+                  style={{ borderColor: palette.line }}
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold py-2 text-white mt-1"
+                  style={{ background: palette.inkHex || '#171717' }}
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Agregar plan
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
