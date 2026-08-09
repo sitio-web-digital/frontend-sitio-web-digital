@@ -105,6 +105,7 @@ export default function Editor() {
     stopAdminEditSite,
     siteLocked,
     refreshSiteStatus,
+    activeSiteId,
     rubros,
     saveAsTemplate,
     createRubro,
@@ -165,14 +166,21 @@ export default function Editor() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [undo, redo]);
 
-  // Sondea el bloqueo cada pocos segundos mientras el editor está abierto —
-  // sin esto, un bloqueo de soporte recién se notaría al recargar la página.
+  // Sondea el bloqueo (y el estado de "publicada") cada pocos segundos
+  // mientras el editor está abierto — sin esto, un bloqueo de soporte recién
+  // se notaría al recargar la página. Antes esto no dependía de
+  // activeSiteId, así que si el editor se quedaba montado mientras se
+  // pasaba de una página a otra (ej. "Crear nueva página" sin salir del
+  // editor), el sondeo seguía usando el closure viejo de refreshSiteStatus
+  // — apuntaba a la página anterior (a veces ya publicada) y le pisaba
+  // `published: true` a la página nueva, que nunca se publicó. Bug real,
+  // confirmado en vivo el 2026-08-09: la Vista previa no mostraba el cartel
+  // de "Publicar ahora" en una página que en realidad seguía sin publicar.
   useEffect(() => {
     if (adminEditingSite) return undefined;
     const interval = setInterval(refreshSiteStatus, 3000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminEditingSite]);
+  }, [adminEditingSite, activeSiteId, refreshSiteStatus]);
 
   // Sondea cada 10s si soporte respondió algo nuevo mientras se está editando
   // — sin esto, alguien que se queda un buen rato en el editor recién se

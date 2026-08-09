@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.9',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'La Vista previa de una página recién creada podía no mostrar el botón "Publicar ahora" — el editor seguía sondeando el estado de una página distinta (una que ya estaba abierta antes) por quedarse con una referencia vieja al pasar a "Crear nueva página" sin salir del editor.' },
+    ],
+  },
+  {
     version: '1.46.8',
     date: '2026-08-09',
     changes: [
