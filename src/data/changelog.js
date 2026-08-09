@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.5',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Bug grave: un autoguardado del editor (tipear, cambiar el subdominio, etc.) podía despublicar una página que ya tenía la suscripción pagada y autorizada por Mercado Pago, si el navegador todavía no se había enterado del pago confirmado en ese momento. "Publicada" ahora es un estado que solo puede tocar el propio pago (o soporte) — nunca un guardado de contenido normal.' },
+    ],
+  },
+  {
     version: '1.46.4',
     date: '2026-08-08',
     changes: [

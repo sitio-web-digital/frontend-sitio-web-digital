@@ -142,6 +142,15 @@ export async function apiUpdateSite(siteId, siteJSON) {
   return request(`/sites/${siteId}`, { method: 'PUT', body: { site: siteJSON }, token });
 }
 
+// Despublicar una página gratis (sin suscripción real de Mercado Pago detrás)
+// — acción explícita, separada de apiUpdateSite a propósito (ver comentario
+// en server/src/routes/sites.js > POST /:id/unpublish).
+export async function apiUnpublishSite(siteId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión para despublicar tu página.' };
+  return request(`/sites/${siteId}/unpublish`, { method: 'POST', token });
+}
+
 // Elegir/cambiar el subdominio de una página puntual (Dashboard > Configuración).
 export async function apiSetSubdomain(siteId, subdomain) {
   const token = getToken();

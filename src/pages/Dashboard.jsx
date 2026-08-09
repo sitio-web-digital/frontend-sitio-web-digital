@@ -8,7 +8,7 @@ import SupportToast from '../components/support/SupportToast';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify, getTemplateById } from '../data/mockData';
 import { hydrateSite } from '../utils/siteSchema';
-import { apiGetSupportUnread, apiMarkSupportSeen, apiRefreshSubscription } from '../api/client';
+import { apiGetSupportUnread, apiMarkSupportSeen, apiRefreshSubscription, apiUnpublishSite } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const PREVIEW_SECTIONS = [
@@ -48,7 +48,6 @@ export default function Dashboard() {
     updateProfile,
     updateSubdomain,
     setPublished,
-    saveSiteToBackend,
     supportTickets,
     addSupportTicket,
     templates,
@@ -207,7 +206,6 @@ export default function Dashboard() {
             <SubscriptionSection
               pages={pages}
               setPublished={setPublished}
-              saveSiteToBackend={saveSiteToBackend}
               switchSite={switchSite}
               startNewSite={startNewSite}
               cancelSubscription={cancelSubscription}
@@ -511,7 +509,6 @@ function RowButton({ children, onClick, primary = false }) {
 function SubscriptionSection({
   pages,
   setPublished,
-  saveSiteToBackend,
   switchSite,
   startNewSite,
   cancelSubscription,
@@ -557,7 +554,6 @@ function SubscriptionSection({
             key={p.id}
             page={p}
             setPublished={setPublished}
-            saveSiteToBackend={saveSiteToBackend}
             switchSite={switchSite}
             cancelSubscription={cancelSubscription}
             onChanged={onChanged}
@@ -583,7 +579,7 @@ function SubscriptionSection({
   );
 }
 
-function SubscriptionRow({ page, setPublished, saveSiteToBackend, switchSite, cancelSubscription, onChanged, navigate, isFree }) {
+function SubscriptionRow({ page, setPublished, switchSite, cancelSubscription, onChanged, navigate, isFree }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -596,10 +592,19 @@ function SubscriptionRow({ page, setPublished, saveSiteToBackend, switchSite, ca
       // Cuenta de prueba (free_subscriptions, la regala un admin) — nunca
       // hubo una suscripción real de Mercado Pago detrás, alcanza con
       // despublicar. Esta fila puede no ser la que está cargada en el
-      // editor ahora mismo — hay que engancharse a ELLA primero.
+      // editor ahora mismo — hay que engancharse a ELLA primero. El
+      // despublicado pasa por un endpoint dedicado (no por el guardado
+      // general del editor), para no arriesgar que un autoguardado con
+      // estado viejo en memoria pise una suscripción paga (ver
+      // POST /sites/:id/unpublish).
       await switchSite(page.id);
+      const result = await apiUnpublishSite(page.id);
+      if (!result.ok) {
+        setError(result.error || 'No se pudo despublicar la página. Probá de nuevo.');
+        setBusy(false);
+        return;
+      }
       setPublished(false);
-      await saveSiteToBackend({ published: false });
     } else {
       const result = await cancelSubscription(page.id);
       if (!result.ok) {
