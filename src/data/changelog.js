@@ -5,6 +5,18 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.49.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Guía de talles": selector de talle con las medidas exactas de cada uno (busto, cintura, largo, hombro), pensada para indumentaria.' },
+      { type: 'nuevo', text: 'Distribución de Hero "Foto de fondo que rota + riel de miniaturas": varias fotos a pantalla completa con su propio título y texto, con miniaturas al costado para saltar a una puntual.' },
+      { type: 'nuevo', text: 'Distribución de Productos "Con color y talle": selector de color (círculos) y grilla de talles disponibles por prenda, tachados si no hay stock de ese talle.' },
+      { type: 'nuevo', text: 'Distribución de Beneficios "Franja angosta, numerada": para tiras cortas de datos (envío, cuotas, cambios) más discretas que la fila con íconos.' },
+      { type: 'mejora', text: 'La sección de pasos "con foto fija" ahora puede mostrar el número en chico (en vez del número grande difuminado que traía).' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Atelier Norte", para marcas de indumentaria con confección propia y showroom con cita previa.' },
+    ],
+  },
+  {
     version: '1.48.2',
     date: '2026-08-09',
     changes: [

@@ -523,6 +523,8 @@ export default function SitePreview({
                 onUpdateDestacadoEtiqueta={(v) => onSetSectionStyle?.(sec.id, { destacadoEtiqueta: v })}
                 zonas={sec.zonas}
                 onUpdateZonas={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
+                looks={sec.looks ?? []}
+                onUpdateLooks={(looks) => onSetSectionStyle?.(sec.id, { looks })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -1273,6 +1275,30 @@ export default function SitePreview({
                 palette={palette}
               />
             )}
+            {sec.type === 'guia-talles' && (
+              <SeccionGuiaTalles
+                talles={sec.talles ?? []}
+                onUpdate={(talles) => onSetSectionStyle?.(sec.id, { talles })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                activeColor={sec.activeColor}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+              />
+            )}
             {sec.type === 'proceso-taller' && (
               <SeccionProcesoTaller
                 pasos={sec.pasos ?? []}
@@ -1680,6 +1706,7 @@ export default function SitePreview({
                 onUpdate={(pasos) => onSetSectionStyle?.(sec.id, { pasos })}
                 variant={sec.variant}
                 numeroPad={sec.numeroPad}
+                numeroEstilo={sec.numeroEstilo}
                 palette={palette}
                 accent={accent}
                 editable={editable}
@@ -6216,8 +6243,25 @@ function SeccionHero({
   onUpdateDestacadoEtiqueta,
   zonas,
   onUpdateZonas,
+  looks = [],
+  onUpdateLooks,
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
+  // Solo la variante "carrusel" usa este estado, pero se declara siempre acá
+  // arriba (nunca adentro de un `if (variant === ...)`) por las reglas de
+  // hooks. El auto-avance se pausa mientras se edita, para no competir con
+  // el usuario mientras completa los datos de cada look.
+  const [activeLookIndex, setActiveLookIndex] = useState(0);
+  useEffect(() => {
+    if (variant !== 'carrusel' || editable) return;
+    const visibles = looks.filter((l) => !l.oculto);
+    if (visibles.length < 2) return;
+    const id = setInterval(() => {
+      setActiveLookIndex((i) => (i + 1) % visibles.length);
+    }, 5200);
+    return () => clearInterval(id);
+  }, [variant, editable, looks]);
+  const looksCrud = useLocalListCrud(looks, onUpdateLooks);
   const inkHex = palette.inkHex || '#171717';
 
   // useZonasDragDrop se llama siempre (nunca adentro de un `if (variant ===
@@ -6625,6 +6669,203 @@ function SeccionHero({
             etiquetaSuperior={ofertasEtiquetaSuperior}
             velocidad={ofertasVelocidad}
           />
+        </div>
+      </section>
+    );
+  }
+
+  // Foto de fondo a pantalla completa que rota sola entre varios "looks"
+  // (cada uno con su propio texto: temporada, título, descripción), con un
+  // riel angosto de miniaturas al costado para saltar a uno puntual — a
+  // diferencia de "ofertas" (que rota una tarjeta chica al costado del
+  // texto), acá lo que cambia es el fondo Y el texto juntos, a pantalla
+  // completa. Pensada para catálogos de indumentaria/moda con varias
+  // colecciones o líneas de producto.
+  if (variant === 'carrusel') {
+    const looksVisibles = editable ? looks : looks.filter((l) => !l.oculto);
+    const activeIdx = looksVisibles.length ? activeLookIndex % looksVisibles.length : 0;
+    const activeLook = looksVisibles[activeIdx];
+    const { duplicate, toggleOculto, dnd } = looksCrud;
+    const updateLook = (id, patch) => onUpdateLooks?.(looks.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    const removeLook = (id) => onUpdateLooks?.(looks.filter((l) => l.id !== id));
+    const addLook = () =>
+      onUpdateLooks?.([...looks, { id: `look-${Date.now()}`, season: '', titulo: 'Nuevo look', desc: '' }]);
+    const handleLookImagen = (id) => async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (file && (await validateImageFile(file, 'hero'))) updateLook(id, { imagen: await uploadImage(file) });
+    };
+    return (
+      <section className="relative overflow-hidden" style={{ background: palette.ink }}>
+        <div className="grid grid-cols-[1fr_72px] @lg:grid-cols-[1fr_96px] min-h-[440px] @lg:min-h-[620px]">
+          <div className="relative overflow-hidden">
+            {looksVisibles.length === 0 && !editable ? null : (
+              <>
+                {looksVisibles.map((l, i) => (
+                  <img
+                    key={l.id}
+                    src={l.imagen}
+                    alt={l.titulo || ''}
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+                    style={{ opacity: i === activeIdx ? 1 : 0, objectPosition: 'center 28%' }}
+                  />
+                ))}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      'linear-gradient(to right, rgba(0,0,0,.8) 0%, rgba(0,0,0,.62) 48%, rgba(0,0,0,.2) 82%, rgba(0,0,0,.4) 100%)',
+                  }}
+                />
+              </>
+            )}
+            <div className="relative h-full flex flex-col justify-end p-6 @lg:p-12">
+              {activeLook ? (
+                <>
+                  <Editable
+                    editable={editable}
+                    value={activeLook.season}
+                    onChange={(v) => updateLook(activeLook.id, { season: v })}
+                    tag="span"
+                    block
+                    placeholder="Temporada (ej: Otoño / Invierno 2026)"
+                    style={{ color: '#8fa2ff' }}
+                    className="font-mono text-xs uppercase tracking-[0.2em] mb-3"
+                    maxLength={40}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={activeLook.titulo}
+                    onChange={(v) => updateLook(activeLook.id, { titulo: v })}
+                    tag="h1"
+                    block
+                    placeholder="Título del look"
+                    style={{ color: '#ffffff' }}
+                    className="font-serif font-bold uppercase text-4xl @lg:text-7xl leading-[0.9] tracking-tight mb-4 max-w-[14ch] text-balance"
+                    maxLength={40}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={activeLook.desc}
+                    onChange={(v) => updateLook(activeLook.id, { desc: v })}
+                    tag="p"
+                    multiline
+                    block
+                    placeholder="Descripción del look"
+                    style={{ color: 'rgba(255,255,255,0.92)' }}
+                    className="text-base @lg:text-lg leading-relaxed max-w-md mb-7 text-balance"
+                    maxLength={200}
+                  />
+                  <div className="flex flex-wrap gap-3">
+                    {HERO_BUTTON_SLOTS.map((slot, idx) => {
+                      const v = botonesData[slot.key];
+                      const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
+                      if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+                      return (
+                        <ButtonObject
+                          key={slot.key}
+                          value={v}
+                          onChange={(patch) =>
+                            onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
+                          }
+                          editable={editable}
+                          seccionesDisponibles={seccionesDisponibles}
+                          nombreNegocio={nombreNegocio}
+                          defaultFuncion={slot.defaultFuncion}
+                          defaultLabel={slot.defaultLabel}
+                          defaultColor={idx === 0 ? palette.bg || '#ffffff' : '#ffffff'}
+                          defaultTarget={defaultTarget}
+                          outline={idx > 0}
+                        />
+                      );
+                    })}
+                  </div>
+                  {editable && (
+                    <label
+                      className="inline-flex items-center gap-1.5 mt-5 bg-black/40 hover:bg-black/60 transition-colors text-white text-xs font-semibold px-3 py-1.5 cursor-pointer self-start"
+                      title="Cambiar la foto de este look"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" /> {activeLook.imagen ? 'Cambiar foto' : 'Agregar foto'}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLookImagen(activeLook.id)} />
+                    </label>
+                  )}
+                </>
+              ) : (
+                editable && (
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    Agregá el primer look con el botón "+" del riel de la derecha.
+                  </p>
+                )
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col border-l" style={{ borderColor: 'rgba(255,255,255,0.16)' }}>
+            {looksVisibles.map((l, i, arr) => (
+              <div
+                key={l.id}
+                ref={dnd.registerItemRef(l.id)}
+                className={`relative flex-1 border-b overflow-hidden ${l.oculto ? 'opacity-40' : ''} ${
+                  dnd.dragId === l.id ? 'opacity-30' : ''
+                }`}
+                style={{ borderColor: 'rgba(255,255,255,0.16)' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveLookIndex(i)}
+                  className="absolute inset-0 w-full h-full"
+                  aria-label={l.titulo || `Look ${i + 1}`}
+                >
+                  {l.imagen && (
+                    <img
+                      src={l.imagen}
+                      alt=""
+                      className="w-full h-full object-cover transition-opacity"
+                      style={{ opacity: i === activeIdx ? 1 : 0.5 }}
+                    />
+                  )}
+                  <div
+                    className="absolute inset-0 transition-colors"
+                    style={{ background: i === activeIdx ? 'rgba(37,64,217,0.28)' : 'rgba(0,0,0,0.5)' }}
+                  />
+                  <span
+                    className="absolute top-2 left-2 font-mono text-[10px]"
+                    style={{ color: i === activeIdx ? '#ffffff' : 'rgba(255,255,255,0.6)' }}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                </button>
+                {editable && (
+                  <div className="absolute top-1 right-1 z-10">
+                    <ItemToolbar
+                      variant="inline"
+                      color="#ffffff"
+                      oculto={l.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => looksCrud.move(l.id, -1)}
+                      onMoveDown={() => looksCrud.move(l.id, 1)}
+                      onDuplicate={() => duplicate(l.id)}
+                      onToggleOculto={() => toggleOculto(l.id)}
+                      onRemove={() => removeLook(l.id)}
+                      onDragStart={dnd.startDrag(l)}
+                      removeLabel={`Quitar ${l.titulo || 'look'}`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addLook}
+                className="flex-1 min-h-[64px] border-b-2 border-dashed flex items-center justify-center"
+                style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.6)' }}
+                aria-label="Agregar look"
+              >
+                <PlusIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       </section>
     );
@@ -8390,6 +8631,7 @@ function SeccionProductos({
   const [duracion, setDuracion] = useState('');
   const [categoria, setCategoria] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
+  const [productoColorActivo, setProductoColorActivo] = useState({});
   const btnColor = buttonColor || palette.inkHex || '#171717';
 
   const submit = (e) => {
@@ -9550,6 +9792,180 @@ function SeccionProductos({
             className="text-xs mt-4"
             maxLength={140}
           />
+        </div>
+      ) : variant === 'moda' ? (
+        <div className="max-w-6xl mx-auto">
+          {categorias.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {['Todos', ...categorias].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategoriaFiltro(c)}
+                  className="font-mono text-xs uppercase tracking-wide px-3.5 py-2 border transition-colors"
+                  style={
+                    categoriaFiltro === c
+                      ? { background: palette.inkHex || '#171717', borderColor: palette.inkHex || '#171717', color: palette.bg }
+                      : { borderColor: palette.line, color: palette.inkSoft }
+                  }
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 @lg:grid-cols-3 gap-x-6 gap-y-10">
+            {productosFiltrados.map((p) => {
+              const colores = p.colores ?? [];
+              const talles = p.talles ?? {};
+              const talleKeys = ['S', 'M', 'L', 'XL'];
+              const colorActivoIdx = productoColorActivo[p.id] ?? 0;
+              const colorActivo = colores[colorActivoIdx];
+              return (
+                <div key={p.id} className="relative group/moda">
+                  {editable && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <ItemToolbar
+                        variant="overlay"
+                        oculto={p.oculto}
+                        onDuplicate={() => onDuplicateProducto?.(p.id)}
+                        onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                        onRemove={() => onRemoveProducto?.(p.id)}
+                        onDragStart={productosDnd.startDrag(p)}
+                        removeLabel={`Quitar ${p.nombre}`}
+                      />
+                    </div>
+                  )}
+                  <div className="relative overflow-hidden mb-3.5">
+                    <MediaCarousel
+                      images={p.imagenes}
+                      editable={editable}
+                      onAddImages={async (files) => {
+                        const urls = await Promise.all(files.map(uploadImage));
+                        urls.forEach((url) => onAddProductoImagen?.(p.id, url));
+                      }}
+                      onRemoveImage={(imgIdx) => onRemoveProductoImagen?.(p.id, imgIdx)}
+                      mediaVariant={p.mediaVariant}
+                      onChangeMediaVariant={(v) => onUpdateProducto?.(p.id, { mediaVariant: v })}
+                      limitKey="productos"
+                      aspect="aspect-[3/4]"
+                    />
+                    {p.etiqueta && (
+                      <span
+                        className="absolute top-2.5 left-2.5 font-mono text-[10px] uppercase tracking-wide px-2.5 py-1 text-white pointer-events-none"
+                        style={{ background: palette.inkHex || '#171717' }}
+                      >
+                        {p.etiqueta}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3 mb-1">
+                    <Editable
+                      editable={editable}
+                      value={p.nombre}
+                      onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                      tag="span"
+                      styleKey={`producto.${p.id}.nombre`}
+                      placeholder="Nombre"
+                      style={{ color: palette.ink }}
+                      className="font-serif font-semibold uppercase text-lg"
+                      maxLength={40}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.precio}
+                      onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                      tag="span"
+                      type="number"
+                      styleKey={`producto.${p.id}.precio`}
+                      format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                      style={{ color: accent }}
+                      className="font-mono text-sm whitespace-nowrap"
+                    />
+                  </div>
+                  <Editable
+                    editable={editable}
+                    value={p.desc}
+                    onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                    tag="p"
+                    block
+                    multiline
+                    styleKey={`producto.${p.id}.desc`}
+                    placeholder="Tela / composición"
+                    style={{ color: palette.inkSoft }}
+                    className="text-sm leading-relaxed mb-3"
+                  />
+                  {(colores.length > 0 || editable) && (
+                    <div className="flex items-center gap-3 flex-wrap mb-2.5">
+                      <div className="flex gap-1.5">
+                        {colores.map((c, i) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            title={c.nombre}
+                            onClick={() => setProductoColorActivo((m) => ({ ...m, [p.id]: i }))}
+                            className="w-[17px] h-[17px] rounded-full transition-shadow"
+                            style={{
+                              background: c.hex,
+                              boxShadow: `0 0 0 1px ${i === colorActivoIdx ? accent : 'rgba(0,0,0,0.15)'}, inset 0 0 0 1px rgba(0,0,0,0.12)`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {colorActivo && (
+                        <span className="font-mono text-xs" style={{ color: palette.inkSoft }}>
+                          {colorActivo.nombre}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {(Object.keys(talles).length > 0 || editable) && (
+                    <div className="flex gap-1.5">
+                      {talleKeys.map((tk) => (
+                        <span
+                          key={tk}
+                          className="font-mono text-xs px-2 py-1 border"
+                          style={{
+                            borderColor: talles[tk] ? palette.inkSoft : palette.line,
+                            color: talles[tk] ? palette.ink : palette.line,
+                            textDecoration: talles[tk] ? 'none' : 'line-through',
+                          }}
+                        >
+                          {tk}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {buttonSlotVisible(editable, p.boton, 'whatsapp', whatsapp) && (
+                    <ButtonObject
+                      value={p.boton}
+                      onChange={(patch) => onUpdateProducto?.(p.id, { boton: { ...(p.boton || {}), ...patch } })}
+                      editable={editable}
+                      seccionesDisponibles={seccionesDisponibles}
+                      nombreNegocio={nombreNegocio}
+                      defaultFuncion="whatsapp"
+                      defaultLabel="Consultar"
+                      defaultColor={palette.inkHex || '#171717'}
+                      defaultTarget={whatsapp}
+                      waMessage={p.nombre ? `Hola! Quiero consultar por "${p.nombre}".` : undefined}
+                      className="mt-3 text-xs"
+                      outline
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {editable && (
+            <button
+              type="button"
+              onClick={() => onAddProducto?.({ nombre: 'Prenda nueva', precio: 0, categoria: '' })}
+              className="mt-6 border-2 border-dashed w-full py-5 flex items-center justify-center gap-1.5 text-sm font-semibold"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar prenda
+            </button>
+          )}
         </div>
       ) : (
         <div className="max-w-5xl mx-auto">
@@ -17793,6 +18209,7 @@ function SeccionPasos({
   notaTexto,
   onUpdateNotaTexto,
   numeroPad = false,
+  numeroEstilo = 'grande',
 }) {
   const update = (id, patch) => onUpdate?.(pasos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const remove = (id) => onUpdate?.(pasos.filter((p) => p.id !== id));
@@ -17886,12 +18303,18 @@ function SeccionPasos({
                   }`}
                   style={{ gridTemplateColumns: 'auto 1fr', borderColor: palette.line }}
                 >
-                  <div
-                    className="font-serif font-bold text-4xl leading-none min-w-[2.5rem]"
-                    style={{ color: accent, opacity: 0.4 }}
-                  >
-                    {String(i + 1).padStart(2, '0')}
-                  </div>
+                  {numeroEstilo === 'chico' ? (
+                    <div className="font-mono text-xs pt-1 min-w-[1.75rem]" style={{ color: accent }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
+                  ) : (
+                    <div
+                      className="font-serif font-bold text-4xl leading-none min-w-[2.5rem]"
+                      style={{ color: accent, opacity: 0.4 }}
+                    >
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
+                  )}
                   <div>
                     {editable && (
                       <div className="float-right">
@@ -17950,6 +18373,7 @@ function SeccionPasos({
                 </button>
               )}
             </div>
+            {(specs.length > 0 || editable) && (
             <div className="grid grid-cols-2 @lg:grid-cols-4 gap-5 mt-8">
               {specs.map((s) => (
                 <div key={s.id} className="relative border-t pt-3" style={{ borderColor: accent }}>
@@ -17999,6 +18423,7 @@ function SeccionPasos({
                 </button>
               )}
             </div>
+            )}
           </div>
         </div>
       </section>
@@ -19177,6 +19602,304 @@ function SeccionEnviosTabs({
   );
 }
 
+// Guía de talles: un selector de talle a la izquierda (S/M/L/XL...) y, a la
+// derecha, un panel con las medidas exactas del talle elegido (en cm, con
+// una pista de cómo tomar cada medida) — para indumentaria, donde "elegí tu
+// talle" sin más datos deja al comprador adivinando. Mismo patrón de tabs
+// con estado local que envios-tabs (activeTalleId + sync si la lista
+// cambia), pero acá cada "tab" trae además su propia lista de medidas
+// (un tercer nivel de listas anidadas: talles → medidas de ESE talle).
+function SeccionGuiaTalles({
+  talles = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  activeColor,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+  seccionesDisponibles = [],
+}) {
+  const talleAccent = activeColor || accent;
+  const [activeTalleId, setActiveTalleId] = useState(talles[0]?.id ?? null);
+  useEffect(() => {
+    if (!talles.some((t) => t.id === activeTalleId)) setActiveTalleId(talles[0]?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [talles]);
+
+  const { move, toggleOculto, dnd } = useLocalListCrud(talles, onUpdate);
+  const tallesVisibles = editable ? talles : talles.filter((t) => !t.oculto);
+  const updateTalle = (id, patch) => onUpdate?.(talles.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const addTalle = () =>
+    onUpdate?.([...talles, { id: `talle-${Date.now()}`, label: 'Talle', equiv: '', nota: '', medidas: [] }]);
+  const removeTalle = (id) => onUpdate?.(talles.filter((t) => t.id !== id));
+
+  const activeTalle = talles.find((t) => t.id === activeTalleId);
+  const medidas = activeTalle?.medidas ?? [];
+  const updateMedidas = (next) => activeTalle && updateTalle(activeTalle.id, { medidas: next });
+  const { duplicate: duplicateMedida, toggleOculto: toggleMedidaOculto, dnd: medidaDnd } = useLocalListCrud(medidas, updateMedidas);
+  const medidasVisibles = editable ? medidas : medidas.filter((m) => !m.oculto);
+  const updateMedida = (id, patch) => updateMedidas(medidas.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const addMedida = () =>
+    updateMedidas([...medidas, { id: `medida-${Date.now()}`, label: 'Medida', how: '', valor: '' }]);
+  const removeMedida = (id) => updateMedidas(medidas.filter((m) => m.id !== id));
+
+  if (tallesVisibles.length === 0 && !editable) return null;
+
+  const ink = textColor || 'rgba(255,255,255,0.5)';
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="max-w-lg mb-9">
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="guiatalles.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ color: talleAccent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Guía de talles'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="guiatalles.titulo"
+            style={{ color: headingColor || '#ffffff' }}
+            className="font-serif text-2xl @lg:text-3xl mb-3.5"
+            maxLength={70}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            styleKey="guiatalles.descripcion"
+            placeholder="Contexto breve sobre cómo usar la guía"
+            style={{ color: ink }}
+            className="text-sm leading-relaxed"
+            maxLength={200}
+          />
+        </div>
+
+        <div className="grid @lg:grid-cols-[0.75fr_1.25fr] gap-8 @lg:gap-10 items-start">
+          <div className="flex flex-col gap-2">
+            {tallesVisibles.map((t, i, arr) => (
+              <div
+                key={t.id}
+                ref={dnd.registerItemRef(t.id)}
+                className={`relative ${t.oculto ? 'opacity-40' : ''} ${dnd.dragId === t.id ? 'opacity-30' : ''}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveTalleId(t.id)}
+                  className="w-full border px-4 @lg:px-5 py-3.5 flex items-center justify-between gap-4 transition-all"
+                  style={
+                    activeTalleId === t.id
+                      ? { borderColor: talleAccent, background: `${talleAccent}1f` }
+                      : { borderColor: 'rgba(255,255,255,0.2)' }
+                  }
+                >
+                  <Editable
+                    editable={editable}
+                    value={t.label}
+                    onChange={(v) => updateTalle(t.id, { label: v })}
+                    tag="span"
+                    styleKey={`talle.${t.id}.label`}
+                    placeholder="S"
+                    style={{ color: activeTalleId === t.id ? talleAccent : '#ffffff' }}
+                    className="font-serif font-bold text-xl @lg:text-2xl"
+                    maxLength={10}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={t.equiv}
+                    onChange={(v) => updateTalle(t.id, { equiv: v })}
+                    tag="span"
+                    styleKey={`talle.${t.id}.equiv`}
+                    placeholder="Equivalencia (ej: Talle 1 · 38)"
+                    style={{ color: activeTalleId === t.id ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.42)' }}
+                    className="font-mono text-xs text-right"
+                    maxLength={30}
+                  />
+                </button>
+                {editable && (
+                  <div className="absolute -top-2 -right-2">
+                    <ItemToolbar
+                      variant="overlay"
+                      oculto={t.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(t.id, -1)}
+                      onMoveDown={() => move(t.id, 1)}
+                      onToggleOculto={() => toggleOculto(t.id)}
+                      onRemove={() => removeTalle(t.id)}
+                      onDragStart={dnd.startDrag(t)}
+                      removeLabel={`Quitar talle ${t.label}`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addTalle}
+                className="border-2 border-dashed px-4 py-3.5 flex items-center justify-center gap-1.5 text-sm font-semibold"
+                style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.6)' }}
+              >
+                <PlusIcon className="w-4 h-4" /> Agregar talle
+              </button>
+            )}
+          </div>
+
+          <div className="border" style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.04)' }}>
+            <div
+              className="px-5 @lg:px-6 py-4 border-b flex items-baseline justify-between gap-4"
+              style={{ borderColor: 'rgba(255,255,255,0.14)' }}
+            >
+              <span
+                className="font-mono text-xs uppercase tracking-wide"
+                style={{ color: 'rgba(255,255,255,0.5)' }}
+              >
+                Medidas del talle
+              </span>
+              <span className="font-serif font-bold text-xl" style={{ color: talleAccent }}>
+                {activeTalle?.label}
+              </span>
+            </div>
+            <div className="px-5 @lg:px-6 py-2">
+              {medidasVisibles.length === 0 && !editable ? (
+                <p className="text-xs py-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Todavía no cargaste medidas para este talle.
+                </p>
+              ) : (
+                medidasVisibles.map((m) => (
+                  <div
+                    key={m.id}
+                    ref={medidaDnd.registerItemRef(m.id)}
+                    className={`relative grid grid-cols-[1fr_auto_auto] gap-4 items-center py-3.5 border-b ${
+                      m.oculto ? 'opacity-40' : ''
+                    } ${medidaDnd.dragId === m.id ? 'opacity-30' : ''}`}
+                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                  >
+                    <Editable
+                      editable={editable}
+                      value={m.label}
+                      onChange={(v) => updateMedida(m.id, { label: v })}
+                      tag="span"
+                      styleKey={`medida.${m.id}.label`}
+                      placeholder="Busto"
+                      style={{ color: '#ffffff' }}
+                      className="text-sm"
+                      maxLength={24}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={m.how}
+                      onChange={(v) => updateMedida(m.id, { how: v })}
+                      tag="span"
+                      styleKey={`medida.${m.id}.how`}
+                      placeholder="Cómo medirla"
+                      style={{ color: 'rgba(255,255,255,0.42)' }}
+                      className="font-mono text-xs hidden @lg:inline"
+                      maxLength={40}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Editable
+                        editable={editable}
+                        value={m.valor}
+                        onChange={(v) => updateMedida(m.id, { valor: v })}
+                        tag="span"
+                        styleKey={`medida.${m.id}.valor`}
+                        placeholder="96 cm"
+                        style={{ color: talleAccent }}
+                        className="font-mono text-base whitespace-nowrap"
+                        maxLength={12}
+                      />
+                      {editable && (
+                        <ItemToolbar
+                          variant="inline"
+                          color="#ffffff"
+                          oculto={m.oculto}
+                          onDuplicate={() => duplicateMedida(m.id)}
+                          onToggleOculto={() => toggleMedidaOculto(m.id)}
+                          onRemove={() => removeMedida(m.id)}
+                          onDragStart={medidaDnd.startDrag(m)}
+                          removeLabel={`Quitar ${m.label}`}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addMedida}
+                  className="w-full py-3 flex items-center justify-center gap-1.5 text-xs font-semibold"
+                  style={{ color: 'rgba(255,255,255,0.6)' }}
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Agregar medida
+                </button>
+              )}
+            </div>
+            {activeTalle && (
+              <div
+                className="px-5 @lg:px-6 py-4 border-t flex flex-wrap items-center justify-between gap-4"
+                style={{ borderColor: 'rgba(255,255,255,0.14)' }}
+              >
+                <Editable
+                  editable={editable}
+                  value={activeTalle.nota}
+                  onChange={(v) => updateTalle(activeTalle.id, { nota: v })}
+                  tag="p"
+                  block
+                  multiline
+                  styleKey={`talle.${activeTalle.id}.nota`}
+                  placeholder="Nota breve para este talle (opcional)"
+                  style={{ color: 'rgba(255,255,255,0.45)' }}
+                  className="font-mono text-xs leading-relaxed max-w-sm"
+                  maxLength={160}
+                />
+                <ButtonObject
+                  value={activeTalle.boton}
+                  onChange={(patch) => updateTalle(activeTalle.id, { boton: { ...(activeTalle.boton || {}), ...patch } })}
+                  editable={editable}
+                  seccionesDisponibles={seccionesDisponibles}
+                  nombreNegocio={nombreNegocio}
+                  defaultFuncion="whatsapp"
+                  defaultLabel="Consultar por talle →"
+                  defaultColor={talleAccent}
+                  defaultTarget={whatsapp}
+                  waMessage={activeTalle.label ? `Hola! Tengo una consulta sobre el talle ${activeTalle.label}.` : undefined}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const FINANCIACION_BUTTON_SLOTS = [{ key: 'primary', defaultFuncion: 'whatsapp', defaultLabel: 'Coordinar financiación →' }];
 const FINANCIACION_PRECIOS_DEFAULT = [15000000, 20000000, 25000000, 30000000];
 const FINANCIACION_PLANES_DEFAULT = [
@@ -19595,6 +20318,74 @@ function SeccionBeneficios({
             </button>
           )}
         </div>
+        )}
+      </section>
+    );
+  }
+
+  // "franja" — una línea por dato, con el número de orden en vez de ícono
+  // (no editable, se recalcula solo según la posición) y sin descripción
+  // aparte: todo el texto entra en una sola línea. Pensada como tira angosta
+  // de datos rápidos (envío, cuotas, cambios) arriba o abajo del todo, más
+  // discreta que "fila" (que sí lleva ícono + título + descripción).
+  if (variant === 'franja') {
+    return (
+      <section className="border-t border-b py-4 @lg:py-5" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+        {visibles.length === 0 && !editable ? null : (
+          <div className="max-w-5xl mx-auto px-6 @lg:px-10 grid grid-cols-2 @lg:grid-cols-4 gap-x-6 gap-y-3">
+            {visibles.map((it, i, arr) => (
+              <div
+                key={it.id}
+                ref={dnd.registerItemRef(it.id)}
+                className={`relative flex items-baseline gap-2.5 ${it.oculto ? 'opacity-40' : ''} ${
+                  dnd.dragId === it.id ? 'opacity-30' : ''
+                }`}
+              >
+                {editable && (
+                  <div className="absolute -top-2 right-0">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={it.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(it.id, -1)}
+                      onMoveDown={() => move(it.id, 1)}
+                      onDuplicate={() => duplicate(it.id)}
+                      onToggleOculto={() => toggleOculto(it.id)}
+                      onRemove={() => remove(it.id)}
+                      onDragStart={dnd.startDrag(it)}
+                      removeLabel={`Quitar ${it.titulo}`}
+                    />
+                  </div>
+                )}
+                <span className="font-mono text-xs shrink-0" style={{ color: accent }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <Editable
+                  editable={editable}
+                  value={it.titulo}
+                  onChange={(v) => update(it.id, { titulo: v })}
+                  tag="span"
+                  styleKey={`beneficio.${it.id}.titulo`}
+                  placeholder="Dato (ej: Envío gratis desde $120.000)"
+                  style={{ color: palette.inkSoft }}
+                  className="text-sm"
+                  maxLength={60}
+                />
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                style={{ color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" /> Agregar dato
+              </button>
+            )}
+          </div>
         )}
       </section>
     );

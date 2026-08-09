@@ -923,6 +923,11 @@ export const SECCIONES_CATALOGO = [
     desc: 'Costo, demora y seguimiento organizados en pestañas — envío, retiro y formas de pago.',
   },
   {
+    id: 'guia-talles',
+    label: 'Guía de talles',
+    desc: 'Selector de talle con las medidas exactas de cada uno (busto, cintura, largo...), para indumentaria.',
+  },
+  {
     id: 'financiacion',
     label: 'Simulador de cuotas',
     desc: 'Un simulador de financiación: elegí un precio y mostrá la cuota estimada en distintos plazos.',
@@ -1200,6 +1205,7 @@ export const SECTION_VARIANTS = {
     { id: 'split', label: 'Imagen + texto', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'minimal', label: 'Minimalista', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
     { id: 'dividido', label: 'Título grande, texto y botones apilados, sin foto', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
+    { id: 'carrusel', label: 'Foto de fondo que rota + riel de miniaturas', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
@@ -1240,6 +1246,7 @@ export const SECTION_VARIANTS = {
     { id: 'bento', label: 'Destacado + grilla', skeleton: 'productosBento', group: 'Productos' },
     { id: 'destacada', label: 'Pieza destacada + categorías', skeleton: 'productosBento', group: 'Productos' },
     { id: 'catalogo', label: 'Catálogo con filtro', skeleton: 'productosCatalogo', group: 'Productos' },
+    { id: 'moda', label: 'Con color y talle', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
   ],
@@ -1274,10 +1281,12 @@ export const SECTION_VARIANTS = {
   areas: [{ id: 'lista-detalle', label: 'Lista + detalle', skeleton: 'areasListaDetalle' }],
   pagos: [{ id: 'fila', label: 'Fila de badges', skeleton: 'pagosFila' }],
   'envios-tabs': [{ id: 'tabs', label: 'Pestañas con datos', skeleton: 'pagosFila' }],
+  'guia-talles': [{ id: 'tabs', label: 'Selector + medidas', skeleton: 'pagosFila' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
   beneficios: [
     { id: 'fila', label: 'Fila con íconos', skeleton: 'beneficiosFila' },
     { id: 'grid', label: 'Tarjetas en grilla', skeleton: 'beneficiosGrid' },
+    { id: 'franja', label: 'Franja angosta, numerada', skeleton: 'beneficiosFila' },
   ],
   marquee: [{ id: 'scroll', label: 'Texto en movimiento', skeleton: 'marqueeScroll' }],
   series: [
@@ -1372,6 +1381,22 @@ export const SECTION_PREVIEW_DATA = {
         ],
       },
       { id: 'p2', label: 'Retiro en el local', stats: [] },
+    ],
+  },
+  'guia-talles': {
+    talles: [
+      {
+        id: 'p1',
+        label: 'S',
+        equiv: 'Talle 1',
+        nota: 'Calce entallado.',
+        medidas: [
+          { id: 'm1', label: 'Busto', how: 'De axila a axila ×2', valor: '96 cm' },
+          { id: 'm2', label: 'Cintura', how: 'En la parte más angosta', valor: '78 cm' },
+        ],
+      },
+      { id: 'p2', label: 'M', equiv: 'Talle 2', nota: '', medidas: [] },
+      { id: 'p3', label: 'L', equiv: 'Talle 3', nota: '', medidas: [] },
     ],
   },
   financiacion: {},
