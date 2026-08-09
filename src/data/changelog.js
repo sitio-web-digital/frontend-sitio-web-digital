@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.7',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Bug grave: al armar una página por primera vez, si dos guardados se disparaban casi al mismo tiempo (el autoguardado del editor y el guardado al elegir el subdominio en Checkout), cada uno podía crear su propia fila — resultado, una página duplicada, huérfana y sin subdominio dando vueltas en el Dashboard. Ahora solo se puede crear una vez: el segundo guardado se engancha a la misma creación en vez de arrancar la suya.' },
+    ],
+  },
+  {
     version: '1.46.6',
     date: '2026-08-08',
     changes: [

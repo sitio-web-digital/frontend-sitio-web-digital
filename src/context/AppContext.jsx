@@ -145,6 +145,29 @@ export function AppProvider({ children }) {
   // que el dueño elija entre las suyas propias.
   const [mySites, setMySites] = useState([]);
   const [activeSiteId, setActiveSiteId] = useState(null);
+  // Mutex para POST /sites: hay dos caminos que pueden intentar crear la
+  // página todavía sin id (el autoguardado debounced de abajo y el guardado
+  // explícito que hace Checkout.jsx al asignar subdominio) — sin esto, si
+  // los dos disparan mientras activeSiteId sigue en null, cada uno crea su
+  // propia fila y queda una página duplicada, huérfana y sin subdominio
+  // (bug real, confirmado en vivo el 2026-08-09). El segundo que llega
+  // espera la MISMA creación en vuelo en vez de arrancar la suya.
+  const pendingSiteCreateRef = useRef(null);
+  // El que "se sube" a una creación ya en vuelo (en vez de arrancarla) no
+  // tiene forma de saber si su propio `json` (puede ser distinto al que
+  // arrancó la creación — otro snapshot, otro momento) quedó guardado; un
+  // apiUpdateSite de más después no rompe nada, y garantiza que su
+  // contenido no se pierda pase lo que pase.
+  const createOrJoinSite = async (json) => {
+    if (!pendingSiteCreateRef.current) {
+      pendingSiteCreateRef.current = apiCreateSite(json).finally(() => {
+        pendingSiteCreateRef.current = null;
+      });
+    }
+    const result = await pendingSiteCreateRef.current;
+    if (result.ok) await apiUpdateSite(result.id, json);
+    return result;
+  };
   // Plantillas/rubros creados por el admin (Admin > Plantillas) — se
   // combinan con los de fábrica (TEMPLATES/RUBROS) más abajo, así el resto
   // de la app (quiz, galería, editor) los trata exactamente igual sin tener
@@ -310,7 +333,10 @@ export function AppProvider({ children }) {
         } else {
           // Todavía ninguna página creada para esta cuenta (recién viniendo
           // del quiz) — el primer autoguardado es el que la crea de verdad.
-          const result = await apiCreateSite(json);
+          // createOrJoinSite (no apiCreateSite directo) evita crear una
+          // segunda fila si Checkout.jsx dispara su propio guardado casi al
+          // mismo tiempo (ver el comentario en pendingSiteCreateRef).
+          const result = await createOrJoinSite(json);
           if (result.ok) {
             setActiveSiteId(result.id);
             try {
@@ -1175,7 +1201,10 @@ export function AppProvider({ children }) {
       return { ...result, id: activeSiteId };
     }
     // Todavía ninguna página propia cargada — este guardado la crea.
-    const result = await apiCreateSite(json);
+    // createOrJoinSite (no apiCreateSite directo) evita crear una segunda
+    // fila si el autoguardado debounced de arriba dispara casi al mismo
+    // tiempo (ver el comentario en pendingSiteCreateRef).
+    const result = await createOrJoinSite(json);
     if (result.ok) {
       setActiveSiteId(result.id);
       try {
