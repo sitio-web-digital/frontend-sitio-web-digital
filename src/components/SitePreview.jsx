@@ -1256,6 +1256,22 @@ export default function SitePreview({
                 palette={palette}
               />
             )}
+            {sec.type === 'envios-tabs' && (
+              <SeccionEnviosTabs
+                tabs={sec.tabs ?? []}
+                onUpdate={(tabs) => onSetSectionStyle?.(sec.id, { tabs })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
             {sec.type === 'proceso-taller' && (
               <SeccionProcesoTaller
                 pasos={sec.pasos ?? []}
@@ -1476,6 +1492,7 @@ export default function SitePreview({
                 variant={sec.variant}
                 titulo={sec.contactoTitulo}
                 subtitulo={sec.contactoSubtitulo}
+                tituloPrincipal={sec.contactoTituloPrincipal}
                 placeholderNombre={sec.contactoPlaceholderNombre}
                 placeholderEmail={sec.contactoPlaceholderEmail}
                 placeholderMensaje={sec.contactoPlaceholderMensaje}
@@ -1656,6 +1673,7 @@ export default function SitePreview({
                 pasos={sec.pasos ?? []}
                 onUpdate={(pasos) => onSetSectionStyle?.(sec.id, { pasos })}
                 variant={sec.variant}
+                numeroPad={sec.numeroPad}
                 palette={palette}
                 accent={accent}
                 editable={editable}
@@ -16177,6 +16195,7 @@ function SeccionContacto({
   variant = 'centrado',
   titulo,
   subtitulo,
+  tituloPrincipal,
   placeholderNombre,
   placeholderEmail,
   placeholderMensaje,
@@ -16384,6 +16403,35 @@ function SeccionContacto({
         style={{ background: bgColor || palette.bg, borderColor: palette.line }}
       >
         <div>
+          {(editable || tituloPrincipal) && (
+            <>
+              <Editable
+                editable={editable}
+                value={tituloPrincipal}
+                onChange={set('contactoTituloPrincipal')}
+                tag="h2"
+                block
+                styleKey="contacto.tituloPrincipal"
+                placeholder="Título grande (opcional)"
+                style={{ color: headingColor || palette.ink }}
+                className="font-serif text-2xl @lg:text-3xl mb-2"
+                maxLength={70}
+              />
+              <Editable
+                editable={editable}
+                value={subtitulo}
+                onChange={set('contactoSubtitulo')}
+                tag="p"
+                block
+                multiline
+                styleKey="contacto.subtitulo"
+                placeholder="Párrafo debajo del título (opcional)"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed mb-6"
+                maxLength={220}
+              />
+            </>
+          )}
           <Editable
             editable={editable}
             value={titulo ?? 'Encontranos'}
@@ -17674,6 +17722,7 @@ function SeccionPasos({
   onUpdateNotaTitulo,
   notaTexto,
   onUpdateNotaTexto,
+  numeroPad = false,
 }) {
   const update = (id, patch) => onUpdate?.(pasos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const remove = (id) => onUpdate?.(pasos.filter((p) => p.id !== id));
@@ -18002,7 +18051,7 @@ function SeccionPasos({
                   className="w-9 h-9 shrink-0 border flex items-center justify-center font-mono font-bold text-sm"
                   style={{ borderColor: accent, color: accent }}
                 >
-                  {i + 1}
+                  {numeroPad ? String(i + 1).padStart(2, '0') : i + 1}
                 </div>
                 <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.15)' }} />
                 {editable && (
@@ -18709,6 +18758,218 @@ function SeccionPagos({
             </button>
           )}
         </div>
+      </div>
+    </section>
+  );
+}
+
+// Envío/retiro/pagos en pestañas: cada pestaña (Envío a domicilio, Retiro
+// en el local, Formas de pago...) muestra su propia grilla de datos
+// (costo, demora, seguimiento — lo que tenga sentido para esa pestaña).
+// Dos listas editables anidadas: las pestañas en sí (useLocalListCrud
+// sobre `tabs`) y, adentro de la pestaña seleccionada, sus datos
+// (useLocalListCrud aparte sobre `tabs[i].stats`, escribiendo de vuelta
+// dentro de esa pestaña puntual del array `tabs`). `activeTabId` es estado
+// local del componente — no depende del estado global del sitio, así que
+// tanto en el editor como en la página publicada clickear una pestaña
+// simplemente cambia qué grilla se ve, sin autoguardar nada.
+function SeccionEnviosTabs({
+  tabs = [],
+  onUpdate,
+  titulo,
+  onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  palette = {},
+  accent,
+}) {
+  const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? null);
+  useEffect(() => {
+    if (!tabs.some((t) => t.id === activeTabId)) setActiveTabId(tabs[0]?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs]);
+
+  const { move, toggleOculto, dnd } = useLocalListCrud(tabs, onUpdate);
+  const tabsVisibles = editable ? tabs : tabs.filter((t) => !t.oculto);
+  const updateTab = (id, patch) => onUpdate?.(tabs.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const addTab = () => onUpdate?.([...tabs, { id: `tab-${Date.now()}`, label: 'Nueva pestaña', stats: [] }]);
+  const removeTab = (id) => onUpdate?.(tabs.filter((t) => t.id !== id));
+
+  const activeTab = tabs.find((t) => t.id === activeTabId);
+  const stats = activeTab?.stats ?? [];
+  const updateStats = (nextStats) => activeTab && updateTab(activeTab.id, { stats: nextStats });
+  const { duplicate: duplicateStat, toggleOculto: toggleStatOculto, dnd: statDnd } = useLocalListCrud(stats, updateStats);
+  const statsVisibles = editable ? stats : stats.filter((s) => !s.oculto);
+  const updateStat = (id, patch) => updateStats(stats.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  const addStat = () => updateStats([...stats, { id: `stat-${Date.now()}`, label: 'Dato', valor: 'Valor', desc: '' }]);
+  const removeStat = (id) => updateStats(stats.filter((s) => s.id !== id));
+
+  if (tabsVisibles.length === 0 && !editable) return null;
+
+  return (
+    <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
+      <div className="max-w-5xl mx-auto">
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="enviostabs.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
+        <Editable
+          editable={editable}
+          value={titulo ?? 'Cómo lo recibís'}
+          onChange={onUpdateTitulo}
+          tag="h2"
+          block
+          styleKey="enviostabs.titulo"
+          style={{ color: headingColor || palette.ink }}
+          className="font-serif text-2xl @lg:text-3xl mb-8"
+          maxLength={70}
+        />
+
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          {tabsVisibles.map((t, i, arr) => (
+            <div
+              key={t.id}
+              ref={dnd.registerItemRef(t.id)}
+              className={`relative flex items-center gap-1 ${t.oculto ? 'opacity-40' : ''} ${dnd.dragId === t.id ? 'opacity-30' : ''}`}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveTabId(t.id)}
+                className="px-4 py-2 border text-sm font-semibold transition-colors"
+                style={
+                  activeTabId === t.id
+                    ? { borderColor: accent, color: accent, background: palette.accentSoft }
+                    : { borderColor: palette.line, color: palette.inkSoft }
+                }
+              >
+                <Editable
+                  editable={editable}
+                  value={t.label}
+                  onChange={(v) => updateTab(t.id, { label: v })}
+                  tag="span"
+                  styleKey={`enviostab.${t.id}.label`}
+                  placeholder="Pestaña"
+                  maxLength={30}
+                />
+              </button>
+              {editable && (
+                <ItemToolbar
+                  variant="inline"
+                  color={palette.ink}
+                  oculto={t.oculto}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < arr.length - 1}
+                  onMoveUp={() => move(t.id, -1)}
+                  onMoveDown={() => move(t.id, 1)}
+                  onDuplicate={() => {
+                    const copy = { ...t, id: `tab-${Date.now()}`, stats: t.stats.map((s) => ({ ...s, id: `stat-${Date.now()}-${s.id}` })) };
+                    onUpdate?.([...tabs.slice(0, i + 1), copy, ...tabs.slice(i + 1)]);
+                  }}
+                  onToggleOculto={() => toggleOculto(t.id)}
+                  onRemove={() => removeTab(t.id)}
+                  onDragStart={dnd.startDrag(t)}
+                  removeLabel={`Quitar ${t.label}`}
+                />
+              )}
+            </div>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={addTab}
+              className="px-3 py-2 border-2 border-dashed flex items-center gap-1.5 text-xs font-semibold"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-3.5 h-3.5" /> Pestaña
+            </button>
+          )}
+        </div>
+
+        {statsVisibles.length === 0 && !editable ? null : (
+          <div className="grid @sm:grid-cols-3 gap-6">
+            {statsVisibles.map((s) => (
+              <div
+                key={s.id}
+                ref={statDnd.registerItemRef(s.id)}
+                className={`relative ${s.oculto ? 'opacity-40' : ''} ${statDnd.dragId === s.id ? 'opacity-30' : ''}`}
+              >
+                {editable && (
+                  <div className="absolute top-0 right-0">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={s.oculto}
+                      onDuplicate={() => duplicateStat(s.id)}
+                      onToggleOculto={() => toggleStatOculto(s.id)}
+                      onRemove={() => removeStat(s.id)}
+                      onDragStart={statDnd.startDrag(s)}
+                      removeLabel={`Quitar ${s.label}`}
+                    />
+                  </div>
+                )}
+                <Editable
+                  editable={editable}
+                  value={s.label}
+                  onChange={(v) => updateStat(s.id, { label: v })}
+                  tag="p"
+                  block
+                  styleKey={`enviostat.${s.id}.label`}
+                  placeholder="Dato"
+                  style={{ color: palette.inkSoft }}
+                  className="font-mono text-xs uppercase tracking-wide mb-1.5"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={s.valor}
+                  onChange={(v) => updateStat(s.id, { valor: v })}
+                  tag="p"
+                  block
+                  styleKey={`enviostat.${s.id}.valor`}
+                  placeholder="Valor"
+                  style={{ color: headingColor || palette.ink }}
+                  className="font-serif text-2xl mb-1.5"
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={s.desc}
+                  onChange={(v) => updateStat(s.id, { desc: v })}
+                  tag="p"
+                  block
+                  multiline
+                  styleKey={`enviostat.${s.id}.desc`}
+                  placeholder="Descripción breve"
+                  style={{ color: textColor || palette.inkSoft }}
+                  className="text-sm leading-relaxed"
+                  maxLength={140}
+                />
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addStat}
+                className="border-2 border-dashed flex items-center justify-center gap-1.5 py-6 text-xs font-semibold"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-3.5 h-3.5" /> Agregar dato
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

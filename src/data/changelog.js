@@ -5,6 +5,15 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.47.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Envío y pagos (pestañas)": costo, demora y seguimiento organizados en pestañas (envío a domicilio, retiro en el local, formas de pago) — disponible para cualquier plantilla desde "Agregar sección" en el editor.' },
+      { type: 'mejora', text: 'La sección de pasos numerados ahora puede mostrar el número con cero adelante (01, 02...). La sección de contacto con mapa ahora admite un título grande y un párrafo arriba de los datos de contacto.' },
+      { type: 'mejora', text: 'Plantilla "Almacén 33": réplica más fiel del diseño original, usando las secciones nuevas de arriba.' },
+    ],
+  },
+  {
     version: '1.46.12',
     date: '2026-08-09',
     changes: [

@@ -918,6 +918,11 @@ export const SECCIONES_CATALOGO = [
     desc: 'Una fila con los medios de pago que aceptás (transferencia, efectivo, tarjetas, etc).',
   },
   {
+    id: 'envios-tabs',
+    label: 'Envío y pagos (pestañas)',
+    desc: 'Costo, demora y seguimiento organizados en pestañas — envío, retiro y formas de pago.',
+  },
+  {
     id: 'financiacion',
     label: 'Simulador de cuotas',
     desc: 'Un simulador de financiación: elegí un precio y mostrá la cuota estimada en distintos plazos.',
@@ -1263,6 +1268,7 @@ export const SECTION_VARIANTS = {
   reservas: [{ id: 'calendario', label: 'Calendario y horarios', skeleton: 'reservasCalendario' }],
   areas: [{ id: 'lista-detalle', label: 'Lista + detalle', skeleton: 'areasListaDetalle' }],
   pagos: [{ id: 'fila', label: 'Fila de badges', skeleton: 'pagosFila' }],
+  'envios-tabs': [{ id: 'tabs', label: 'Pestañas con datos', skeleton: 'pagosFila' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
   beneficios: [
     { id: 'fila', label: 'Fila con íconos', skeleton: 'beneficiosFila' },
@@ -1349,6 +1355,20 @@ export const SECTION_PREVIEW_DATA = {
     ],
   },
   pagos: { metodos: [{ id: 'p1', label: 'Efectivo' }, { id: 'p2', label: 'Transferencia' }, { id: 'p3', label: 'Tarjetas' }] },
+  'envios-tabs': {
+    tabs: [
+      {
+        id: 'p1',
+        label: 'Envío a domicilio',
+        stats: [
+          { id: 's1', label: 'Costo', valor: '$6.500', desc: 'Gratis en compras desde cierto monto.' },
+          { id: 's2', label: 'Demora', valor: '3 a 5 días', desc: 'Hábiles, desde que confirmás el pago.' },
+          { id: 's3', label: 'Seguimiento', valor: 'Por WhatsApp', desc: 'Te avisamos apenas despachamos.' },
+        ],
+      },
+      { id: 'p2', label: 'Retiro en el local', stats: [] },
+    ],
+  },
   financiacion: {},
   beneficios: {
     items: [
