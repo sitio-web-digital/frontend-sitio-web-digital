@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.56.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Reserva de turno en 3 pasos": servicio del catálogo compartido + uno de los próximos 6 días (calculados en vivo, domingos cerrados) + horario con cupo, con resumen y botón de WhatsApp — sin elegir profesional, para lavaderos y talleres.' },
+      { type: 'nuevo', text: 'Distribución de Productos "Tarjetas con duración, descripción y precio": para catálogos de servicios con precio por duración.' },
+      { type: 'nuevo', text: 'Distribución de Hero "Texto llano + foto con una ficha en la esquina": una etiqueta con valor (ej. "Turno más cercano · Hoy 15:30 hs") superpuesta en la esquina de la foto.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Punto Cero", lavadero y estudio de detailing con catálogo de servicios y reserva de turno online en 3 pasos.' },
+    ],
+  },
+  {
     version: '1.55.0',
     date: '2026-08-09',
     changes: [

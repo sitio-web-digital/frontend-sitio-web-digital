@@ -1423,6 +1423,27 @@ export default function SitePreview({
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
               />
             )}
+            {sec.type === 'turno-express' && (
+              <SeccionTurnoExpress
+                productos={productos}
+                slots={sec.slots ?? []}
+                onUpdateSlots={(slots) => onSetSectionStyle?.(sec.id, { slots })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+              />
+            )}
             {sec.type === 'agenda' && (
               <SeccionAgenda
                 meses={sec.meses ?? []}
@@ -7426,6 +7447,136 @@ function SeccionHero({
     );
   }
 
+  // Igual que "sencillo" (eyebrow chico, título llano, foto a la derecha)
+  // pero con una ficha/chip fijo en la esquina inferior derecha de la foto
+  // (etiqueta + valor, ej. "Turno más cercano" / "Hoy 15:30 hs") en un
+  // color de resalte propio del diseño (no el acento general del sitio) —
+  // a diferencia de "foto-derecha" (barra inferior de ancho completo, con
+  // el color del acento). Reusa destacadoEtiqueta/caption que ya existen
+  // en el Hero. Copiada con valores literales de Detailing Punto Cero.
+  if (variant === 'insignia') {
+    const heroImg = heroImagen || galeria?.[0];
+    return (
+      <section style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(2.5rem,6vw,4.5rem) clamp(1.25rem,3vw,2.5rem)', background: bgColor || palette.bg }}>
+        <div className="grid @lg:grid-cols-[1.05fr_0.95fr] items-center" style={{ gap: 'clamp(2rem,5vw,3.25rem)' }}>
+          <div>
+            <Editable
+              editable={editable}
+              value={rubroLabel}
+              onChange={field('rubroLabel')}
+              tag="div"
+              block
+              styleKey="hero.rubroLabel"
+              placeholder="Frase corta (ej: Lavadero y detailing)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.7rem', letterSpacing: '0.16em', color: accent, textTransform: 'uppercase', marginBottom: '1.1rem' }}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? nombreNegocio}
+              onChange={onUpdateTitulo || field('nombreNegocio')}
+              tag="h1"
+              block
+              multiline
+              styleKey="hero.nombreNegocio"
+              placeholder={'Título, hasta dos líneas (ej: Tu auto limpio,\ncon turno y sin esperar)'}
+              style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, lineHeight: 1.02, letterSpacing: '-0.02em', color: headingColor || palette.ink, margin: '0 0 1.3rem', whiteSpace: 'pre-line' }}
+              className="text-[clamp(2.4rem,6vw,4rem)]"
+            />
+            <Editable
+              editable={editable}
+              value={descripcion ?? sobreNosotros}
+              onChange={onUpdateDescripcion || field('sobreNosotros')}
+              tag="p"
+              multiline
+              block
+              styleKey="hero.sobreNosotros"
+              style={{ fontSize: '1.02rem', color: textColor || palette.inkSoft, lineHeight: 1.75, maxWidth: '29rem', margin: '0 0 2rem' }}
+            />
+            <div className="flex flex-wrap" style={{ gap: '0.9rem', marginBottom: '2.25rem' }}>
+              {HERO_BUTTON_SLOTS.map((slot, idx) => {
+                const v = botonesData[slot.key];
+                const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
+                if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+                return (
+                  <ButtonObject
+                    key={slot.key}
+                    value={v}
+                    onChange={(patch) =>
+                      onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
+                    }
+                    editable={editable}
+                    seccionesDisponibles={seccionesDisponibles}
+                    nombreNegocio={nombreNegocio}
+                    defaultFuncion={slot.defaultFuncion}
+                    defaultLabel={slot.defaultLabel}
+                    defaultColor={idx === 0 ? accent : palette.ink}
+                    defaultTarget={defaultTarget}
+                    outline={idx > 0}
+                  />
+                );
+              })}
+            </div>
+            {stats.length > 0 && (
+              <div className="flex flex-wrap" style={{ gap: '2.2rem', borderTop: `1px solid ${palette.line}`, paddingTop: '1.3rem' }}>
+                {stats.map((s, i) => (
+                  <div key={i}>
+                    <div style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.7rem', color: headingColor || palette.ink, lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: palette.inkSoft, marginTop: '0.4rem' }}>
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ position: 'relative' }} className="group/hero">
+            <label className={`block relative aspect-[9/10] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
+              {heroImg ? (
+                <img src={heroImg} alt={nombreNegocio || ''} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                  Agregá fotos en tu galería
+                </div>
+              )}
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 group-hover/hero:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/hero:opacity-100">
+                    <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+                </>
+              )}
+            </label>
+            {(caption || destacadoEtiqueta || editable) && (
+              <div className="absolute right-0 bottom-0" style={{ background: '#ffb020', color: '#101820', padding: '0.85rem 1.1rem' }}>
+                <Editable
+                  editable={editable}
+                  value={destacadoEtiqueta}
+                  onChange={onUpdateDestacadoEtiqueta}
+                  tag="div"
+                  block
+                  placeholder="Etiqueta (ej: Turno más cercano)"
+                  style={{ fontFamily: palette.fonts?.mono, fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.15rem' }}
+                  maxLength={40}
+                />
+                <Editable
+                  editable={editable}
+                  value={caption}
+                  onChange={onUpdateCaption}
+                  tag="div"
+                  block
+                  placeholder="Valor (ej: Hoy 15:30 hs)"
+                  style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.1rem', lineHeight: 1 }}
+                  maxLength={40}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Foto circular a la derecha con una medallita rotada encima (valor +
   // etiqueta, reusa caption/destacadoEtiqueta que ya existen en el Hero en
   // vez de sumar props nuevas) y texto a la izquierda con eyebrow simple —
@@ -9875,6 +10026,79 @@ function SeccionProductos({
               </button>
             </form>
           )}
+        </div>
+      ) : variant === 'detalle' ? (
+        <div className="max-w-5xl mx-auto grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4 gap-4">
+          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
+            <div
+              key={p.id}
+              className={`relative border flex flex-col ${p.oculto ? 'opacity-40' : ''}`}
+              style={{ borderColor: palette.line, padding: '1.5rem 1.4rem', gap: '0.7rem' }}
+            >
+              {editable && (
+                <div className="absolute top-2 right-2">
+                  <ItemToolbar
+                    variant="inline"
+                    color={palette.ink}
+                    oculto={p.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                    onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                    onDuplicate={() => onDuplicateProducto?.(p.id)}
+                    onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                    onRemove={() => onRemoveProducto?.(p.id)}
+                    onDragStart={productosDnd.startDrag(p)}
+                    removeLabel={`Quitar ${p.nombre}`}
+                  />
+                </div>
+              )}
+              <Editable
+                editable={editable}
+                value={p.duracion}
+                onChange={(v) => onUpdateProducto?.(p.id, { duracion: v })}
+                tag="div"
+                block
+                styleKey={`producto.${p.id}.duracion`}
+                placeholder="Duración (ej: 45 minutos)"
+                style={{ fontFamily: palette.fonts?.mono, fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: accent }}
+                maxLength={30}
+              />
+              <Editable
+                editable={editable}
+                value={p.nombre}
+                onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                tag="div"
+                block
+                styleKey={`producto.${p.id}.nombre`}
+                placeholder="Nombre del servicio"
+                style={{ fontFamily: palette.fonts?.serif, fontWeight: 600, fontSize: '1.2rem', color: palette.ink }}
+                maxLength={50}
+              />
+              <Editable
+                editable={editable}
+                value={p.desc}
+                onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                styleKey={`producto.${p.id}.desc`}
+                placeholder="Descripción breve"
+                style={{ fontSize: '0.9rem', color: palette.inkSoft, lineHeight: 1.6, flex: 1, margin: 0 }}
+                maxLength={140}
+              />
+              <Editable
+                editable={editable}
+                value={p.precio}
+                onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                tag="div"
+                type="number"
+                styleKey={`producto.${p.id}.precio`}
+                format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.5rem', color: palette.ink }}
+              />
+            </div>
+          ))}
         </div>
       ) : variant === 'destacada' ? (
         <div className="max-w-5xl mx-auto">
@@ -22595,6 +22819,281 @@ function SeccionServicioTamano({
           )}
           {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />}
         </label>
+      </div>
+    </section>
+  );
+}
+
+const TURNOEXPRESS_DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const TURNOEXPRESS_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+// Selector de turno en 3 pasos (servicio del catálogo compartido → uno de
+// los próximos 6 días, calculados en vivo desde hoy, domingos cerrados →
+// horario con cupo) + resumen y botón de WhatsApp. A diferencia de
+// "reservas" (calendario de mes completo, fondo oscuro) y de "turnos"
+// (wizard de 4 pasos con selección de profesional), esta es una franja de
+// 6 días fija sobre fondo claro y SIN paso de profesional, pensada para
+// negocios que reservan con pocos días de anticipación y no distinguen
+// por quién atiende (lavaderos, talleres).
+function SeccionTurnoExpress({
+  productos = [],
+  slots = [],
+  onUpdateSlots,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+}) {
+  const [servicioIdx, setServicioIdx] = useState(0);
+  const [diaOffset, setDiaOffset] = useState(0);
+  const [slotIdx, setSlotIdx] = useState(null);
+  const { move, remove: removeSlot, dnd } = useLocalListCrud(slots, onUpdateSlots);
+  const updateSlot = (id, patch) => onUpdateSlots?.(slots.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  const addSlot = () => onUpdateSlots?.([...slots, { id: `slot-${Date.now()}`, time: '10:00', disponibles: 2 }]);
+
+  const dias = (() => {
+    const today = new Date();
+    const out = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      out.push({ offset: i, weekday: TURNOEXPRESS_DIAS_SEMANA[d.getDay()], dayNum: d.getDate(), month: TURNOEXPRESS_MESES[d.getMonth()], abierto: d.getDay() !== 0 });
+    }
+    return out;
+  })();
+  const diaActivo = dias.find((d) => d.offset === diaOffset && d.abierto) || dias.find((d) => d.abierto) || dias[0];
+  const servicio = productos[servicioIdx];
+  const slot = slotIdx !== null ? slots[slotIdx] : null;
+  const dim = palette.inkSoft;
+
+  const hayTurno = Boolean(diaActivo && slot);
+  const mensajeWa = hayTurno
+    ? `Hola! Quiero pedir un turno para ${servicio?.nombre || 'un servicio'} el ${diaActivo.weekday} ${diaActivo.dayNum} de ${diaActivo.month} a las ${slot.time}.`
+    : undefined;
+
+  const stepLabel = (n, label) => (
+    <div className="flex items-center" style={{ gap: '0.7rem', marginBottom: '1rem' }}>
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          background: accent,
+          color: '#ffffff',
+          fontFamily: palette.fonts?.mono,
+          fontSize: '0.68rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {n}
+      </span>
+      <span style={{ fontFamily: palette.fonts?.mono, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.09em', color: palette.inkSoft }}>{label}</span>
+    </div>
+  );
+
+  return (
+    <section style={{ background: bgColor || palette.bg }}>
+      <div style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div style={{ maxWidth: '34rem', marginBottom: '2rem' }}>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="div"
+            block
+            styleKey="turnos.eyebrow"
+            placeholder="Eyebrow (ej: Turnos)"
+            style={{ fontFamily: palette.fonts?.mono, fontSize: '0.7rem', letterSpacing: '0.16em', color: accent, textTransform: 'uppercase', marginBottom: '0.8rem' }}
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Sacá tu turno en 3 pasos'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="turnos.titulo"
+            style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 0.8rem', color: headingColor || palette.ink }}
+            className="text-[clamp(1.8rem,4vw,2.6rem)]"
+            maxLength={80}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            styleKey="turnos.descripcion"
+            placeholder="Frase breve debajo del título (opcional)"
+            style={{ fontSize: '0.97rem', color: textColor || palette.inkSoft, lineHeight: 1.75 }}
+          />
+        </div>
+
+        <div style={{ border: `1px solid ${palette.line}`, background: palette.bg, padding: 'clamp(1.25rem,3vw,2rem)', display: 'flex', flexDirection: 'column', gap: '1.9rem' }}>
+          <div>
+            {stepLabel(1, 'Servicio')}
+            {productos.length === 0 ? (
+              <p className="text-sm" style={{ color: palette.inkSoft }}>Todavía no cargaste servicios en el catálogo.</p>
+            ) : (
+              <div className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4" style={{ gap: '0.6rem' }}>
+                {productos.map((p, i) => {
+                  const on = servicioIdx === i;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setServicioIdx(i)}
+                      className="text-left"
+                      style={{ border: `1px solid ${on ? accent : palette.line}`, background: on ? `${accent}1a` : palette.bg, padding: '0.9rem 1rem', transition: 'all .2s' }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: '0.94rem', color: on ? accent : palette.ink, marginBottom: '0.25rem' }}>{p.nombre}</div>
+                      <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', color: on ? accent : palette.inkSoft }}>
+                        ${Number(p.precio || 0).toLocaleString('es-AR')}{p.duracion ? ` · ${p.duracion}` : ''}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            {stepLabel(2, 'Día')}
+            <div className="grid grid-cols-3 @lg:grid-cols-6" style={{ gap: '0.6rem' }}>
+              {dias.map((d) => {
+                const on = d.abierto && diaActivo.offset === d.offset;
+                return (
+                  <button
+                    key={d.offset}
+                    type="button"
+                    disabled={!d.abierto}
+                    onClick={() => {
+                      setDiaOffset(d.offset);
+                      setSlotIdx(null);
+                    }}
+                    style={{
+                      cursor: d.abierto ? 'pointer' : 'not-allowed',
+                      border: `1px solid ${on ? accent : palette.line}`,
+                      background: on ? accent : palette.bg,
+                      padding: '0.75rem 0.5rem',
+                      textAlign: 'center',
+                      opacity: d.abierto ? 1 : 0.35,
+                      transition: 'all .2s',
+                    }}
+                  >
+                    <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: on ? '#ffffffbf' : palette.inkSoft }}>{d.weekday}</div>
+                    <div style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2, color: on ? '#ffffff' : palette.ink }}>{d.dayNum}</div>
+                    <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.6rem', color: on ? '#ffffffbf' : palette.inkSoft }}>{d.month}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            {stepLabel(3, 'Horario')}
+            <div className="grid grid-cols-3 @lg:grid-cols-6" style={{ gap: '0.6rem' }}>
+              {slots.map((s, i, arr) => {
+                const tomado = Number(s.disponibles) === 0;
+                const on = slotIdx === i;
+                return (
+                  <div key={s.id} ref={dnd.registerItemRef(s.id)} className="relative group/slot">
+                    <button
+                      type="button"
+                      disabled={tomado && !editable}
+                      onClick={() => (tomado ? undefined : setSlotIdx(i))}
+                      className="w-full"
+                      style={{
+                        cursor: tomado ? 'not-allowed' : 'pointer',
+                        border: `1px solid ${on ? accent : palette.line}`,
+                        background: on ? accent : palette.bg,
+                        padding: '0.9rem 0.5rem',
+                        textAlign: 'center',
+                        opacity: tomado ? 0.4 : 1,
+                        transition: 'all .2s',
+                      }}
+                    >
+                      {editable ? (
+                        <Editable editable value={s.time} onChange={(v) => updateSlot(s.id, { time: v })} tag="div" maxLength={10} style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.1rem', color: on ? '#ffffff' : palette.ink, lineHeight: 1 }} />
+                      ) : (
+                        <div style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.1rem', color: on ? '#ffffff' : palette.ink, lineHeight: 1 }}>{s.time}</div>
+                      )}
+                      <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: on ? '#ffffffbf' : palette.inkSoft, marginTop: '0.35rem' }}>
+                        {tomado ? 'Completo' : `${s.disponibles} bahía(s)`}
+                      </div>
+                    </button>
+                    {editable && (
+                      <div className="hidden group-hover/slot:flex absolute -top-2 -right-2">
+                        <ItemToolbar
+                          variant="overlay"
+                          canMoveUp={i > 0}
+                          canMoveDown={i < arr.length - 1}
+                          onMoveUp={() => move(s.id, -1)}
+                          onMoveDown={() => move(s.id, 1)}
+                          onRemove={() => removeSlot(s.id)}
+                          onDragStart={dnd.startDrag(s)}
+                          removeLabel={`Quitar horario ${s.time}`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addSlot}
+                  className="flex flex-col items-center justify-center gap-1 border-2 border-dashed text-xs font-semibold"
+                  style={{ borderColor: palette.line, color: palette.inkSoft, padding: '0.9rem 0.5rem' }}
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Horario
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between" style={{ borderTop: `1px solid ${palette.line}`, paddingTop: '1.5rem', gap: '1.5rem' }}>
+            <div className="flex flex-wrap" style={{ gap: 'clamp(1.5rem,4vw,3rem)' }}>
+              {[
+                { label: 'Servicio', value: servicio?.nombre || '—', color: palette.ink },
+                { label: 'Día', value: diaActivo ? `${diaActivo.weekday} ${diaActivo.dayNum} de ${diaActivo.month}` : '—', color: palette.ink },
+                { label: 'Horario', value: slot ? `${slot.time} hs` : 'Sin elegir', color: slot ? accent : dim },
+              ].map((row) => (
+                <div key={row.label}>
+                  <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: palette.inkSoft, marginBottom: '0.3rem' }}>{row.label}</div>
+                  <div style={{ fontFamily: palette.fonts?.serif, fontWeight: 600, fontSize: '1.1rem', color: row.color }}>{row.value}</div>
+                </div>
+              ))}
+            </div>
+            <a
+              href={hayTurno ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+              onClick={(e) => !hayTurno && e.preventDefault()}
+              style={{
+                background: hayTurno ? palette.ink : palette.bg,
+                color: hayTurno ? palette.bg : dim,
+                border: `1px solid ${hayTurno ? palette.ink : palette.line}`,
+                fontWeight: 700,
+                padding: '0.85rem 1.6rem',
+                fontSize: '0.93rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {hayTurno ? 'Confirmar turno →' : 'Elegí un horario'}
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );

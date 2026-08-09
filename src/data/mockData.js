@@ -948,6 +948,11 @@ export const SECCIONES_CATALOGO = [
     desc: 'Tabla de precios por tamaño/porte (dos servicios + duración estimada) — para peluquerías caninas y servicios similares.',
   },
   {
+    id: 'turno-express',
+    label: 'Reserva de turno en 3 pasos',
+    desc: 'Elegís servicio del catálogo, uno de los próximos 6 días y un horario con cupo, con resumen y botón de WhatsApp — sin elegir profesional, para lavaderos, talleres y turnos de corto plazo.',
+  },
+  {
     id: 'agenda',
     label: 'Agenda / disponibilidad por mes',
     desc: 'Grilla de 12 meses con estado (disponible, últimos lugares, completo) — para negocios que toman un trabajo por fecha.',
@@ -1245,6 +1250,7 @@ export const SECTION_VARIANTS = {
     { id: 'circular', label: 'Foto circular con medallita, a la derecha', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'collage', label: 'Collage de 3 fotos de la galería, a la derecha', skeleton: 'heroDuo', group: 'Distribuciones fijas' },
     { id: 'sencillo', label: 'Texto llano + foto a la derecha, sin adornos', skeleton: 'split', group: 'Distribuciones fijas' },
+    { id: 'insignia', label: 'Texto llano + foto con una ficha en la esquina', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
@@ -1291,6 +1297,7 @@ export const SECTION_VARIANTS = {
     { id: 'pizza', label: 'Fotos circulares + precio en medallón', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'lista-cantidad', label: 'Lista numerada, con cantidad en el carrito', skeleton: 'productosLista', group: 'Productos' },
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
+    { id: 'detalle', label: 'Tarjetas con duración, descripción y precio', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
   ],
   'sobre-nosotros': [
@@ -1334,6 +1341,7 @@ export const SECTION_VARIANTS = {
   'promo-dia': [{ id: 'tabs', label: 'Botones por día', skeleton: 'pagosFila' }],
   trabajos: [{ id: 'lista-foto', label: 'Lista + foto grande', skeleton: 'split' }],
   'servicio-tamano': [{ id: 'tabla', label: 'Pestañas + panel de precios', skeleton: 'split' }],
+  'turno-express': [{ id: 'pasos', label: 'Servicio + día + horario, en 3 pasos', skeleton: 'pagosFila' }],
   agenda: [{ id: 'meses', label: 'Grilla de 12 meses', skeleton: 'grid4' }],
   presupuesto: [{ id: 'calculadora', label: 'Tipo + invitados + extras', skeleton: 'split' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
