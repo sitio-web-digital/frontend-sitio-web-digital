@@ -5,6 +5,17 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.57.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Cursos con temario": grilla de cursos con selector presencial/online (cambia el precio) y, abajo, el temario completo del curso elegido con acordeón de módulos y lista de temas por módulo — para academias y escuelas.' },
+      { type: 'nuevo', text: 'Sección nueva "Próximas camadas / cohortes": lista de fechas de inicio con barra de cupos ocupados y botón de reserva (o lista de espera si está completa).' },
+      { type: 'nuevo', text: 'Distribución de Equipo "Fotos grandes, sin borde, en fila de 4": foto 3/4, nombre, rol y bio, sin la línea superior de acento.' },
+      { type: 'mejora', text: 'Hero "Texto llano + foto con una ficha en la esquina" ahora admite elegir de qué lado va la ficha y su color, sin afectar plantillas que ya la usan con los valores por defecto.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Taller Norte", escuela de oficios creativos con catálogo de cursos, temario por módulos y calendario de camadas.' },
+    ],
+  },
+  {
     version: '1.56.0',
     date: '2026-08-09',
     changes: [

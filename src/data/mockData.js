@@ -958,6 +958,16 @@ export const SECCIONES_CATALOGO = [
     desc: 'Grilla de 12 meses con estado (disponible, últimos lugares, completo) — para negocios que toman un trabajo por fecha.',
   },
   {
+    id: 'cursos',
+    label: 'Cursos con temario',
+    desc: 'Grilla de cursos con selector presencial/online (cambia el precio) + el temario del curso elegido con acordeón de módulos — para academias y escuelas con contenido curricular.',
+  },
+  {
+    id: 'camadas',
+    label: 'Próximas camadas / cohortes',
+    desc: 'Lista de fechas de inicio con barra de cupos ocupados y botón de reserva (o lista de espera si está completo) — para cursos con inicios periódicos.',
+  },
+  {
     id: 'trabajos',
     label: 'Trabajos realizados',
     desc: 'Pestañas de categoría + una lista que cambia la foto grande (nombre, lugar y descripción) — para portfolios de trabajos.',
@@ -1342,6 +1352,8 @@ export const SECTION_VARIANTS = {
   trabajos: [{ id: 'lista-foto', label: 'Lista + foto grande', skeleton: 'split' }],
   'servicio-tamano': [{ id: 'tabla', label: 'Pestañas + panel de precios', skeleton: 'split' }],
   'turno-express': [{ id: 'pasos', label: 'Servicio + día + horario, en 3 pasos', skeleton: 'pagosFila' }],
+  cursos: [{ id: 'grilla', label: 'Grilla + temario con acordeón', skeleton: 'split' }],
+  camadas: [{ id: 'lista', label: 'Lista con barra de cupos', skeleton: 'pagosFila' }],
   agenda: [{ id: 'meses', label: 'Grilla de 12 meses', skeleton: 'grid4' }],
   presupuesto: [{ id: 'calculadora', label: 'Tipo + invitados + extras', skeleton: 'split' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
@@ -1375,6 +1387,7 @@ export const SECTION_VARIANTS = {
     { id: 'grid', label: 'Tarjetas', skeleton: 'grid3' },
     { id: 'carousel', label: 'Carrusel', skeleton: 'carousel' },
     { id: 'retrato', label: 'Fotos grandes', skeleton: 'equipoRetrato' },
+    { id: 'perfil', label: 'Fotos grandes, sin borde, en fila de 4', skeleton: 'equipoRetrato' },
   ],
   cta: [
     { id: 'zonas', label: 'Centrado', skeleton: 'ctaCentered', group: 'Distribuciones' },
