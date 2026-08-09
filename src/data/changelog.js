@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.6',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Al volver de pagar en Mercado Pago, la pantalla de confirmación podía no aparecer — aterrizaba en el hostname dedicado al retorno de pago (necesario porque Mercado Pago rechaza dominios .digital ahí), que al ser un origen distinto al de uso diario no comparte la sesión guardada. Ahora esa página, apenas carga, salta sola al dominio real (app.sitioweb.digital) preservando a dónde iba, así la sesión de siempre está disponible al instante.' },
+    ],
+  },
+  {
     version: '1.46.5',
     date: '2026-08-08',
     changes: [
