@@ -145,6 +145,21 @@ export function AppProvider({ children }) {
   // que el dueño elija entre las suyas propias.
   const [mySites, setMySites] = useState([]);
   const [activeSiteId, setActiveSiteId] = useState(null);
+  // Espejo síncrono de activeSiteId — un `useState` recién se refleja en el
+  // próximo render, así que un código que llama setActiveSiteId(id) y al
+  // toque (mismo tick, antes de que React vuelva a renderizar) le pasa ESE
+  // mismo id a otra función que compara `siteId === activeSiteId` (ver
+  // updateSubdomain) se encuentra con el valor viejo — closure de esta
+  // misma pasada, no el que se acaba de pedir. Bug real, confirmado en vivo
+  // el 2026-08-09: recién creada una página, Checkout.jsx le asigna
+  // subdominio de una — updateSubdomain comparaba contra el activeSiteId
+  // todavía viejo (null) y nunca guardaba el subdominio en el estado local,
+  // así que la pantalla de "publicada" mostraba "null.sitioweb.digital".
+  const activeSiteIdRef = useRef(null);
+  const applyActiveSiteId = (id) => {
+    activeSiteIdRef.current = id;
+    setActiveSiteId(id);
+  };
   // Mutex para POST /sites: hay dos caminos que pueden intentar crear la
   // página todavía sin id (el autoguardado debounced de abajo y el guardado
   // explícito que hace Checkout.jsx al asignar subdominio) — sin esto, si
@@ -338,7 +353,7 @@ export function AppProvider({ children }) {
           // mismo tiempo (ver el comentario en pendingSiteCreateRef).
           const result = await createOrJoinSite(json);
           if (result.ok) {
-            setActiveSiteId(result.id);
+            applyActiveSiteId(result.id);
             try {
               localStorage.setItem(ACTIVE_SITE_KEY, String(result.id));
             } catch {
@@ -982,7 +997,7 @@ export function AppProvider({ children }) {
     applyHydratedSite(hydrateSite(siteJson));
     setSubdomain(subdomainValue);
     setSiteLocked(lockedValue);
-    setActiveSiteId(siteId);
+    applyActiveSiteId(siteId);
     try {
       localStorage.setItem(ACTIVE_SITE_KEY, String(siteId));
     } catch {
@@ -1206,7 +1221,7 @@ export function AppProvider({ children }) {
     // tiempo (ver el comentario en pendingSiteCreateRef).
     const result = await createOrJoinSite(json);
     if (result.ok) {
-      setActiveSiteId(result.id);
+      applyActiveSiteId(result.id);
       try {
         localStorage.setItem(ACTIVE_SITE_KEY, String(result.id));
       } catch {
@@ -1236,7 +1251,11 @@ export function AppProvider({ children }) {
   const updateSubdomain = async (siteId, value) => {
     const result = await apiSetSubdomain(siteId, value);
     if (!result.ok) return result;
-    if (siteId === activeSiteId) setSubdomain(result.subdomain);
+    // activeSiteIdRef, no el activeSiteId del closure — este mismo llamado
+    // puede llegar en el mismo tick en que se acaba de crear la página (ver
+    // Checkout.jsx), antes de que React haya vuelto a renderizar con el id
+    // nuevo (ver applyActiveSiteId).
+    if (siteId === activeSiteIdRef.current) setSubdomain(result.subdomain);
     return { ok: true, subdomain: result.subdomain };
   };
 
@@ -1260,7 +1279,7 @@ export function AppProvider({ children }) {
     setPosts([]);
     setSiteLocked(false);
     setEditingTemplate(null);
-    setActiveSiteId(null);
+    applyActiveSiteId(null);
     try {
       localStorage.removeItem(ACTIVE_SITE_KEY);
     } catch {

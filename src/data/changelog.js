@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.8',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'La pantalla de "tu página ya está en vivo" podía mostrar el link roto (null.sitioweb.digital) recién creada una página nueva — el subdominio sí quedaba guardado bien del lado del servidor, pero el navegador no se enteraba a tiempo por una condición de carrera al guardar el estado. Arreglado.' },
+    ],
+  },
+  {
     version: '1.46.7',
     date: '2026-08-09',
     changes: [
