@@ -5,6 +5,21 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.4',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'El aviso de pago confirmado (webhook) de Mercado Pago resultó no ser confiable en la práctica — a veces nunca llega, aunque esté todo bien configurado del lado de Mercado Pago. El Dashboard ahora consulta solo, cada 10 segundos, el estado real de cualquier página con un pago pendiente, así se publica sola apenas Mercado Pago confirma el cobro, sin depender de que ese aviso llegue.' },
+      { type: 'fix', text: 'Se revierte otra vez el back_url al hostname dedicado con el path completo (probado en vivo: Mercado Pago rechaza cualquier dominio .digital con path, incluso después de agregarlo a las URLs de retorno de la cuenta — es una restricción fija de su lado, no de configuración).' },
+    ],
+  },
+  {
+    version: '1.46.3',
+    date: '2026-08-08',
+    changes: [
+      { type: 'fix', text: 'Se revierte el cambio de dominio de retorno de v1.46.1/1.46.2: Mercado Pago rechaza cualquier URL de retorno en dominios .digital, sin excepción — no era un olvido de configuración, era intencional (ver infraestructura/terraform). El botón "Pagar" vuelve a funcionar apuntando al hostname dedicado a esto. Lo que sí queda arreglado de v1.46.1: el aviso de pago confirmado (webhook) ya no depende de configuración manual en Mercado Pago, así que un pago se aplica igual aunque el usuario no vea la pantalla de confirmación.' },
+    ],
+  },
+  {
     version: '1.46.2',
     date: '2026-08-08',
     changes: [

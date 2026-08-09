@@ -8,7 +8,7 @@ import SupportToast from '../components/support/SupportToast';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify, getTemplateById } from '../data/mockData';
 import { hydrateSite } from '../utils/siteSchema';
-import { apiGetSupportUnread, apiMarkSupportSeen } from '../api/client';
+import { apiGetSupportUnread, apiMarkSupportSeen, apiRefreshSubscription } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const PREVIEW_SECTIONS = [
@@ -117,11 +117,34 @@ export default function Dashboard() {
   // lado, se nota sin tener que recargar). GET /api/sites ya trae el estado
   // real de Mercado Pago y los totales de visitas/WhatsApp de cada una, así
   // que no hace falta un sondeo aparte por fila.
+  //
+  // Además: por cada página que quede "pending"/"pending_redirect" (mandada
+  // a pagar pero sin confirmación todavía), se pide un refresh puntual
+  // contra Mercado Pago (mismo POST /subscription/:id/refresh que ya usa
+  // SuscripcionConfirmar.jsx) — el webhook de Mercado Pago puede no llegar
+  // nunca o tardar (probado en vivo, 2026-08-08: pagos ya autorizados en
+  // Mercado Pago se quedaban sin aplicar en nuestra base porque el aviso
+  // real no llegaba, a pesar de tener la config correcta del lado de MP),
+  // así que el Dashboard no depende de él — en el peor caso, una página
+  // recién pagada queda publicada sola dentro de los próximos 10s de estar
+  // mirando esta pantalla, sin que el usuario tenga que hacer nada.
   useEffect(() => {
     if (!user) return undefined;
-    fetchMySites();
-    const interval = setInterval(fetchMySites, 10000);
-    return () => clearInterval(interval);
+    let cancelado = false;
+    const syncPendientes = async () => {
+      const sites = await fetchMySites();
+      if (cancelado) return;
+      const pendientes = (sites || []).filter((s) => s.mpStatus === 'pending' || s.mpStatus === 'pending_redirect');
+      if (pendientes.length === 0) return;
+      await Promise.all(pendientes.map((s) => apiRefreshSubscription(s.id)));
+      if (!cancelado) fetchMySites();
+    };
+    syncPendientes();
+    const interval = setInterval(syncPendientes, 10000);
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
