@@ -11,8 +11,10 @@ import {
   EyeOffIcon,
   RefreshIcon,
   SendIcon,
+  GlobeIcon,
 } from '../components/icons';
 import { useApp } from '../context/AppContext';
+import { ROOT_DOMAIN } from '../utils/rootDomain';
 import {
   apiAdminSummary,
   apiAdminSubscriptions,
@@ -1001,7 +1003,7 @@ export function LeadsSection() {
                           href={`https://wa.me/${l.telefono.replace(/\D/g, '')}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs inline-block whitespace-nowrap"
+                          className="px-2 py-1 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-[0.7rem] inline-block whitespace-nowrap"
                         >
                           Escribir
                         </a>
@@ -1104,17 +1106,17 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
                       {new Date(t.createdAt).toLocaleDateString('es-AR')}
                     </td>
                     <td className="py-2.5 text-right">
-                      <div className="flex flex-wrap justify-end gap-2">
+                      <div className="flex flex-wrap justify-end gap-1.5">
                         <button
                           onClick={() => editar(t.id)}
                           disabled={editingId === t.id}
-                          className="px-3 py-1.5 border border-gold-500/30 hover:bg-gold-500/10 disabled:opacity-50 transition-colors text-xs font-semibold text-gold-400"
+                          className="px-2 py-1 border border-gold-500/30 hover:bg-gold-500/10 disabled:opacity-50 transition-colors text-[0.7rem] font-semibold text-gold-400"
                         >
                           {editingId === t.id ? 'Abriendo...' : 'Editar'}
                         </button>
                         <button
                           onClick={() => onTogglePublished(t.id, t.published)}
-                          className={`px-3 py-1.5 border transition-colors text-xs font-semibold ${
+                          className={`px-2 py-1 border transition-colors text-[0.7rem] font-semibold ${
                             t.published
                               ? 'border-red-500/30 hover:bg-red-500/10 text-red-300'
                               : 'border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-300'
@@ -1128,7 +1130,7 @@ function PlantillasSection({ templates, rubros, onTogglePublished, onDeleteTempl
                               onDeleteTemplate(t.id);
                             }
                           }}
-                          className="px-3 py-1.5 border border-white/15 hover:bg-white/5 transition-colors text-xs font-semibold text-white"
+                          className="px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
                         >
                           Borrar
                         </button>
@@ -1250,11 +1252,20 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish, onRefres
                     )}
                   </td>
                   <td className="py-2.5 text-right">
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      {s.published && s.subdomain && (
+                        <button
+                          onClick={() => window.open(`https://${s.subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}
+                          title="Abre el sitio publicado en una pestaña nueva."
+                          className="w-7 h-7 flex items-center justify-center border border-white/15 hover:bg-white/5 transition-colors text-white"
+                        >
+                          <GlobeIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onTogglePublish(s.id, s.published)}
                         title="Despublica o vuelve a publicar la página — el dueño sigue pudiendo editarla."
-                        className={`px-3 py-1.5 border transition-colors text-xs font-semibold ${
+                        className={`px-2 py-1 border transition-colors text-[0.7rem] font-semibold ${
                           s.published
                             ? 'border-red-500/30 hover:bg-red-500/10 text-red-300'
                             : 'border-white/15 hover:bg-white/5 text-white'
@@ -1265,7 +1276,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish, onRefres
                       <button
                         onClick={() => onToggleLock(s.id, s.locked)}
                         title="Pausa o reanuda la edición — sigue publicada tal cual está."
-                        className={`px-3 py-1.5 border transition-colors text-xs font-semibold ${
+                        className={`px-2 py-1 border transition-colors text-[0.7rem] font-semibold ${
                           s.locked
                             ? 'border-white/15 hover:bg-white/5 text-white'
                             : 'border-amber-500/30 hover:bg-amber-500/10 text-amber-300'
@@ -1275,7 +1286,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish, onRefres
                       </button>
                       <button
                         onClick={() => onEdit(s.id)}
-                        className="px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
+                        className="px-2 py-1 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-[0.7rem]"
                       >
                         Editar
                       </button>
@@ -1413,13 +1424,13 @@ function SuscripcionRow({ s, onCancel }) {
             <button
               disabled={busy}
               onClick={confirm}
-              className="px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-semibold hover:bg-red-500/25 transition-colors disabled:opacity-50 whitespace-nowrap"
+              className="px-2 py-1 bg-red-500/15 border border-red-500/30 text-red-300 text-[0.7rem] font-semibold hover:bg-red-500/25 transition-colors disabled:opacity-50 whitespace-nowrap"
             >
               {busy ? 'Dando de baja...' : 'Confirmar'}
             </button>
             <button
               onClick={() => setConfirming(false)}
-              className="px-2.5 py-1.5 border border-white/15 text-xs font-semibold hover:bg-white/5 transition-colors"
+              className="px-2 py-1 border border-white/15 text-[0.7rem] font-semibold hover:bg-white/5 transition-colors"
             >
               Volver
             </button>
@@ -1753,7 +1764,7 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
           <button
             onClick={() => onSetFreeSubscriptions(u.id, Number(value) || 0)}
             disabled={!dirty}
-            className="px-2.5 py-1.5 border border-white/15 hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold text-white"
+            className="px-2 py-1 border border-white/15 hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-[0.7rem] font-semibold text-white"
           >
             Guardar
           </button>
@@ -1763,7 +1774,7 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
         {!confirming && (
           <button
             onClick={() => onOpenMail(u.id)}
-            className="mr-2 px-2.5 py-1.5 border border-white/15 hover:bg-white/5 transition-colors text-xs font-semibold text-white"
+            className="mr-1.5 px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
           >
             Mandar mail
           </button>
@@ -1776,14 +1787,14 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
             <button
               onClick={confirmarEliminar}
               disabled={deleting}
-              className="px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors text-xs font-semibold"
+              className="px-2 py-1 bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors text-[0.7rem] font-semibold"
             >
               {deleting ? 'Eliminando...' : 'Confirmar'}
             </button>
             <button
               onClick={() => setConfirming(false)}
               disabled={deleting}
-              className="px-2.5 py-1.5 border border-white/15 hover:bg-white/5 transition-colors text-xs font-semibold text-white"
+              className="px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
             >
               Volver
             </button>
@@ -1791,7 +1802,7 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
         ) : (
           <button
             onClick={() => setConfirming(true)}
-            className="px-2.5 py-1.5 border border-white/15 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 transition-colors text-xs font-semibold text-white"
+            className="px-2 py-1 border border-white/15 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 transition-colors text-[0.7rem] font-semibold text-white"
           >
             Eliminar
           </button>

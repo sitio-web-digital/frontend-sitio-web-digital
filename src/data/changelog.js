@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.11',
+    date: '2026-08-09',
+    changes: [
+      { type: 'mejora', text: 'Admin > Páginas: botones de acción más chicos y agregado un botón para abrir el sitio publicado en una pestaña nueva. Mismo achique aplicado a los botones de fila en Leads, Plantillas, Suscripciones y Usuarios.' },
+      { type: 'fix', text: 'Los mails a cuentas test_user_*@testuser.com (compradores de prueba de Mercado Pago) nunca llegaban a ningún lado porque son direcciones sintéticas sin bandeja real — ahora se redirigen a una casilla real (con el destinatario original en el asunto) para poder revisar el contenido durante las pruebas.' },
+    ],
+  },
+  {
     version: '1.46.10',
     date: '2026-08-09',
     changes: [
