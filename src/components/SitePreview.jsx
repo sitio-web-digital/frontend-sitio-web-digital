@@ -1425,6 +1425,67 @@ export default function SitePreview({
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
               />
             )}
+            {sec.type === 'ambientes' && (
+              <SeccionAmbientes
+                ambientes={sec.ambientes ?? []}
+                onUpdateAmbientes={(ambientes) => onSetSectionStyle?.(sec.id, { ambientes })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+              />
+            )}
+            {sec.type === 'paleta' && (
+              <SeccionPaleta
+                colores={sec.colores ?? []}
+                onUpdateColores={(colores) => onSetSectionStyle?.(sec.id, { colores })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+              />
+            )}
+            {sec.type === 'medidor' && (
+              <SeccionMedidor
+                medidasStock={sec.medidasStock ?? []}
+                usos={sec.usos ?? []}
+                onUpdateUsos={(usos) => onSetSectionStyle?.(sec.id, { usos })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                anchoMin={sec.anchoMin}
+                anchoMax={sec.anchoMax}
+                largoMin={sec.largoMin}
+                largoMax={sec.largoMax}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+              />
+            )}
             {sec.type === 'turno-express' && (
               <SeccionTurnoExpress
                 productos={productos}
@@ -1766,6 +1827,8 @@ export default function SitePreview({
                 onUpdateZonasEntrega={(zonasEntrega) => onSetSectionStyle?.(sec.id, { zonasEntrega })}
                 infoRows={sec.infoRows ?? []}
                 onUpdateInfoRows={sec.infoRows !== undefined ? (infoRows) => onSetSectionStyle?.(sec.id, { infoRows }) : undefined}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -7622,6 +7685,112 @@ function SeccionHero({
     );
   }
 
+  // Foto de ancho completo arriba (16/9) y, debajo, una caja de texto del
+  // color de fondo del sitio que se superpone hacia arriba sobre la foto
+  // (margen negativo) — eyebrow, título en dos líneas (la segunda en
+  // cursiva y color de acento, reusa tituloAcento) y dos botones, SIN fila
+  // de estadísticas. A diferencia de todas las demás variantes (texto y
+  // foto lado a lado), acá la foto va arriba de todo el ancho. Copiada
+  // con valores literales de Deco Casa Ámbar.
+  if (variant === 'solapada') {
+    const heroImg = heroImagen || galeria?.[0];
+    return (
+      <section style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2rem,4vw,3.5rem) clamp(1.25rem,3vw,2.5rem) clamp(2.5rem,5vw,4rem)' }}>
+        <div style={{ position: 'relative' }}>
+          <label className={`block relative aspect-[16/9] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
+            {heroImg ? (
+              <img src={heroImg} alt={nombreNegocio || ''} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                Agregá fotos en tu galería
+              </div>
+            )}
+            {editable && (
+              <>
+                <span className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                  <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                </span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+              </>
+            )}
+          </label>
+          <div
+            className="relative"
+            style={{ background: bgColor || palette.bg, padding: 'clamp(1.5rem,3vw,2.5rem) clamp(1.5rem,3vw,2.75rem) 0', maxWidth: 'min(640px,92%)', marginTop: '-3.5rem' }}
+          >
+            <Editable
+              editable={editable}
+              value={rubroLabel}
+              onChange={field('rubroLabel')}
+              tag="div"
+              block
+              styleKey="hero.rubroLabel"
+              placeholder="Frase corta (ej: Decoración de interiores · Buenos Aires)"
+              style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: accent, marginBottom: '1.1rem' }}
+            />
+            <h1 style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, lineHeight: 1.02, margin: '0 0 1.2rem', color: headingColor || palette.ink }} className="text-[clamp(2.6rem,6vw,4.4rem)]">
+              <Editable
+                editable={editable}
+                value={titulo ?? nombreNegocio}
+                onChange={onUpdateTitulo || field('nombreNegocio')}
+                tag="div"
+                block
+                multiline
+                styleKey="hero.nombreNegocio"
+                placeholder={'Título, primera línea (ej: La casa se arma)'}
+                style={{ whiteSpace: 'pre-line' }}
+              />
+              <Editable
+                editable={editable}
+                value={tituloAcento}
+                onChange={onUpdateTituloAcento}
+                tag="div"
+                block
+                styleKey="hero.tituloAcento"
+                placeholder="Línea final, en cursiva (ej: de a una pieza)"
+                style={{ fontStyle: 'italic', color: accent }}
+              />
+            </h1>
+            <Editable
+              editable={editable}
+              value={descripcion ?? sobreNosotros}
+              onChange={onUpdateDescripcion || field('sobreNosotros')}
+              tag="p"
+              multiline
+              block
+              styleKey="hero.sobreNosotros"
+              style={{ fontSize: '1rem', fontWeight: 300, color: textColor || palette.inkSoft, lineHeight: 1.75, maxWidth: '32rem', margin: '0 0 1.75rem' }}
+            />
+            <div className="flex flex-wrap" style={{ gap: '0.85rem' }}>
+              {HERO_BUTTON_SLOTS.map((slot, idx) => {
+                const v = botonesData[slot.key];
+                const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
+                if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+                return (
+                  <ButtonObject
+                    key={slot.key}
+                    value={v}
+                    onChange={(patch) =>
+                      onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
+                    }
+                    editable={editable}
+                    seccionesDisponibles={seccionesDisponibles}
+                    nombreNegocio={nombreNegocio}
+                    defaultFuncion={slot.defaultFuncion}
+                    defaultLabel={slot.defaultLabel}
+                    defaultColor={palette.ink}
+                    defaultTarget={defaultTarget}
+                    outline={idx > 0}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Foto circular a la derecha con una medallita rotada encima (valor +
   // etiqueta, reusa caption/destacadoEtiqueta que ya existen en el Hero en
   // vez de sumar props nuevas) y texto a la izquierda con eyebrow simple —
@@ -10144,6 +10313,125 @@ function SeccionProductos({
               />
             </div>
           ))}
+        </div>
+      ) : variant === 'vitrina' ? (
+        <div className="max-w-5xl mx-auto">
+          {categorias.length > 0 && (
+            <div className="flex flex-wrap" style={{ gap: '1.5rem', fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.11em', marginBottom: '2rem' }}>
+              {['Todo', ...categorias].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategoriaFiltro(c === 'Todo' ? 'Todos' : c)}
+                  style={{
+                    cursor: 'pointer',
+                    color: (categoriaFiltro === 'Todos' ? 'Todo' : categoriaFiltro) === c ? accent : palette.inkSoft,
+                    borderBottom: `1px solid ${(categoriaFiltro === 'Todos' ? 'Todo' : categoriaFiltro) === c ? accent : 'transparent'}`,
+                    paddingBottom: '0.3rem',
+                    transition: 'all .25s',
+                  }}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 @lg:grid-cols-4" style={{ gap: '1.5rem 1.25rem' }}>
+            {productosFiltrados.map((p, i, arr) => (
+              <div key={p.id} ref={productosDnd.registerItemRef(p.id)} className={`relative ${p.oculto ? 'opacity-40' : ''} ${productosDnd.dragId === p.id ? 'opacity-30' : ''}`}>
+                {editable && (
+                  <div className="absolute top-1 right-1 z-10">
+                    <ItemToolbar
+                      variant="overlay"
+                      oculto={p.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                      onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                      onDuplicate={() => onDuplicateProducto?.(p.id)}
+                      onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                      onRemove={() => onRemoveProducto?.(p.id)}
+                      onDragStart={productosDnd.startDrag(p)}
+                      removeLabel={`Quitar ${p.nombre}`}
+                    />
+                  </div>
+                )}
+                <label className={`relative block w-full overflow-hidden ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '3/4', marginBottom: '0.9rem' }} title={editable ? 'Cambiar foto' : undefined}>
+                  {p.imagenes?.[0] ? (
+                    <img src={p.imagenes[0]} alt={p.nombre || ''} className="w-full h-full object-cover" style={{ display: 'block' }} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                      <ImageIcon className="w-5 h-5" />
+                    </div>
+                  )}
+                  {editable && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = '';
+                        if (file && (await validateImageFile(file, 'productos'))) onAddProductoImagen?.(p.id, await uploadImage(file));
+                      }}
+                    />
+                  )}
+                  {(p.etiqueta || editable) && (
+                    <Editable
+                      editable={editable}
+                      value={p.etiqueta}
+                      onChange={(v) => onUpdateProducto?.(p.id, { etiqueta: v })}
+                      tag="span"
+                      placeholder="Etiqueta (opcional)"
+                      className="absolute top-2.5 left-2.5 text-[10px] uppercase tracking-wide px-2.5 py-1.5"
+                      style={{ background: accent, color: palette.bg }}
+                      maxLength={20}
+                    />
+                  )}
+                </label>
+                <Editable
+                  editable={editable}
+                  value={p.categoria}
+                  onChange={(v) => onUpdateProducto?.(p.id, { categoria: v })}
+                  tag="div"
+                  block
+                  placeholder="Categoría"
+                  style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: palette.inkSoft, marginBottom: '0.35rem' }}
+                  maxLength={30}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.nombre}
+                  onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                  tag="div"
+                  block
+                  styleKey={`producto.${p.id}.nombre`}
+                  placeholder="Nombre"
+                  style={{ fontFamily: palette.fonts?.serif, fontSize: '1.35rem', lineHeight: 1.15, marginBottom: '0.3rem', color: palette.ink }}
+                  maxLength={50}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.desc}
+                  onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                  tag="div"
+                  block
+                  placeholder="Detalle"
+                  style={{ fontSize: '0.84rem', fontWeight: 300, color: palette.inkSoft, marginBottom: '0.55rem' }}
+                  maxLength={50}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.precio}
+                  onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                  tag="div"
+                  type="number"
+                  format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                  style={{ fontSize: '1rem', color: accent }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       ) : variant === 'destacada' ? (
         <div className="max-w-5xl mx-auto">
@@ -18244,6 +18532,8 @@ function SeccionContacto({
   onUpdateZonasEntrega,
   infoRows = [],
   onUpdateInfoRows,
+  eyebrow,
+  onUpdateEyebrow,
 }) {
   const btnColor = buttonColor || palette.inkHex || '#171717';
   const set = (field) => (v) => onUpdateContacto?.({ [field]: v });
@@ -18349,6 +18639,98 @@ function SeccionContacto({
     const updateInfoRow = (id, patch) => onUpdateInfoRows?.(infoRows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
     const addInfoRow = () => onUpdateInfoRows?.([...infoRows, { id: `info-${Date.now()}`, label: 'Dato', value: '' }]);
     const removeInfoRow = (id) => onUpdateInfoRows?.(infoRows.filter((r) => r.id !== id));
+
+    // Con foto (imagenUrl seteado): layout distinto — foto a un lado, y del
+    // otro TODO junto en una sola columna (eyebrow, título, desc, filas de
+    // datos y el botón al final), a diferencia del layout sin foto (título+
+    // desc+botón en una columna, filas en la otra). Pensada para "vení a
+    // conocernos" con una foto del local/showroom.
+    if (imagenUrl) {
+      return (
+        <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
+          <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-center">
+            <label className={`relative block w-full aspect-[4/3] overflow-hidden ${editable ? 'cursor-pointer' : ''}`} style={{ background: 'rgba(0,0,0,0.05)' }} title={editable ? 'Cambiar foto' : undefined}>
+              <img src={imagenUrl} alt="" className="w-full h-full object-cover" style={{ display: 'block' }} />
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <PencilIcon className="w-5 h-5 text-white" />
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (file && (await validateImageFile(file, 'galeria'))) onUpdateContacto?.({ contactoImagenUrl: await uploadImage(file) });
+                    }}
+                  />
+                </>
+              )}
+            </label>
+            <div>
+              <Editable
+                editable={editable}
+                value={eyebrow}
+                onChange={onUpdateEyebrow}
+                tag="div"
+                block
+                styleKey="contacto.eyebrow"
+                placeholder="Eyebrow (opcional)"
+                style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: accent, marginBottom: '0.9rem' }}
+                maxLength={40}
+              />
+              <Editable
+                editable={editable}
+                value={titulo ?? 'Contame tu proyecto.'}
+                onChange={set('contactoTitulo')}
+                tag="h2"
+                block
+                styleKey="contacto.titulo"
+                style={{ color: headingColor || palette.ink }}
+                className="font-serif text-3xl @lg:text-4xl leading-[1.1] mb-4 text-balance"
+                maxLength={70}
+              />
+              <Editable
+                editable={editable}
+                value={subtitulo ?? 'Respondo dentro de las 24 horas.'}
+                onChange={set('contactoSubtitulo')}
+                tag="p"
+                block
+                styleKey="contacto.subtitulo"
+                style={{ color: palette.inkSoft }}
+                className="text-sm leading-relaxed mb-7 max-w-sm"
+                maxLength={220}
+              />
+              <div className="flex flex-col gap-4 mb-7">
+                {(useCustomRows ? infoRows : rows).map((r) => (
+                  <div key={r.id ?? r.label} className="flex items-baseline justify-between gap-4 border-b pb-3.5" style={{ borderColor: palette.line }}>
+                    <span className="font-mono text-xs uppercase tracking-wide" style={{ color: palette.inkSoft }}>
+                      {r.label}
+                    </span>
+                    <span className="text-[15px] text-right" style={{ color: palette.ink }}>
+                      {r.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <ButtonObject
+                value={botonesData.whatsapp}
+                onChange={(patch) => onUpdateBotones?.({ ...botonesData, whatsapp: { ...(botonesData.whatsapp || {}), ...patch } })}
+                editable={editable}
+                seccionesDisponibles={seccionesDisponibles}
+                nombreNegocio={nombreNegocio}
+                defaultFuncion="whatsapp"
+                defaultLabel="Escribime por WhatsApp"
+                defaultColor={accent}
+                defaultTarget={whatsapp}
+              />
+            </div>
+          </div>
+        </section>
+      );
+    }
     return (
       <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
         <div className="max-w-5xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-12 items-center">
@@ -23810,6 +24192,631 @@ function SeccionCamadas({
               <PlusIcon className="w-4 h-4" /> Agregar camada
             </button>
           )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Explorador de ambientes: pestañas (Living/Comedor/...) → foto del
+// ambiente con puntos numerados superpuestos en posiciones fijas (%) →
+// clic en un punto muestra su producto (foto/nombre/desc/precio/meta) en
+// el panel de al lado, con botón de WhatsApp. Pensado para decoración/
+// muebles, donde cada mueble de la foto es un producto en sí. La posición
+// de cada punto se edita con dos campos numéricos (no arrastre visual).
+function SeccionAmbientes({
+  ambientes = [],
+  onUpdateAmbientes,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+}) {
+  const [roomIdx, setRoomIdx] = useState(0);
+  const [spotIdx, setSpotIdx] = useState(0);
+  const { move, duplicate, toggleOculto, remove, dnd } = useLocalListCrud(ambientes, onUpdateAmbientes);
+  const ambientesVisibles = editable ? ambientes : ambientes.filter((a) => !a.oculto);
+  const room = ambientes[Math.min(roomIdx, Math.max(ambientes.length - 1, 0))];
+  const spot = room?.puntos?.[Math.min(spotIdx, Math.max((room?.puntos?.length || 1) - 1, 0))];
+
+  const updateRoom = (id, patch) => onUpdateAmbientes?.(ambientes.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  const addRoom = () =>
+    onUpdateAmbientes?.([...ambientes, { id: `ambiente-${Date.now()}`, label: 'Nuevo ambiente', imagen: '', puntos: [] }]);
+  const updatePunto = (roomId, idx, patch) =>
+    updateRoom(roomId, { puntos: ambientes.find((a) => a.id === roomId).puntos.map((p, i) => (i === idx ? { ...p, ...patch } : p)) });
+  const addPunto = (roomId) =>
+    updateRoom(roomId, { puntos: [...ambientes.find((a) => a.id === roomId).puntos, { top: '50%', left: '50%', nombre: 'Nuevo producto', desc: '', precio: '', meta: '', imagen: '' }] });
+  const removePunto = (roomId, idx) =>
+    updateRoom(roomId, { puntos: ambientes.find((a) => a.id === roomId).puntos.filter((_, i) => i !== idx) });
+
+  const handleImagenRoom = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) updateRoom(id, { imagen: await uploadImage(file) });
+  };
+  const handleImagenPunto = (roomId, idx) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) updatePunto(roomId, idx, { imagen: await uploadImage(file) });
+  };
+
+  if (!room) return editable ? (
+    <section style={{ background: bgColor || palette.bg, padding: '2rem' }}>
+      <button type="button" onClick={addRoom} className="text-sm font-semibold underline" style={{ color: accent }}>
+        + Agregar ambiente
+      </button>
+    </section>
+  ) : null;
+
+  return (
+    <section style={{ background: bgColor || palette.bg }}>
+      <div style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div className="flex flex-wrap items-end justify-between" style={{ gap: '1.5rem', marginBottom: '1.75rem' }}>
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow ?? 'Ambientes armados'}
+              onChange={onUpdateEyebrow}
+              tag="div"
+              block
+              styleKey="ambientes.eyebrow"
+              style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: accent, marginBottom: '0.9rem' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Tocá los puntos y mirá qué hay en cada rincón'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="ambientes.titulo"
+              style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, margin: 0, lineHeight: 1.05, color: headingColor || palette.ink }}
+              className="text-[clamp(1.9rem,4vw,3rem)]"
+              maxLength={90}
+            />
+          </div>
+          <div className="flex flex-wrap" style={{ gap: '0.5rem' }}>
+            {ambientesVisibles.map((a, i, arr) => {
+              const on = room.id === a.id;
+              return (
+                <div key={a.id} className="relative group/tab">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoomIdx(ambientes.findIndex((x) => x.id === a.id));
+                      setSpotIdx(0);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      padding: '0.55rem 1.1rem',
+                      fontSize: '0.76rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      border: `1px solid ${on ? palette.ink : palette.line}`,
+                      background: on ? palette.ink : 'transparent',
+                      color: on ? palette.bg : palette.inkSoft,
+                      transition: 'all .25s',
+                    }}
+                  >
+                    {editable ? (
+                      <Editable editable value={a.label} onChange={(v) => updateRoom(a.id, { label: v })} tag="span" maxLength={20} />
+                    ) : (
+                      a.label
+                    )}
+                  </button>
+                  {editable && (
+                    <div className="hidden group-hover/tab:flex absolute -top-2 -right-2">
+                      <ItemToolbar
+                        variant="overlay"
+                        oculto={a.oculto}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => move(a.id, -1)}
+                        onMoveDown={() => move(a.id, 1)}
+                        onDuplicate={() => duplicate(a.id)}
+                        onToggleOculto={() => toggleOculto(a.id)}
+                        onRemove={() => remove(a.id)}
+                        onDragStart={dnd.startDrag(a)}
+                        removeLabel={`Quitar ${a.label}`}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {editable && (
+              <button type="button" onClick={addRoom} className="text-xs font-semibold inline-flex items-center gap-1" style={{ color: palette.inkSoft }}>
+                <PlusIcon className="w-3.5 h-3.5" /> Ambiente
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 @lg:grid-cols-[1.15fr_0.85fr] items-stretch" style={{ gap: 'clamp(1.25rem,3vw,2rem)' }}>
+          <label className={`relative block ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '4/3' }} title={editable ? 'Cambiar foto' : undefined}>
+            {room.imagen ? (
+              <img src={room.imagen} alt={room.label} className="w-full h-full object-cover" style={{ display: 'block' }} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                <ImageIcon className="w-6 h-6" />
+              </div>
+            )}
+            {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagenRoom(room.id)} />}
+            {room.puntos.map((p, i) => (
+              <div
+                key={i}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSpotIdx(i);
+                }}
+                className="absolute flex items-center justify-center rounded-full transition-transform hover:scale-[1.18]"
+                style={{
+                  top: p.top,
+                  left: p.left,
+                  width: 30,
+                  height: 30,
+                  margin: '-15px 0 0 -15px',
+                  background: spotIdx === i ? accent : palette.bg,
+                  color: spotIdx === i ? palette.bg : palette.ink,
+                  border: `2px solid ${palette.bg}`,
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  zIndex: 5,
+                }}
+              >
+                {i + 1}
+              </div>
+            ))}
+          </label>
+
+          <div style={{ background: palette.bg, padding: 'clamp(1.5rem,3vw,2rem)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.16em', color: palette.inkSoft, marginBottom: '1.1rem' }}>
+              Punto {(spotIdx + 1)} de {room.puntos.length}
+            </div>
+            {spot ? (
+              <>
+                <label className={`block relative ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '4/3', marginBottom: '1.2rem' }}>
+                  {spot.imagen ? (
+                    <img src={spot.imagen} alt={spot.nombre} className="w-full h-full object-cover" style={{ display: 'block' }} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                  )}
+                  {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagenPunto(room.id, spotIdx)} />}
+                </label>
+                <Editable
+                  editable={editable}
+                  value={spot.nombre}
+                  onChange={(v) => updatePunto(room.id, spotIdx, { nombre: v })}
+                  tag="h3"
+                  block
+                  style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, fontSize: '1.7rem', margin: '0 0 0.5rem', color: palette.ink }}
+                  maxLength={60}
+                />
+                <Editable
+                  editable={editable}
+                  value={spot.desc}
+                  onChange={(v) => updatePunto(room.id, spotIdx, { desc: v })}
+                  tag="p"
+                  block
+                  multiline
+                  style={{ fontSize: '0.92rem', fontWeight: 300, color: palette.inkSoft, lineHeight: 1.7, margin: '0 0 1.2rem', flex: 1 }}
+                  maxLength={220}
+                />
+                <div className="flex items-baseline justify-between" style={{ gap: '1rem', borderTop: `1px solid ${palette.line}`, paddingTop: '1.1rem' }}>
+                  <div>
+                    <Editable
+                      editable={editable}
+                      value={spot.precio}
+                      onChange={(v) => updatePunto(room.id, spotIdx, { precio: v })}
+                      tag="div"
+                      placeholder="$0"
+                      style={{ fontFamily: palette.fonts?.serif, fontSize: '1.6rem', color: accent }}
+                      maxLength={20}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={spot.meta}
+                      onChange={(v) => updatePunto(room.id, spotIdx, { meta: v })}
+                      tag="div"
+                      placeholder="Medida u opciones"
+                      style={{ fontSize: '0.76rem', fontWeight: 300, color: palette.inkSoft }}
+                      maxLength={50}
+                    />
+                  </div>
+                  <a
+                    href={waLink(whatsapp, nombreNegocio, `Hola! Quiero consultar por "${spot.nombre}".`)}
+                    style={{ border: `1px solid ${palette.ink}`, color: palette.ink, padding: '0.7rem 1.2rem', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}
+                  >
+                    Consultar
+                  </a>
+                </div>
+              </>
+            ) : (
+              editable && (
+                <p className="text-sm" style={{ color: palette.inkSoft }}>Agregá un punto para este ambiente.</p>
+              )
+            )}
+          </div>
+        </div>
+
+        {editable && (
+          <div className="flex flex-col" style={{ gap: '0.5rem', marginTop: '1.25rem', border: `1px solid ${palette.line}`, padding: '1rem' }}>
+            <div className="text-xs font-semibold" style={{ color: palette.inkSoft }}>
+              Posición de los puntos de "{room.label}" (% desde arriba/izquierda)
+            </div>
+            {room.puntos.map((p, i) => (
+              <div key={i} className="flex flex-wrap items-center" style={{ gap: '0.6rem' }}>
+                <span className="text-xs" style={{ minWidth: '1.5rem', color: palette.inkSoft }}>{i + 1}.</span>
+                <span className="text-xs flex-1 min-w-[100px]">{p.nombre}</span>
+                <label className="text-xs flex items-center gap-1" style={{ color: palette.inkSoft }}>
+                  Arriba
+                  <input
+                    value={p.top}
+                    onChange={(e) => updatePunto(room.id, i, { top: e.target.value })}
+                    className="w-14 border px-1 py-0.5 text-xs"
+                    style={{ borderColor: palette.line }}
+                  />
+                </label>
+                <label className="text-xs flex items-center gap-1" style={{ color: palette.inkSoft }}>
+                  Izquierda
+                  <input
+                    value={p.left}
+                    onChange={(e) => updatePunto(room.id, i, { left: e.target.value })}
+                    className="w-14 border px-1 py-0.5 text-xs"
+                    style={{ borderColor: palette.line }}
+                  />
+                </label>
+                <button type="button" onClick={() => removePunto(room.id, i)} className="text-xs opacity-50 hover:opacity-100">
+                  Quitar
+                </button>
+              </div>
+            ))}
+            <button type="button" onClick={() => addPunto(room.id)} className="text-xs font-semibold self-start" style={{ color: accent }}>
+              + Punto
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Grilla de swatches de color: bloque de color + nombre + hex + uso
+// sugerido, sin foto. Pensada para decoración/pintura, donde el
+// protagonista es el color en sí, no un producto fotografiado.
+function SeccionPaleta({
+  colores = [],
+  onUpdateColores,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+}) {
+  const { move, duplicate, toggleOculto, remove, dnd } = useLocalListCrud(colores, onUpdateColores);
+  const visibles = editable ? colores : colores.filter((c) => !c.oculto);
+  const update = (id, patch) => onUpdateColores?.(colores.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const add = () => onUpdateColores?.([...colores, { id: `color-${Date.now()}`, nombre: 'Nuevo color', hex: '#c9bfae', uso: '' }]);
+
+  return (
+    <section style={{ background: bgColor || palette.bg }}>
+      <div style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div style={{ maxWidth: '34rem', marginBottom: '2rem' }}>
+          <Editable
+            editable={editable}
+            value={eyebrow ?? 'Paleta de temporada'}
+            onChange={onUpdateEyebrow}
+            tag="div"
+            block
+            styleKey="paleta.eyebrow"
+            style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: accent, marginBottom: '0.9rem' }}
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Los colores con los que trabajamos este año'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="paleta.titulo"
+            style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, margin: '0 0 0.9rem', lineHeight: 1.08, color: headingColor || palette.ink }}
+            className="text-[clamp(1.9rem,4vw,2.8rem)]"
+            maxLength={90}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            styleKey="paleta.descripcion"
+            placeholder="Frase breve debajo del título (opcional)"
+            style={{ fontSize: '0.95rem', fontWeight: 300, color: textColor || palette.inkSoft, lineHeight: 1.75 }}
+          />
+        </div>
+        <div className="grid grid-cols-2 @[1000px]:grid-cols-4" style={{ gap: '1rem' }}>
+          {visibles.map((c, i, arr) => (
+            <div key={c.id} ref={dnd.registerItemRef(c.id)} className={`relative ${c.oculto ? 'opacity-40' : ''} ${dnd.dragId === c.id ? 'opacity-30' : ''}`}>
+              {editable && (
+                <div className="absolute top-1 right-1 z-10">
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={c.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(c.id, -1)}
+                    onMoveDown={() => move(c.id, 1)}
+                    onDuplicate={() => duplicate(c.id)}
+                    onToggleOculto={() => toggleOculto(c.id)}
+                    onRemove={() => remove(c.id)}
+                    onDragStart={dnd.startDrag(c)}
+                    removeLabel={`Quitar ${c.nombre}`}
+                  />
+                </div>
+              )}
+              <label className={editable ? 'cursor-pointer block' : 'block'} title={editable ? 'Cambiar color' : undefined}>
+                <div style={{ height: 150, background: c.hex }} />
+                {editable && <input type="color" value={c.hex} onChange={(e) => update(c.id, { hex: e.target.value })} className="sr-only" />}
+              </label>
+              <div style={{ padding: '0.9rem 0.2rem' }}>
+                <Editable
+                  editable={editable}
+                  value={c.nombre}
+                  onChange={(v) => update(c.id, { nombre: v })}
+                  tag="div"
+                  block
+                  placeholder="Nombre del color"
+                  style={{ fontFamily: palette.fonts?.serif, fontSize: '1.3rem', marginBottom: '0.25rem', color: palette.ink }}
+                  maxLength={30}
+                />
+                <div style={{ fontSize: '0.74rem', letterSpacing: '0.1em', color: palette.inkSoft, marginBottom: '0.55rem' }}>{c.hex}</div>
+                <Editable
+                  editable={editable}
+                  value={c.uso}
+                  onChange={(v) => update(c.id, { uso: v })}
+                  tag="p"
+                  block
+                  multiline
+                  placeholder="Dónde usarlo"
+                  style={{ fontSize: '0.86rem', fontWeight: 300, color: palette.inkSoft, lineHeight: 1.6, margin: 0 }}
+                  maxLength={140}
+                />
+              </div>
+            </div>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 text-xs font-semibold"
+              style={{ borderColor: palette.line, color: palette.inkSoft, minHeight: '150px' }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar color
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Calculadora de medida recomendada (ej. alfombra) según dos medidas del
+// ambiente (ancho/largo, con sliders) y un uso elegido — cada uso define
+// cuánto piso libre hace falta alrededor, y el resultado se calcula
+// buscando la medida de stock más grande que entre. A diferencia de
+// "servicio-tamano" (tamaños discretos en pestañas), acá las medidas son
+// continuas (sliders) y el resultado sale de una regla, no de una tabla
+// fija por opción.
+function SeccionMedidor({
+  medidasStock = [],
+  usos = [],
+  onUpdateUsos,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  anchoMin = 2.5,
+  anchoMax = 7,
+  largoMin = 2.5,
+  largoMax = 8,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+}) {
+  const [ancho, setAncho] = useState(4);
+  const [largo, setLargo] = useState(5);
+  const [usoIdx, setUsoIdx] = useState(0);
+  const { move, remove, dnd } = useLocalListCrud(usos, onUpdateUsos);
+  const updateUso = (id, patch) => onUpdateUsos?.(usos.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+  const addUso = () => onUpdateUsos?.([...usos, { id: `uso-${Date.now()}`, nombre: 'Nuevo uso', regla: '', margen: 0.8 }]);
+  const uso = usos[Math.min(usoIdx, Math.max(usos.length - 1, 0))];
+  const bg = bgColor || palette.ink;
+  const textoBase = textColor || palette.bg;
+  const textoSuave = `${textoBase}b3`;
+
+  const margen = Number(uso?.margen || 0);
+  const maxW = ancho - margen;
+  const maxL = largo - margen;
+  let pick = medidasStock[0] || [1.6, 2.3];
+  medidasStock.forEach((sz) => {
+    if (sz[0] <= maxW && sz[1] <= maxL) pick = sz;
+  });
+  const fits = pick[0] <= maxW && pick[1] <= maxL;
+  const area = (ancho * largo).toFixed(1);
+  const coverage = Math.round(((pick[0] * pick[1]) / (ancho * largo)) * 100);
+  const fmt = (n) => n.toFixed(1).replace('.0', '');
+
+  const rugSize = fits ? `${pick[0]} x ${pick[1]} m` : 'A medida';
+  const rugNote = fits ? uso?.regla : 'Tu ambiente es chico para las medidas de stock: la hacemos a medida.';
+
+  return (
+    <section style={{ background: bg, color: textoBase }}>
+      <div style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div className="grid grid-cols-1 @lg:grid-cols-[0.9fr_1.1fr] items-start" style={{ gap: 'clamp(2rem,4vw,3.5rem)' }}>
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow ?? 'Guía de medidas'}
+              onChange={onUpdateEyebrow}
+              tag="div"
+              block
+              styleKey="medidor.eyebrow"
+              style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: accent, marginBottom: '0.9rem' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? '¿Qué medida entra en tu ambiente?'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="medidor.titulo"
+              style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, margin: '0 0 1.1rem', lineHeight: 1.08, color: headingColor || textoBase }}
+              className="text-[clamp(1.9rem,4vw,2.8rem)]"
+              maxLength={90}
+            />
+            <Editable
+              editable={editable}
+              value={descripcion}
+              onChange={onUpdateDescripcion}
+              tag="p"
+              block
+              multiline
+              styleKey="medidor.descripcion"
+              placeholder="Frase breve debajo del título (opcional)"
+              style={{ fontSize: '0.95rem', fontWeight: 300, opacity: 0.72, lineHeight: 1.75, marginBottom: '2rem' }}
+            />
+
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div className="flex items-baseline justify-between" style={{ marginBottom: '0.7rem' }}>
+                <span style={{ fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.12em', opacity: 0.6 }}>Ancho del ambiente</span>
+                <span style={{ fontFamily: palette.fonts?.serif, fontSize: '1.5rem', color: accent }}>{fmt(ancho)} m</span>
+              </div>
+              <input type="range" min={anchoMin} max={anchoMax} step="0.5" value={ancho} onChange={(e) => setAncho(Number(e.target.value))} className="w-full" style={{ accentColor: accent }} />
+            </div>
+
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div className="flex items-baseline justify-between" style={{ marginBottom: '0.7rem' }}>
+                <span style={{ fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.12em', opacity: 0.6 }}>Largo del ambiente</span>
+                <span style={{ fontFamily: palette.fonts?.serif, fontSize: '1.5rem', color: accent }}>{fmt(largo)} m</span>
+              </div>
+              <input type="range" min={largoMin} max={largoMax} step="0.5" value={largo} onChange={(e) => setLargo(Number(e.target.value))} className="w-full" style={{ accentColor: accent }} />
+            </div>
+
+            <div>
+              <div style={{ fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.12em', opacity: 0.6, marginBottom: '0.7rem' }}>Uso del ambiente</div>
+              <div className="flex flex-wrap" style={{ gap: '0.5rem' }}>
+                {usos.map((u, i, arr) => {
+                  const on = usoIdx === i;
+                  return (
+                    <div key={u.id} ref={dnd.registerItemRef(u.id)} className="relative group/uso">
+                      <button
+                        type="button"
+                        onClick={() => setUsoIdx(i)}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '0.55rem 1.05rem',
+                          fontSize: '0.76rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          border: `1px solid ${on ? accent : `${textoBase}47`}`,
+                          background: on ? accent : 'transparent',
+                          color: on ? palette.ink : textoBase,
+                          transition: 'all .25s',
+                        }}
+                      >
+                        {editable ? (
+                          <Editable editable value={u.nombre} onChange={(v) => updateUso(u.id, { nombre: v })} tag="span" maxLength={20} />
+                        ) : (
+                          u.nombre
+                        )}
+                      </button>
+                      {editable && (
+                        <div className="hidden group-hover/uso:flex absolute -top-2 -right-2">
+                          <ItemToolbar
+                            variant="overlay"
+                            canMoveUp={i > 0}
+                            canMoveDown={i < arr.length - 1}
+                            onMoveUp={() => move(u.id, -1)}
+                            onMoveDown={() => move(u.id, 1)}
+                            onRemove={() => remove(u.id)}
+                            onDragStart={dnd.startDrag(u)}
+                            removeLabel={`Quitar ${u.nombre}`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {editable && (
+                  <button type="button" onClick={addUso} className="text-xs font-semibold inline-flex items-center gap-1" style={{ color: textoSuave }}>
+                    <PlusIcon className="w-3.5 h-3.5" /> Uso
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ border: `1px solid ${textoBase}38`, padding: 'clamp(1.5rem,3vw,2rem)' }}>
+            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.16em', opacity: 0.55, marginBottom: '1.5rem' }}>Medida recomendada</div>
+            <div style={{ fontFamily: palette.fonts?.serif, color: accent, lineHeight: 1, marginBottom: '0.5rem' }} className="text-[clamp(2.6rem,6vw,3.8rem)]">
+              {rugSize}
+            </div>
+            {editable ? (
+              <Editable editable value={uso?.regla} onChange={(v) => updateUso(uso.id, { regla: v })} tag="div" placeholder="Regla para este uso" style={{ fontSize: '0.9rem', fontWeight: 300, opacity: 0.7, marginBottom: '1.75rem' }} maxLength={120} />
+            ) : (
+              <div style={{ fontSize: '0.9rem', fontWeight: 300, opacity: 0.7, marginBottom: '1.75rem' }}>{rugNote}</div>
+            )}
+            <div className="flex flex-col" style={{ gap: '1rem' }}>
+              {[
+                { label: 'Ambiente', value: `${fmt(ancho)} x ${fmt(largo)} m · ${area} m²` },
+                { label: 'Uso', value: uso?.nombre || '—' },
+                { label: 'Piso libre alrededor', value: `${fmt(margen)} m en total` },
+                { label: 'Cubre', value: fits ? `${coverage}% del ambiente` : 'Según medida final' },
+              ].map((r) => (
+                <div key={r.label} className="flex items-baseline justify-between" style={{ gap: '1rem', borderBottom: `1px solid ${textoBase}24`, paddingBottom: '0.85rem' }}>
+                  <span style={{ fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.55 }}>{r.label}</span>
+                  <span style={{ fontSize: '0.95rem', textAlign: 'right' }}>{r.value}</span>
+                </div>
+              ))}
+            </div>
+            <a
+              href={waLink(whatsapp, nombreNegocio, `Hola! Quiero consultar disponibilidad de ${rugSize} para ${uso?.nombre || 'mi ambiente'}.`)}
+              style={{ display: 'block', textAlign: 'center', marginTop: '1.75rem', background: accent, color: palette.ink, padding: '0.85rem', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}
+            >
+              Consultar disponibilidad
+            </a>
+            <p style={{ fontSize: '0.76rem', fontWeight: 300, opacity: 0.5, lineHeight: 1.65, margin: '1rem 0 0', textAlign: 'center' }}>
+              Medidas orientativas. Si tu ambiente es irregular, mandanos el plano.
+            </p>
+          </div>
         </div>
       </div>
     </section>

@@ -953,6 +953,21 @@ export const SECCIONES_CATALOGO = [
     desc: 'Elegís servicio del catálogo, uno de los próximos 6 días y un horario con cupo, con resumen y botón de WhatsApp — sin elegir profesional, para lavaderos, talleres y turnos de corto plazo.',
   },
   {
+    id: 'ambientes',
+    label: 'Explorador de ambientes',
+    desc: 'Pestañas de ambiente + foto con puntos numerados superpuestos; tocar un punto muestra ese producto (foto, precio, descripción) al costado — para decoración y muebles.',
+  },
+  {
+    id: 'paleta',
+    label: 'Paleta de colores',
+    desc: 'Grilla de swatches de color con nombre, código hex y uso sugerido, sin foto — para decoración, pintura o marca.',
+  },
+  {
+    id: 'medidor',
+    label: 'Calculadora de medida recomendada',
+    desc: 'Sliders de ancho/largo del ambiente + selector de uso, calcula la medida de stock más grande que entra (o "a medida" si no entra ninguna) — para alfombras, muebles a medida, etc.',
+  },
+  {
     id: 'agenda',
     label: 'Agenda / disponibilidad por mes',
     desc: 'Grilla de 12 meses con estado (disponible, últimos lugares, completo) — para negocios que toman un trabajo por fecha.',
@@ -1261,6 +1276,7 @@ export const SECTION_VARIANTS = {
     { id: 'collage', label: 'Collage de 3 fotos de la galería, a la derecha', skeleton: 'heroDuo', group: 'Distribuciones fijas' },
     { id: 'sencillo', label: 'Texto llano + foto a la derecha, sin adornos', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'insignia', label: 'Texto llano + foto con una ficha en la esquina', skeleton: 'split', group: 'Distribuciones fijas' },
+    { id: 'solapada', label: 'Foto ancha arriba, caja de texto superpuesta debajo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
@@ -1308,6 +1324,7 @@ export const SECTION_VARIANTS = {
     { id: 'lista-cantidad', label: 'Lista numerada, con cantidad en el carrito', skeleton: 'productosLista', group: 'Productos' },
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'detalle', label: 'Tarjetas con duración, descripción y precio', skeleton: 'productosServicios', group: 'Servicios' },
+    { id: 'vitrina', label: 'Foto 3/4, categorías con línea inferior', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
   ],
   'sobre-nosotros': [
@@ -1352,6 +1369,9 @@ export const SECTION_VARIANTS = {
   trabajos: [{ id: 'lista-foto', label: 'Lista + foto grande', skeleton: 'split' }],
   'servicio-tamano': [{ id: 'tabla', label: 'Pestañas + panel de precios', skeleton: 'split' }],
   'turno-express': [{ id: 'pasos', label: 'Servicio + día + horario, en 3 pasos', skeleton: 'pagosFila' }],
+  ambientes: [{ id: 'hotspots', label: 'Foto con puntos + panel de producto', skeleton: 'split' }],
+  paleta: [{ id: 'grid', label: 'Grilla de swatches', skeleton: 'grid4' }],
+  medidor: [{ id: 'sliders', label: 'Sliders + panel de resultado', skeleton: 'split' }],
   cursos: [{ id: 'grilla', label: 'Grilla + temario con acordeón', skeleton: 'split' }],
   camadas: [{ id: 'lista', label: 'Lista con barra de cupos', skeleton: 'pagosFila' }],
   agenda: [{ id: 'meses', label: 'Grilla de 12 meses', skeleton: 'grid4' }],

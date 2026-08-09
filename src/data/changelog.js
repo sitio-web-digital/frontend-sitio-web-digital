@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.58.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Explorador de ambientes": pestañas de ambiente + foto con puntos numerados superpuestos — tocar un punto muestra ese producto (foto, precio, descripción) al costado, con botón de WhatsApp.' },
+      { type: 'nuevo', text: 'Sección nueva "Paleta de colores": grilla de swatches con nombre, código hex y uso sugerido, sin foto — para decoración, pintura o marca.' },
+      { type: 'nuevo', text: 'Sección nueva "Calculadora de medida recomendada": sliders de ancho/largo del ambiente + selector de uso, calcula la medida de stock más grande que entra (o "a medida" si no entra ninguna).' },
+      { type: 'nuevo', text: 'Distribución de Productos "Foto 3/4, categorías con línea inferior".' },
+      { type: 'nuevo', text: 'Distribución de Hero "Foto ancha arriba, caja de texto superpuesta debajo".' },
+      { type: 'mejora', text: 'Contacto "Sin formulario, directo a WhatsApp" ahora admite una foto (layout cambia a foto + una columna con todo el contenido) y un eyebrow propio, sin afectar plantillas que ya la usan sin foto.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Casa Ámbar", tienda de decoración e interiorismo con explorador de ambientes, paleta de colores y calculadora de medida de alfombra.' },
+    ],
+  },
+  {
     version: '1.57.0',
     date: '2026-08-09',
     changes: [
