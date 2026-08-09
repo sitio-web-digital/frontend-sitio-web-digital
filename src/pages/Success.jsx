@@ -16,14 +16,18 @@ function celebrate() {
 }
 
 export default function Success() {
-  const { siteData, template, subdomain, published, theme } = useApp();
+  const { siteData, template, subdomain, published, authReady, theme } = useApp();
   const navigate = useNavigate();
   const celebrated = useRef(false);
 
+  // Espera a authReady antes de redirigir — sin esto, una recarga completa
+  // de esta página mandaba de una a /plantillas antes de que la sesión
+  // terminara de restaurarse (ver el mismo fix en Checkout.jsx/Editor.jsx).
   useEffect(() => {
+    if (!authReady) return;
     if (!siteData || !template) navigate('/plantillas', { replace: true });
     else if (!published) navigate('/preview', { replace: true });
-  }, [siteData, template, published, navigate]);
+  }, [authReady, siteData, template, published, navigate]);
 
   useEffect(() => {
     if (!published || celebrated.current) return;

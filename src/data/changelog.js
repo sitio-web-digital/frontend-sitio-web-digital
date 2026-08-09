@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.12',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Bug grave: volver atrás con el navegador después de un error en Mercado Pago (o cualquier recarga completa del Editor, Checkout, Vista previa, Estadísticas o la pantalla de éxito) mandaba directo a "Elegí el estilo de tu página", perdiendo la página en curso — pasaba porque esas pantallas decidían que "no hay página" antes de que la sesión terminara de restaurarse desde el servidor. Ahora esperan a que la restauración termine antes de decidir.' },
+    ],
+  },
+  {
     version: '1.46.11',
     date: '2026-08-09',
     changes: [

@@ -14,6 +14,7 @@ export default function Checkout() {
     subdomain,
     theme,
     user,
+    authReady,
     login,
     register,
     logout,
@@ -29,9 +30,17 @@ export default function Checkout() {
   const [autoAssignDone, setAutoAssignDone] = useState(false);
   const isFree = (user?.freeSubscriptions ?? 0) > 0;
 
+  // Espera a que termine de restaurarse la sesión (authReady) antes de
+  // decidir que no hay página armada — sin esto, volver acá con un refresh
+  // de por medio (ej. "atrás" del navegador después de un error en Mercado
+  // Pago, que implica una recarga completa al volver) mandaba de una a
+  // /plantillas en el instante inicial, antes de que la restauración
+  // llegara a traer la página real del servidor. Bug real, confirmado en
+  // vivo el 2026-08-09 — se perdía todo el progreso por un error de MP.
   useEffect(() => {
+    if (!authReady) return;
     if (!template || !siteData) navigate('/plantillas', { replace: true });
-  }, [template, siteData, navigate]);
+  }, [authReady, template, siteData, navigate]);
 
   // El nombre del negocio (y con él, el subdominio sugerido) ya se pidió en
   // el Paso 1 del quiz — no tiene sentido mandar a alguien a Configuración a

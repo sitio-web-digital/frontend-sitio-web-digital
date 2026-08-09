@@ -20,13 +20,17 @@ const FUENTE_LABELS = { instagram: 'Instagram', google: 'Google', whatsapp: 'Wha
 const FUENTE_COLORS = { instagram: '#9085e9', google: '#3987e5', whatsapp: '#199e70', directo: '#c98500', otro: '#6b7590' };
 
 export default function Stats() {
-  const { siteData, template, subdomain, published, activeSiteId, getSiteStats } = useApp();
+  const { siteData, template, subdomain, published, authReady, activeSiteId, getSiteStats } = useApp();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 
+  // Espera a authReady antes de redirigir — sin esto, una recarga completa
+  // de esta página mandaba de una a /plantillas antes de que la sesión
+  // terminara de restaurarse (ver el mismo fix en Checkout.jsx/Editor.jsx).
   useEffect(() => {
+    if (!authReady) return;
     if (!siteData || !template) navigate('/plantillas', { replace: true });
-  }, [siteData, template, navigate]);
+  }, [authReady, siteData, template, navigate]);
 
   useEffect(() => {
     if (!activeSiteId) return;

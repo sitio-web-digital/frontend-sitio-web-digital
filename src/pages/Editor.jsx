@@ -96,6 +96,7 @@ export default function Editor() {
     textStyles,
     setTextStyle,
     user,
+    authReady,
     login,
     register,
     supportTickets,
@@ -132,11 +133,17 @@ export default function Editor() {
   // `leaving` corta este efecto durante "Atrás": al salir del modo admin,
   // limpiar el estado (resetAll) deja template/siteData en null un instante
   // antes de que el router termine de irse a /admin — sin este freno, este
-  // mismo efecto lo redirige a /plantillas y gana la carrera.
+  // mismo efecto lo redirige a /plantillas y gana la carrera. authReady
+  // cubre el mismo tipo de carrera pero por otro motivo: una recarga
+  // completa de esta página (ej. "atrás" del navegador después de un error
+  // en Mercado Pago, que implica salir de la SPA y volver) arranca con
+  // template/siteData en null hasta que termina de restaurarse la sesión —
+  // sin esto, se perdía todo el progreso del editor por ese error. Bug real,
+  // confirmado en vivo el 2026-08-09.
   useEffect(() => {
-    if (leaving) return;
+    if (leaving || !authReady) return;
     if (!template || !siteData) navigate('/plantillas', { replace: true });
-  }, [template, siteData, navigate, leaving]);
+  }, [template, siteData, navigate, leaving, authReady]);
 
   // Si soporte bloqueó esta página, ni entrar deja — corta directo al panel
   // en vez de mostrar el editor en modo lectura. También cubre el caso de

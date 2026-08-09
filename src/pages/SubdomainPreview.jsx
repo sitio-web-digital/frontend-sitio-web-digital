@@ -11,6 +11,7 @@ export default function SubdomainPreview() {
     siteData,
     logoUrl,
     published,
+    authReady,
     theme,
     sections,
     productos,
@@ -26,9 +27,15 @@ export default function SubdomainPreview() {
   } = useApp();
   const navigate = useNavigate();
 
+  // Espera a authReady antes de redirigir — sin esto, volver acá con una
+  // recarga completa de por medio (ej. "atrás" del navegador después de un
+  // error en Mercado Pago) mandaba de una a /plantillas antes de que la
+  // sesión terminara de restaurarse, perdiendo la página en curso (ver el
+  // mismo fix en Checkout.jsx/Editor.jsx).
   useEffect(() => {
+    if (!authReady) return;
     if (!template || !siteData) navigate('/plantillas', { replace: true });
-  }, [template, siteData, navigate]);
+  }, [authReady, template, siteData, navigate]);
 
   if (!template || !siteData) return null;
 
