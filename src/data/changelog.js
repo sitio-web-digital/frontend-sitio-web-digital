@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.46.10',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Causa real (más de fondo que el fix anterior) de que la Vista previa no mostrara "Publicar ahora": un borrador viejo guardado en el navegador (de antes de que existiera el backend real) podía arrancar cualquier página nueva ya marcada como "publicada" desde el primer instante, sin haber pasado por el servidor. "Publicada" ahora nunca arranca de ese borrador — solo lo puede confirmar el servidor.' },
+    ],
+  },
+  {
     version: '1.46.9',
     date: '2026-08-09',
     changes: [

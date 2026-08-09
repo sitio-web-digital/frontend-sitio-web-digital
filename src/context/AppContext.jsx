@@ -100,7 +100,19 @@ export function AppProvider({ children }) {
   const [templateId, setTemplateId] = useState(initialHydrated?.templateId ?? null);
   const [siteData, setSiteData] = useState(initialHydrated?.siteData ?? null);
   const [logoUrl, setLogoUrl] = useState(initialHydrated?.logoUrl ?? null);
-  const [published, setPublished] = useState(initialHydrated?.published ?? false);
+  // A propósito NUNCA arranca de initialHydrated (el borrador de
+  // localStorage) — ese borrador es un mecanismo viejo de antes de que
+  // existiera el backend real (ver siteSchema.js, saveSiteToStorage /
+  // loadSiteFromStorage), una sola clave GLOBAL sin ninguna cuenta ni
+  // página asociada. Si en algún momento se guardó ahí una página
+  // publicada, ese `true` contaminaba el estado inicial de CUALQUIER
+  // página nueva, en cualquier cuenta, antes incluso de que existiera en
+  // el servidor — bug real, confirmado en vivo el 2026-08-09 (una página
+  // recién creada, sin fila todavía en la base, ya mostraba "publicada").
+  // `published` es un estado que solo el servidor puede confirmar de
+  // verdad (switchSite lo hidrata real, refreshSiteStatus lo revalida) —
+  // nunca hay que confiar en él viniendo de un borrador local.
+  const [published, setPublished] = useState(false);
   // A diferencia del resto del estado del sitio, el subdominio no vive en el
   // JSON de `hydrateSite()` (es identidad de cuenta, no contenido de página)
   // — por eso no puede salir de `initialHydrated` (que es solo localStorage)
