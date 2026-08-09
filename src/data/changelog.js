@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.48.2',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'El menú "Agregar sección" tenía dos barras de scroll anidadas (una del popover, otra de la lista de adentro) — ahora es una sola y el buscador queda fijo arriba mientras se scrollea la lista.' },
+    ],
+  },
+  {
     version: '1.48.1',
     date: '2026-08-09',
     changes: [

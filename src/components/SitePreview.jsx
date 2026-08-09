@@ -4773,7 +4773,7 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
               <p className="text-xs text-neutral-400 px-3 py-2.5">Ya agregaste todas las secciones.</p>
             ) : (
               <>
-                <div className="px-1.5 pt-1 pb-1.5">
+                <div className="px-1.5 pt-1 pb-1.5 sticky top-0 z-10 bg-white">
                   <input
                     autoFocus
                     value={query}
@@ -4782,7 +4782,7 @@ function InsertionPoint({ disponibles, onAdd, prominent = false, topEdge = false
                     className="w-full border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-gold-500"
                   />
                 </div>
-                <div className="max-h-80 overflow-y-auto" onMouseLeave={() => setHoveredType(null)}>
+                <div onMouseLeave={() => setHoveredType(null)}>
                   {filtrados.length === 0 ? (
                     <p className="text-xs text-neutral-400 px-3 py-2.5">Ninguna sección coincide con "{query}".</p>
                   ) : (
