@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.50.2',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Precios y planes: la pestaña activa de período (Mensual/Trimestral/Anual) se pintaba con el color de texto genérico en vez del color de acento del sitio.' },
+    ],
+  },
+  {
     version: '1.50.1',
     date: '2026-08-09',
     changes: [

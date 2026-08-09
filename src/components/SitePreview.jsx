@@ -17303,7 +17303,7 @@ function SeccionPrecios({
                 className="px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors"
                 style={
                   terminoActivo === i
-                    ? { background: palette.inkHex || '#171717', color: palette.bg }
+                    ? { background: accent, color: palette.bg }
                     : { color: palette.inkSoft }
                 }
               >
