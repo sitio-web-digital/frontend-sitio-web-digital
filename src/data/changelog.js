@@ -5,6 +5,18 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.50.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Grilla de horarios": una grilla semanal (horario × día) con una disciplina o clase asignada a cada celda, clickeable para ver el detalle y reservar — pensada para gimnasios y estudios.' },
+      { type: 'nuevo', text: 'Distribución de Hero "Texto + eyebrow con borde, foto a la derecha": para negocios que quieren un badge destacado en vez del eyebrow simple.' },
+      { type: 'nuevo', text: 'Distribución de Productos "Con franja de color": tarjeta con foto, una franja de color lateral y nivel/duración, sin precio — para clases o servicios sin costo fijo.' },
+      { type: 'nuevo', text: 'Distribución de Categorías "Grilla de fotos con etiqueta": para mostrar ambientes o instalaciones (sedes, talleres, locales con varias salas).' },
+      { type: 'mejora', text: 'Precios y planes ahora admite un eyebrow opcional y tabs de período (ej. Mensual/Trimestral/Anual) que recalculan el precio mostrado con un descuento por período.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Gimnasio Base 9", para gimnasios con clases con cupo, planes por período y grilla horaria.' },
+    ],
+  },
+  {
     version: '1.49.1',
     date: '2026-08-09',
     changes: [

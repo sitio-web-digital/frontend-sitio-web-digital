@@ -928,6 +928,11 @@ export const SECCIONES_CATALOGO = [
     desc: 'Selector de talle con las medidas exactas de cada uno (busto, cintura, largo...), para indumentaria.',
   },
   {
+    id: 'horarios',
+    label: 'Grilla de horarios',
+    desc: 'Grilla semanal (horario × día) con una disciplina o clase asignada a cada celda — para gimnasios y estudios.',
+  },
+  {
     id: 'financiacion',
     label: 'Simulador de cuotas',
     desc: 'Un simulador de financiación: elegí un precio y mostrá la cuota estimada en distintos plazos.',
@@ -1206,6 +1211,7 @@ export const SECTION_VARIANTS = {
     { id: 'minimal', label: 'Minimalista', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
     { id: 'dividido', label: 'Título grande, texto y botones apilados, sin foto', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
     { id: 'carrusel', label: 'Foto de fondo que rota + riel de miniaturas', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
+    { id: 'foto-derecha', label: 'Texto + eyebrow con borde, foto a la derecha', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
@@ -1247,6 +1253,7 @@ export const SECTION_VARIANTS = {
     { id: 'destacada', label: 'Pieza destacada + categorías', skeleton: 'productosBento', group: 'Productos' },
     { id: 'catalogo', label: 'Catálogo con filtro', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'moda', label: 'Con color y talle', skeleton: 'productosCatalogo', group: 'Productos' },
+    { id: 'disciplinas', label: 'Con franja de color', skeleton: 'productosFila', group: 'Productos' },
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
   ],
@@ -1270,6 +1277,7 @@ export const SECTION_VARIANTS = {
   categorias: [
     { id: 'scroll', label: 'Fila con scroll', skeleton: 'categoriasScroll' },
     { id: 'numerada', label: 'Rubros numerados + estadísticas', skeleton: 'categoriasScroll' },
+    { id: 'fotos', label: 'Grilla de fotos con etiqueta', skeleton: 'categoriasScroll' },
   ],
   pasos: [
     { id: 'numerados', label: 'Pasos numerados', skeleton: 'pasosNumerados' },
@@ -1282,6 +1290,7 @@ export const SECTION_VARIANTS = {
   pagos: [{ id: 'fila', label: 'Fila de badges', skeleton: 'pagosFila' }],
   'envios-tabs': [{ id: 'tabs', label: 'Pestañas con datos', skeleton: 'pagosFila' }],
   'guia-talles': [{ id: 'tabs', label: 'Selector + medidas', skeleton: 'pagosFila' }],
+  horarios: [{ id: 'grilla', label: 'Grilla semanal', skeleton: 'pagosFila' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
   beneficios: [
     { id: 'fila', label: 'Fila con íconos', skeleton: 'beneficiosFila' },
@@ -1397,6 +1406,15 @@ export const SECTION_PREVIEW_DATA = {
       },
       { id: 'p2', label: 'M', equiv: 'Talle 2', nota: '', medidas: [] },
       { id: 'p3', label: 'L', equiv: 'Talle 3', nota: '', medidas: [] },
+    ],
+  },
+  horarios: {
+    dias: ['Lun', 'Mar', 'Mié'],
+    horarios: ['09:00', '18:00'],
+    disciplinas: [{ id: 'd1', nombre: 'Funcional', coach: 'Coach', color: '#d4ff3d', nivel: '', duracion: '55 min' }],
+    grilla: [
+      ['d1', null, 'd1'],
+      [null, 'd1', null],
     ],
   },
   financiacion: {},
