@@ -1609,6 +1609,8 @@ export default function SitePreview({
                 headingColor={sec.headingColor}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
                 onAddMember={(item) => onAddListItem?.('equipo', item)}
                 onRemoveMember={(id) => onRemoveListItem?.('equipo', id)}
                 onUpdateMember={(id, patch) => onUpdateListItem?.('equipo', id, patch)}
@@ -17693,6 +17695,8 @@ function SeccionEquipo({
   palette = {},
   titulo,
   onUpdateTitulo,
+  eyebrow,
+  onUpdateEyebrow,
   onAddMember,
   onRemoveMember,
   onUpdateMember,
@@ -17799,6 +17803,18 @@ function SeccionEquipo({
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
       <div className="max-w-5xl mx-auto pb-6 mb-10 border-b" style={{ borderColor: palette.line }}>
+        <Editable
+          editable={editable}
+          value={eyebrow}
+          onChange={onUpdateEyebrow}
+          tag="span"
+          block
+          styleKey="equipo.eyebrow"
+          placeholder="Eyebrow (opcional)"
+          style={{ color: accent }}
+          className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+          maxLength={40}
+        />
         <Editable
           editable={editable}
           value={titulo ?? 'Nuestro equipo'}

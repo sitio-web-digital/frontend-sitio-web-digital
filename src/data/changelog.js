@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.50.1',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Plantilla "Gimnasio Base 9": la paleta tenía "ink" (color de texto) y "bg" (fondo) invertidos — el texto quedaba casi invisible sobre el fondo oscuro. Corregido, y ahora las secciones "Grilla semanal" y "Coaches" usan el mismo tono levemente más claro que el diseño original.' },
+      { type: 'mejora', text: 'Equipo/Coaches ahora admite un eyebrow opcional arriba del título.' },
+    ],
+  },
+  {
     version: '1.50.0',
     date: '2026-08-09',
     changes: [
