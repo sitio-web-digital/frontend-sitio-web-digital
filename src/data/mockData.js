@@ -938,6 +938,21 @@ export const SECCIONES_CATALOGO = [
     desc: 'Elegí un producto para cada mitad y armá una combinación con precio propio — para pizzerías y catálogos similares.',
   },
   {
+    id: 'presupuesto',
+    label: 'Calculadora de presupuesto',
+    desc: 'Elegís tipo de evento, cantidad de invitados y servicios extra, y calcula un rango de precio estimado en vivo — para rubros que cotizan por invitado/persona.',
+  },
+  {
+    id: 'agenda',
+    label: 'Agenda / disponibilidad por mes',
+    desc: 'Grilla de 12 meses con estado (disponible, últimos lugares, completo) — para negocios que toman un trabajo por fecha.',
+  },
+  {
+    id: 'trabajos',
+    label: 'Trabajos realizados',
+    desc: 'Pestañas de categoría + una lista que cambia la foto grande (nombre, lugar y descripción) — para portfolios de trabajos.',
+  },
+  {
     id: 'promo-dia',
     label: 'Promoción del día',
     desc: 'Un botón por día que cambia la promo mostrada (foto, título, descripción y precio) — para negocios con ofertas semanales fijas.',
@@ -1223,6 +1238,7 @@ export const SECTION_VARIANTS = {
     { id: 'carrusel', label: 'Foto de fondo que rota + riel de miniaturas', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'foto-derecha', label: 'Texto + eyebrow con borde, foto a la derecha', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'circular', label: 'Foto circular con medallita, a la derecha', skeleton: 'split', group: 'Distribuciones fijas' },
+    { id: 'collage', label: 'Collage de 3 fotos de la galería, a la derecha', skeleton: 'heroDuo', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
@@ -1307,6 +1323,9 @@ export const SECTION_VARIANTS = {
   horarios: [{ id: 'grilla', label: 'Grilla semanal', skeleton: 'pagosFila' }],
   'mitad-y-mitad': [{ id: 'circular', label: 'Foto circular partida al medio', skeleton: 'split' }],
   'promo-dia': [{ id: 'tabs', label: 'Botones por día', skeleton: 'pagosFila' }],
+  trabajos: [{ id: 'lista-foto', label: 'Lista + foto grande', skeleton: 'split' }],
+  agenda: [{ id: 'meses', label: 'Grilla de 12 meses', skeleton: 'grid4' }],
+  presupuesto: [{ id: 'calculadora', label: 'Tipo + invitados + extras', skeleton: 'split' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
   beneficios: [
     { id: 'fila', label: 'Fila con íconos', skeleton: 'beneficiosFila' },
@@ -1331,6 +1350,7 @@ export const SECTION_VARIANTS = {
   precios: [
     { id: 'tarjetas', label: 'Tarjetas', skeleton: 'grid3col' },
     { id: 'gimnasio', label: 'Con tabs de período y plan destacado', skeleton: 'grid3col' },
+    { id: 'servicios', label: 'Etiqueta + lista de características antes del precio', skeleton: 'grid3col' },
   ],
   equipo: [
     { id: 'grid', label: 'Tarjetas', skeleton: 'grid3' },

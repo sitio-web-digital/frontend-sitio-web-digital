@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.54.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Calculadora de presupuesto": tipo de evento + rango de invitados + servicios extra a elección, con un panel que recalcula un rango de precio estimado al toque — para rubros que cotizan por invitado/persona.' },
+      { type: 'nuevo', text: 'Sección nueva "Trabajos realizados": pestañas de categoría + una lista que cambia la foto grande (con crossfade, nombre y descripción) — para portfolios.' },
+      { type: 'nuevo', text: 'Sección nueva "Agenda / disponibilidad por mes": grilla de 12 meses con estado (disponible, últimos lugares, completo).' },
+      { type: 'nuevo', text: 'Distribución de Hero "Collage de 3 fotos de la galería, a la derecha".' },
+      { type: 'nuevo', text: 'Distribución de Precios "Etiqueta + lista de características antes del precio": para catálogos de servicios sin botón por tarjeta.' },
+      { type: 'mejora', text: 'Pasos "Lista de pasos + una foto fija a la derecha" ahora admite poner la foto a la izquierda en cambio.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Bruma eventos", productora de eventos con calculadora de presupuesto, trabajos realizados y agenda de disponibilidad.' },
+    ],
+  },
+  {
     version: '1.53.0',
     date: '2026-08-09',
     changes: [
