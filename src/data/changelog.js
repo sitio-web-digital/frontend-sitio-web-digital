@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.55.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Precio según el tamaño": pestañas de tamaño + panel que recalcula el total sumando dos servicios (ej. baño + corte) y muestra la duración estimada, con botón de WhatsApp para pedir turno.' },
+      { type: 'nuevo', text: 'Distribución de Beneficios "Fila con guión, sin ícono": para franjas angostas de confianza sin necesitar un ícono por ítem.' },
+      { type: 'nuevo', text: 'Distribución de Productos "Lista numerada, con cantidad en el carrito": el botón de agregar pasa a mostrar la cantidad ya sumada al pedido.' },
+      { type: 'nuevo', text: 'Distribución de Hero "Texto llano + foto a la derecha, sin adornos".' },
+      { type: 'nuevo', text: 'Distribución de Categorías "Título + grilla de fotos con nombre y conteo".' },
+      { type: 'nuevo', text: 'Distribución de Pasos "Encabezado + fila de 4, borde superior de color": para preguntas frecuentes o consejos breves.' },
+      { type: 'mejora', text: 'Contacto "Sin formulario, directo a WhatsApp" ahora admite una lista de datos personalizada (en vez de los 3 campos fijos), con orden y textos libres.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Pata", pet shop de barrio con catálogo de alimento y accesorios, peluquería canina con turno y carrito de compra.' },
+    ],
+  },
+  {
     version: '1.54.0',
     date: '2026-08-09',
     changes: [
