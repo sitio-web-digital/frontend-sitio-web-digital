@@ -1269,6 +1269,7 @@ export default function SitePreview({
                 headingColor={sec.headingColor}
                 textColor={sec.textColor}
                 accent={accent}
+                activeColor={sec.activeColor}
                 palette={palette}
               />
             )}
@@ -1661,11 +1662,16 @@ export default function SitePreview({
                 categorias={sec.categorias ?? []}
                 onUpdate={(categorias) => onSetSectionStyle?.(sec.id, { categorias })}
                 palette={palette}
+                accent={accent}
+                variant={sec.variant}
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
+                textColor={sec.textColor}
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                stats={sec.stats ?? []}
+                onUpdateStats={(stats) => onSetSectionStyle?.(sec.id, { stats })}
               />
             )}
             {sec.type === 'pasos' && (
@@ -6791,6 +6797,26 @@ function SeccionHero({
     );
   }
 
+  // Dos columnas sin foto — título grande a la izquierda, párrafo y botones
+  // a la derecha, alineados con la base del título (a diferencia de "centro",
+  // que apila todo en una sola columna centrada). Para rubros que quieren un
+  // hero editorial sin foto pero con más peso tipográfico que "minimal". Sin
+  // eyebrow (a diferencia del resto de variantes fijas): el título entra
+  // directo, pensado para cuando el rubro ya se lee en el header.
+  if (variant === 'dividido') {
+    return (
+      <section className="px-6 @lg:px-10 py-20 @lg:py-28" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-6xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-16 items-end">
+          <div>{heading('text-5xl @lg:text-7xl @lg:leading-[0.86]')}</div>
+          <div className="@lg:pb-2">
+            {paragraph()}
+            {botones()}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Todo centrado de verdad (a diferencia de "centrado", que pese al nombre
   // es un grid asimétrico texto+imagen) — sin foto, con dos manchas de color
   // decorativas de fondo. Para rubros hogareños/artesanales que no quieren
@@ -9528,8 +9554,31 @@ function SeccionProductos({
           />
         </div>
       ) : (
-        <div className={`max-w-5xl mx-auto grid ${PRODUCTOS_GRID_COLS[variant] || PRODUCTOS_GRID_COLS['grid-3']} gap-5`}>
-          {(editable ? productos : productos.filter((p) => !p.oculto)).map((p, i, arr) => (
+        <div className="max-w-5xl mx-auto">
+          {categorias.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {['Todos', ...categorias].map((c) => {
+                const count = c === 'Todos' ? productosVisibles.length : productosVisibles.filter((p) => p.categoria === c).length;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategoriaFiltro(c)}
+                    className="text-xs font-semibold px-3.5 py-2 border transition-colors"
+                    style={
+                      categoriaFiltro === c
+                        ? { background: accent, borderColor: accent, color: palette.bg }
+                        : { borderColor: palette.line, color: palette.inkSoft }
+                    }
+                  >
+                    {c} {count}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className={`grid ${PRODUCTOS_GRID_COLS[variant] || PRODUCTOS_GRID_COLS['grid-3']} gap-5`}>
+          {productosFiltrados.map((p, i, arr) => (
             <div
               key={p.id}
               className={`relative border flex flex-col text-left ${p.oculto ? 'opacity-40' : ''}`}
@@ -9564,7 +9613,29 @@ function SeccionProductos({
                 onChangeMediaVariant={(v) => onUpdateProducto?.(p.id, { mediaVariant: v })}
                 limitKey="productos"
               />
+              {p.etiqueta && (
+                <span
+                  className="absolute top-2 left-2 font-mono text-[10px] uppercase tracking-wide px-2 py-1 text-white pointer-events-none"
+                  style={{ background: p.etiquetaColor || accent }}
+                >
+                  {p.etiqueta}
+                </span>
+              )}
               <div className="p-5 flex flex-col flex-1">
+                {(editable || p.categoria) && (
+                  <Editable
+                    editable={editable}
+                    value={p.categoria}
+                    onChange={(v) => onUpdateProducto?.(p.id, { categoria: v })}
+                    tag="p"
+                    block
+                    styleKey={`producto.${p.id}.categoria`}
+                    placeholder="Categoría (opcional)"
+                    style={{ color: palette.inkSoft }}
+                    className="font-mono text-[10px] uppercase tracking-wide mb-1"
+                    maxLength={30}
+                  />
+                )}
                 <Editable
                   editable={editable}
                   value={p.nombre}
@@ -9682,6 +9753,7 @@ function SeccionProductos({
               </button>
             </form>
           )}
+          </div>
         </div>
       )}
     </section>
@@ -17935,6 +18007,136 @@ function SeccionPasos({
     );
   }
 
+  // Grilla con bordes finas, número grande en un color de acento y fondo
+  // claro — a diferencia de "numerados"/"timeline" (pensadas para fondo
+  // oscuro, con el número en un chip), esta es una tabla de criterios: el
+  // encabezado va en dos columnas (eyebrow+título a la izquierda, un
+  // párrafo de contexto a la derecha) y las celdas comparten un solo borde
+  // entre sí, no cada una la suya. Pensada para "por qué elegimos así lo
+  // que vendemos" en catálogos, no para procesos paso a paso.
+  if (variant === 'criterio') {
+    return (
+      <section className="px-6 @lg:px-10 py-16 @lg:py-24" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-wrap items-end justify-between gap-6 mb-9">
+            <div className="max-w-md">
+              <Editable
+                editable={editable}
+                value={eyebrow ?? 'Nuestro criterio'}
+                onChange={onUpdateEyebrow}
+                tag="span"
+                block
+                styleKey="pasos.eyebrow"
+                style={{ color: accent }}
+                className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
+                maxLength={40}
+              />
+              <Editable
+                editable={editable}
+                value={titulo ?? 'Cómo elegimos lo que vendemos'}
+                onChange={onUpdateTitulo}
+                tag="h2"
+                block
+                styleKey="pasos.titulo"
+                style={{ color: headingColor || palette.ink }}
+                className="font-serif font-extrabold text-3xl @lg:text-4xl leading-[1.02] tracking-tight text-balance"
+                maxLength={90}
+              />
+            </div>
+            <Editable
+              editable={editable}
+              value={descripcion}
+              onChange={onUpdateDescripcion}
+              tag="p"
+              block
+              multiline
+              styleKey="pasos.descripcion"
+              placeholder="Contexto breve sobre este criterio"
+              style={{ color: textColor || palette.inkSoft }}
+              className="text-sm @lg:text-base leading-relaxed max-w-sm"
+              maxLength={220}
+            />
+          </div>
+          <div
+            className={`grid @sm:grid-cols-2 ${pasosVisibles.length >= 4 ? '@lg:grid-cols-4' : '@lg:grid-cols-3'} border-t border-l`}
+            style={{ borderColor: palette.line }}
+          >
+            {pasosVisibles.map((p, i, arr) => (
+              <div
+                key={p.id}
+                ref={dnd.registerItemRef(p.id)}
+                className={`relative border-r border-b p-6 @lg:p-7 flex flex-col gap-3 ${p.oculto ? 'opacity-40' : ''} ${
+                  dnd.dragId === p.id ? 'opacity-30' : ''
+                }`}
+                style={{ borderColor: palette.line }}
+              >
+                {editable && (
+                  <div className="absolute top-2 right-2">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={p.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(p.id, -1)}
+                      onMoveDown={() => move(p.id, 1)}
+                      onDuplicate={() => duplicate(p.id)}
+                      onToggleOculto={() => toggleOculto(p.id)}
+                      onRemove={() => remove(p.id)}
+                      onDragStart={dnd.startDrag(p)}
+                      removeLabel="Quitar criterio"
+                    />
+                  </div>
+                )}
+                <span
+                  className="font-serif font-extrabold text-4xl leading-none tracking-tight"
+                  style={{ color: accent }}
+                >
+                  {numeroPad ? String(i + 1).padStart(2, '0') : i + 1}
+                </span>
+                <Editable
+                  editable={editable}
+                  value={p.titulo}
+                  onChange={(v) => update(p.id, { titulo: v })}
+                  tag="p"
+                  block
+                  styleKey={`paso.${p.id}.titulo`}
+                  placeholder="Título del criterio"
+                  style={{ color: headingColor || palette.ink }}
+                  className="font-serif font-extrabold text-lg leading-tight"
+                  maxLength={50}
+                />
+                <Editable
+                  editable={editable}
+                  value={p.desc}
+                  onChange={(v) => update(p.id, { desc: v })}
+                  tag="p"
+                  multiline
+                  block
+                  styleKey={`paso.${p.id}.desc`}
+                  placeholder="Descripción breve"
+                  style={{ color: textColor || palette.inkSoft }}
+                  className="text-sm leading-relaxed"
+                  maxLength={140}
+                />
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={add}
+                className="border-r border-b-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-8 text-sm font-semibold"
+                style={{ borderColor: palette.line, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-4 h-4" /> Agregar criterio
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.ink }}>
       <div className="max-w-5xl mx-auto">
@@ -18786,7 +18988,9 @@ function SeccionEnviosTabs({
   textColor,
   palette = {},
   accent,
+  activeColor,
 }) {
+  const tabActiveColor = activeColor || accent;
   const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? null);
   useEffect(() => {
     if (!tabs.some((t) => t.id === activeTabId)) setActiveTabId(tabs[0]?.id ?? null);
@@ -18821,7 +19025,7 @@ function SeccionEnviosTabs({
           block
           styleKey="enviostabs.eyebrow"
           placeholder="Eyebrow (opcional)"
-          style={{ color: accent }}
+          style={{ color: tabActiveColor }}
           className="font-mono text-xs uppercase tracking-[0.16em] mb-3"
           maxLength={40}
         />
@@ -18850,8 +19054,8 @@ function SeccionEnviosTabs({
                 className="px-4 py-2 border text-sm font-semibold transition-colors"
                 style={
                   activeTabId === t.id
-                    ? { borderColor: accent, color: accent, background: palette.accentSoft }
-                    : { borderColor: palette.line, color: palette.inkSoft }
+                    ? { borderColor: tabActiveColor, color: palette.inkHex || '#171717', background: tabActiveColor }
+                    : { borderColor: textColor ? 'rgba(255,255,255,0.2)' : palette.line, color: textColor || palette.inkSoft }
                 }
               >
                 <Editable
@@ -18898,7 +19102,7 @@ function SeccionEnviosTabs({
         </div>
 
         {statsVisibles.length === 0 && !editable ? null : (
-          <div className="grid @sm:grid-cols-3 gap-6">
+          <div className="grid @sm:grid-cols-3 gap-6 border p-6 @lg:p-8" style={{ borderColor: textColor ? 'rgba(255,255,255,0.15)' : palette.line }}>
             {statsVisibles.map((s) => (
               <div
                 key={s.id}
@@ -18909,7 +19113,7 @@ function SeccionEnviosTabs({
                   <div className="absolute top-0 right-0">
                     <ItemToolbar
                       variant="inline"
-                      color={palette.ink}
+                      color={textColor || palette.ink}
                       oculto={s.oculto}
                       onDuplicate={() => duplicateStat(s.id)}
                       onToggleOculto={() => toggleStatOculto(s.id)}
@@ -18927,7 +19131,7 @@ function SeccionEnviosTabs({
                   block
                   styleKey={`enviostat.${s.id}.label`}
                   placeholder="Dato"
-                  style={{ color: palette.inkSoft }}
+                  style={{ color: tabActiveColor }}
                   className="font-mono text-xs uppercase tracking-wide mb-1.5"
                   maxLength={30}
                 />
@@ -18939,7 +19143,7 @@ function SeccionEnviosTabs({
                   block
                   styleKey={`enviostat.${s.id}.valor`}
                   placeholder="Valor"
-                  style={{ color: headingColor || palette.ink }}
+                  style={{ color: headingColor || textColor || palette.ink }}
                   className="font-serif text-2xl mb-1.5"
                   maxLength={30}
                 />
@@ -22792,7 +22996,19 @@ function SeccionCategorias({
   editable,
   bgColor,
   headingColor,
+  textColor,
   palette = {},
+  accent,
+  variant = 'scroll',
+  descripcion,
+  onUpdateDescripcion,
+  botones: botonesData = {},
+  onUpdateBotones,
+  nombreNegocio,
+  whatsapp,
+  seccionesDisponibles = [],
+  stats = [],
+  onUpdateStats,
 }) {
   const update = (id, patch) => onUpdate?.(categorias.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   const remove = (id) => onUpdate?.(categorias.filter((c) => c.id !== id));
@@ -22803,6 +23019,160 @@ function SeccionCategorias({
   };
   const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(categorias, onUpdate);
   const displayItems = editable ? categorias : categorias.filter((c) => !c.oculto);
+
+  // "numerada" — tres (o más) rubros en fila, cada uno con su número (01,
+  // 02...), cuántos productos tiene y una foto abajo — pensado para ir
+  // arriba de todo, como remate del hero, no como galería de scroll. Suma
+  // una fila chica de estadísticas debajo (ej. "3 RUBROS · 48 h DESPACHO"),
+  // datos sueltos tipo label+valor, sin ícono.
+  if (variant === 'numerada') {
+    const updateStat = (id, patch) => onUpdateStats?.(stats.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    const addStat = () => onUpdateStats?.([...stats, { id: `stat-${Date.now()}`, valor: '0', label: 'Dato' }]);
+    const removeStat = (id) => onUpdateStats?.(stats.filter((s) => s.id !== id));
+    const statsVisibles = editable ? stats : stats.filter((s) => !s.oculto);
+    return (
+      <section className="px-6 @lg:px-10 py-10 @lg:py-14" style={{ background: bgColor || palette.bg }}>
+        <div className="max-w-5xl mx-auto">
+          {displayItems.length === 0 && !editable ? null : (
+            <div className={`grid @sm:grid-cols-${Math.min(displayItems.length || 3, 4)} gap-5 mb-6`}>
+              {displayItems.map((c, i, arr) => (
+                <div
+                  key={c.id}
+                  ref={dnd.registerItemRef(c.id)}
+                  className={`relative border ${c.oculto ? 'opacity-40' : ''} ${dnd.dragId === c.id ? 'opacity-30' : ''}`}
+                  style={{ borderColor: palette.line }}
+                >
+                  {editable && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <ItemToolbar
+                        variant="overlay"
+                        oculto={c.oculto}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => move(c.id, -1)}
+                        onMoveDown={() => move(c.id, 1)}
+                        onDuplicate={() => duplicate(c.id)}
+                        onToggleOculto={() => toggleOculto(c.id)}
+                        onRemove={() => remove(c.id)}
+                        onDragStart={dnd.startDrag(c)}
+                        removeLabel={`Quitar ${c.label}`}
+                      />
+                    </div>
+                  )}
+                  <div className="p-4 flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold" style={{ color: accent }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <Editable
+                      editable={editable}
+                      value={c.count}
+                      onChange={(v) => update(c.id, { count: v })}
+                      tag="span"
+                      styleKey={`categoria.${c.id}.count`}
+                      placeholder="N items"
+                      style={{ color: palette.inkSoft }}
+                      className="font-mono text-xs"
+                      maxLength={16}
+                    />
+                  </div>
+                  <div className="px-4 pb-3">
+                    <Editable
+                      editable={editable}
+                      value={c.label}
+                      onChange={(v) => update(c.id, { label: v })}
+                      tag="p"
+                      block
+                      styleKey={`categoria.${c.id}.label`}
+                      placeholder="Nombre del rubro"
+                      style={{ color: headingColor || palette.ink }}
+                      className="font-serif text-lg font-bold"
+                      maxLength={30}
+                    />
+                  </div>
+                  <label className={`relative block w-full aspect-[4/3] bg-black/5 ${editable ? 'cursor-pointer' : ''}`}>
+                    {c.img ? (
+                      <img src={c.img} alt={c.label || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center" style={{ color: palette.inkSoft }}>
+                        <ImageIcon className="w-6 h-6" />
+                      </div>
+                    )}
+                    {editable && (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (file && (await validateImageFile(file, 'galeria'))) update(c.id, { img: await uploadImage(file) });
+                        }}
+                      />
+                    )}
+                  </label>
+                </div>
+              ))}
+              {editable && (
+                <label className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-10 text-xs font-semibold cursor-pointer" style={{ borderColor: palette.line, color: palette.inkSoft }}>
+                  <PlusIcon className="w-4 h-4" /> Agregar rubro
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (file) addSlide(file);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          )}
+          {(statsVisibles.length > 0 || editable) && (
+            <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 border-t pt-5" style={{ borderColor: palette.line }}>
+              {statsVisibles.map((s) => (
+                <div key={s.id} className={`relative flex items-baseline gap-2 ${s.oculto ? 'opacity-40' : ''}`}>
+                  <Editable
+                    editable={editable}
+                    value={s.valor}
+                    onChange={(v) => updateStat(s.id, { valor: v })}
+                    tag="span"
+                    styleKey={`categoriastat.${s.id}.valor`}
+                    placeholder="0"
+                    style={{ color: accent }}
+                    className="font-serif text-xl font-bold"
+                    maxLength={12}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={s.label}
+                    onChange={(v) => updateStat(s.id, { label: v })}
+                    tag="span"
+                    styleKey={`categoriastat.${s.id}.label`}
+                    placeholder="Dato"
+                    style={{ color: palette.inkSoft }}
+                    className="font-mono text-[11px] uppercase tracking-wide"
+                    maxLength={24}
+                  />
+                  {editable && (
+                    <button type="button" onClick={() => removeStat(s.id)} className="text-xs opacity-50 hover:opacity-100" style={{ color: palette.ink }}>
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {editable && (
+                <button type="button" onClick={addStat} className="text-xs font-semibold flex items-center gap-1" style={{ color: palette.inkSoft }}>
+                  <PlusIcon className="w-3.5 h-3.5" /> Agregar dato
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-10 @lg:py-14 border-y" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>

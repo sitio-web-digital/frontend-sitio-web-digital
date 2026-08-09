@@ -467,8 +467,13 @@ export function AppProvider({ children }) {
     // Las plantillas de gastronomía traen carrito prendido por default (se
     // arma el pedido completo y se manda por WhatsApp desde ahí en vez de
     // consultar producto por producto) — el dueño lo puede apagar después
-    // desde el menú de widgets si no lo quiere.
-    setWidgets({ whatsappFloating: true, carrito: !!t.rubros?.includes('gastronomia') });
+    // desde el menú de widgets si no lo quiere. Cualquier otra plantilla
+    // también puede pedirlo con el tag 'carrito' (ej. un almacén con catálogo
+    // grande), sin que haga falta declararse como rubro gastronómico.
+    setWidgets({
+      whatsappFloating: true,
+      carrito: !!t.rubros?.includes('gastronomia') || !!t.tags?.includes('carrito'),
+    });
     // Estilos de texto puntuales que trae la plantilla de fábrica (ej. una
     // tipografía distinta para los títulos) — se pisan igual que cualquier
     // otro estilo desde el editor una vez elegida.
@@ -561,7 +566,10 @@ export function AppProvider({ children }) {
     }));
     setSections(nextSections);
     setLogoUrl(null);
-    setWidgets({ whatsappFloating: true, carrito: !!t.rubros?.includes('gastronomia') });
+    setWidgets({
+      whatsappFloating: true,
+      carrito: !!t.rubros?.includes('gastronomia') || !!t.tags?.includes('carrito'),
+    });
     setTextStyles(t.textStyles || {});
     const seeds = t.seeds || {};
     setProductos(nextSections.some((s) => s.type === 'productos') ? seeds.productos ?? seedProductos() : []);

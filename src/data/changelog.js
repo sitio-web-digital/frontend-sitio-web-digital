@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.48.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Dos distribuciones nuevas: Hero "Título y texto en columnas, sin foto" y Pasos "Grilla con bordes, fondo claro" — para plantillas con hero editorial sin foto y secciones de criterio/por qué tipo tabla.' },
+      { type: 'mejora', text: 'Envío y pagos (pestañas): la pestaña activa y sus estadísticas ahora se pueden pintar con un color propio (antes usaban siempre el color de acento del sitio), y las tres estadísticas quedan agrupadas en una sola caja con borde en vez de sueltas.' },
+      { type: 'mejora', text: 'Plantillas con catálogo de productos ahora pueden prender el carrito por default (antes solo pasaba en gastronomía) agregando el tag "carrito" a la plantilla.' },
+      { type: 'mejora', text: 'Plantilla "Almacén 33": reconstruida de nuevo a partir del código fuente real de la plantilla original (no de fragmentos de texto) — productos, precios, reseñas, pestañas de envío y contacto ahora coinciden exactamente con el diseño de referencia.' },
+    ],
+  },
+  {
     version: '1.47.0',
     date: '2026-08-09',
     changes: [
