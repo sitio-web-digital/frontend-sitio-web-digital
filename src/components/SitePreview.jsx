@@ -529,6 +529,8 @@ export default function SitePreview({
                 onUpdateTituloAcento={(v) => onSetSectionStyle?.(sec.id, { tituloAcento: v })}
                 badgeLado={sec.badgeLado}
                 badgeColor={sec.badgeColor}
+                badgeCaptionItalic={sec.badgeCaptionItalic}
+                imgAspect={sec.imgAspect}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -1486,6 +1488,28 @@ export default function SitePreview({
                 nombreNegocio={nombreNegocio}
               />
             )}
+            {sec.type === 'combos' && (
+              <SeccionCombos
+                combos={sec.combos ?? []}
+                onUpdateCombos={(combos) => onSetSectionStyle?.(sec.id, { combos })}
+                notas={sec.notas ?? []}
+                onUpdateNotas={(notas) => onSetSectionStyle?.(sec.id, { notas })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+              />
+            )}
             {sec.type === 'turno-express' && (
               <SeccionTurnoExpress
                 productos={productos}
@@ -1829,6 +1853,8 @@ export default function SitePreview({
                 onUpdateInfoRows={sec.infoRows !== undefined ? (infoRows) => onSetSectionStyle?.(sec.id, { infoRows }) : undefined}
                 eyebrow={sec.eyebrow}
                 onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                horas={sec.horas ?? []}
+                onUpdateHoras={sec.horas !== undefined ? (horas) => onSetSectionStyle?.(sec.id, { horas }) : undefined}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -6549,6 +6575,8 @@ function SeccionHero({
   onUpdateTituloAcento,
   badgeLado = 'derecha',
   badgeColor = '#ffb020',
+  badgeCaptionItalic = false,
+  imgAspect = '9/10',
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
   // Solo la variante "carrusel" usa este estado, pero se declara siempre acá
@@ -7635,7 +7663,7 @@ function SeccionHero({
             )}
           </div>
           <div style={{ position: 'relative' }} className="group/hero">
-            <label className={`block relative aspect-[9/10] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
+            <label className={`block relative bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: imgAspect }} title={editable ? 'Cambiar foto' : undefined}>
               {heroImg ? (
                 <img src={heroImg} alt={nombreNegocio || ''} className="w-full h-full object-cover" />
               ) : (
@@ -7674,7 +7702,13 @@ function SeccionHero({
                   tag="div"
                   block
                   placeholder="Valor (ej: Quedan 4 lugares para la camada del 12 de agosto)"
-                  style={{ fontFamily: palette.fonts?.serif, fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.2 }}
+                  style={{
+                    fontFamily: palette.fonts?.serif,
+                    fontWeight: badgeCaptionItalic ? 400 : 700,
+                    fontStyle: badgeCaptionItalic ? 'italic' : 'normal',
+                    fontSize: '1.1rem',
+                    lineHeight: 1.2,
+                  }}
                   maxLength={90}
                 />
               </div>
@@ -9608,6 +9642,43 @@ function SeccionGaleria({
             </label>
           )}
         </div>
+      ) : variant === 'sencilla' ? (
+        <div className="max-w-5xl mx-auto grid grid-cols-2 @[960px]:grid-cols-4 gap-3">
+          {images.map((src, i) => (
+            <div key={i} className="relative aspect-[3/4] overflow-hidden bg-black/5 group/gitem">
+              <img src={src} alt={`Foto ${i + 1} de la galería`} className="w-full h-full object-cover" loading="lazy" />
+              {editable && (
+                <>
+                  <label
+                    title="Cambiar esta foto"
+                    className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors opacity-0 group-hover/gitem:opacity-100"
+                  >
+                    <PencilIcon className="w-3 h-3" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleReplace(i)} />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => onRemove?.(i)}
+                    aria-label="Quitar esta foto"
+                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover/gitem:opacity-100"
+                  >
+                    <TrashIcon className="w-3 h-3" />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+          {editable && (
+            <label
+              className="aspect-[3/4] border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors"
+              style={{ borderColor: palette.line, color: palette.inkSoft }}
+            >
+              <PlusIcon className="w-5 h-5" />
+              <span className="text-xs font-semibold">Agregar</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddFiles} />
+            </label>
+          )}
+        </div>
       ) : (
         <div className="max-w-4xl mx-auto grid grid-cols-2 @lg:grid-cols-4 gap-3 @lg:gap-4">
           {images.map((src, i) => (
@@ -10428,6 +10499,116 @@ function SeccionProductos({
                   type="number"
                   format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
                   style={{ fontSize: '1rem', color: accent }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : variant === 'carta' ? (
+        <div className="max-w-5xl mx-auto">
+          {categorias.length > 0 && (
+            <div className="flex flex-wrap" style={{ gap: '0.5rem', marginBottom: '2rem' }}>
+              {categorias.map((c) => {
+                const on = (categoriaFiltro === 'Todos' ? categorias[0] : categoriaFiltro) === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategoriaFiltro(c)}
+                    style={{
+                      cursor: 'pointer',
+                      fontFamily: palette.fonts?.mono,
+                      fontSize: '0.62rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      padding: '0.55rem 1rem',
+                      border: `1px solid ${on ? palette.ink : `${palette.ink}33`}`,
+                      background: on ? palette.ink : 'transparent',
+                      color: on ? palette.bg : `${palette.ink}99`,
+                      transition: 'all .25s',
+                    }}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="grid grid-cols-1 @[820px]:grid-cols-2" style={{ gap: '0 clamp(2rem,5vw,4rem)' }}>
+            {(categorias.length > 0
+              ? productosVisibles.filter((p) => p.categoria === (categoriaFiltro === 'Todos' ? categorias[0] : categoriaFiltro))
+              : productosVisibles
+            ).map((p, i, arr) => (
+              <div
+                key={p.id}
+                ref={productosDnd.registerItemRef(p.id)}
+                className={`relative flex items-baseline ${p.oculto ? 'opacity-40' : ''} ${productosDnd.dragId === p.id ? 'opacity-30' : ''}`}
+                style={{ gap: '0.9rem', padding: '1.05rem 0', borderBottom: `1px solid ${palette.line}` }}
+              >
+                {editable && (
+                  <div className="absolute top-1 right-0 z-10">
+                    <ItemToolbar
+                      variant="inline"
+                      color={palette.ink}
+                      oculto={p.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => onMoveProducto?.(p.id, -1)}
+                      onMoveDown={() => onMoveProducto?.(p.id, 1)}
+                      onDuplicate={() => onDuplicateProducto?.(p.id)}
+                      onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                      onRemove={() => onRemoveProducto?.(p.id)}
+                      onDragStart={productosDnd.startDrag(p)}
+                      removeLabel={`Quitar ${p.nombre}`}
+                    />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline" style={{ gap: '0.6rem' }}>
+                    <Editable
+                      editable={editable}
+                      value={p.nombre}
+                      onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                      tag="span"
+                      styleKey={`producto.${p.id}.nombre`}
+                      placeholder="Nombre"
+                      style={{ fontFamily: palette.fonts?.serif, fontSize: '1.22rem', color: palette.ink }}
+                      maxLength={50}
+                    />
+                    {(p.etiqueta || editable) && (
+                      <Editable
+                        editable={editable}
+                        value={p.etiqueta}
+                        onChange={(v) => onUpdateProducto?.(p.id, { etiqueta: v })}
+                        tag="span"
+                        placeholder="Etiqueta (opcional)"
+                        className="uppercase"
+                        style={{ fontFamily: palette.fonts?.mono, fontSize: '0.52rem', letterSpacing: '0.08em', color: accent, border: `1px solid ${accent}80`, padding: '0.15rem 0.4rem' }}
+                        maxLength={20}
+                      />
+                    )}
+                  </div>
+                  <Editable
+                    editable={editable}
+                    value={p.desc}
+                    onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                    tag="p"
+                    block
+                    multiline
+                    placeholder="Descripción breve"
+                    style={{ fontSize: '0.85rem', color: palette.inkSoft, lineHeight: 1.55, margin: '0.3rem 0 0' }}
+                    maxLength={100}
+                  />
+                </div>
+                <span style={{ flex: 1, borderBottom: `1px dotted ${palette.line}`, minWidth: '1.5rem', transform: 'translateY(-0.35rem)' }} />
+                <Editable
+                  editable={editable}
+                  value={p.precio}
+                  onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                  tag="span"
+                  type="number"
+                  format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                  style={{ fontFamily: palette.fonts?.mono, fontSize: '0.86rem', color: palette.ink, whiteSpace: 'nowrap' }}
                 />
               </div>
             ))}
@@ -18534,6 +18715,8 @@ function SeccionContacto({
   onUpdateInfoRows,
   eyebrow,
   onUpdateEyebrow,
+  horas = [],
+  onUpdateHoras,
 }) {
   const btnColor = buttonColor || palette.inkHex || '#171717';
   const set = (field) => (v) => onUpdateContacto?.({ [field]: v });
@@ -18545,6 +18728,10 @@ function SeccionContacto({
   // genéricas label/value en vez de los 3 campos fijos direccion/telefono/
   // horarios) — mismo motivo, hook siempre arriba.
   const infoRowsCrud = useLocalListCrud(infoRows, onUpdateInfoRows);
+  // Solo "mapa" la usa cuando el llamador pasa onUpdateHoras (tabla semanal
+  // de horarios día+horario+abierto, en vez del campo global `horarios`)
+  // — mismo motivo que infoRowsCrud, hook siempre arriba.
+  const horasCrud = useLocalListCrud(horas, onUpdateHoras);
 
   const formProps = {
     editable,
@@ -18870,6 +19057,10 @@ function SeccionContacto({
           />
         </div>
       );
+    const useCustomRowsMapa = !!onUpdateInfoRows;
+    const useHoras = !!onUpdateHoras;
+    const updateHora = (id, patch) => onUpdateHoras?.(horas.map((h) => (h.id === id ? { ...h, ...patch } : h)));
+    const addHora = () => onUpdateHoras?.([...horas, { id: `hora-${Date.now()}`, dia: 'Día', horario: 'Horario', abierto: true }]);
     return (
       <section
         className="px-6 @lg:px-10 py-14 @lg:py-20 border-t grid @lg:grid-cols-2 gap-10 @lg:gap-14 max-w-6xl mx-auto"
@@ -18916,10 +19107,110 @@ function SeccionContacto({
             className="font-mono text-xs uppercase tracking-[0.16em] mb-5"
             maxLength={40}
           />
+          {useHoras && (
+            <div className="flex flex-col gap-2.5 mb-8">
+              {horas.map((h, i, arr) => (
+                <div key={h.id} ref={horasCrud.dnd.registerItemRef(h.id)} className={`relative flex items-baseline justify-between gap-4 border-b pb-2.5 ${horasCrud.dnd.dragId === h.id ? 'opacity-30' : ''}`} style={{ borderColor: palette.line }}>
+                  {editable && (
+                    <div className="absolute -top-1 right-0">
+                      <ItemToolbar
+                        variant="inline"
+                        color={palette.ink}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => horasCrud.move(h.id, -1)}
+                        onMoveDown={() => horasCrud.move(h.id, 1)}
+                        onDuplicate={() => {}}
+                        onRemove={() => onUpdateHoras?.(horas.filter((x) => x.id !== h.id))}
+                        onDragStart={horasCrud.dnd.startDrag(h)}
+                        removeLabel={`Quitar ${h.dia}`}
+                      />
+                    </div>
+                  )}
+                  <Editable
+                    editable={editable}
+                    value={h.dia}
+                    onChange={(v) => updateHora(h.id, { dia: v })}
+                    tag="span"
+                    placeholder="Día"
+                    className="font-mono text-xs uppercase tracking-wide"
+                    style={{ color: palette.inkSoft }}
+                    maxLength={30}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={h.horario}
+                    onChange={(v) => updateHora(h.id, { horario: v })}
+                    tag="span"
+                    placeholder="Horario"
+                    className="text-sm font-semibold"
+                    style={{ color: h.abierto ? palette.ink : palette.inkSoft }}
+                    maxLength={30}
+                  />
+                </div>
+              ))}
+              {editable && (
+                <button type="button" onClick={addHora} className="font-mono text-xs uppercase self-start" style={{ color: accent }}>
+                  + Agregar día
+                </button>
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-5">
-            {dato('Horarios', horarios, onUpdateHorarios, 60)}
-            {dato('Dirección', direccion, onUpdateDireccion, 120)}
-            {dato('Contacto', telefono, onUpdateTelefono, 40)}
+            {useCustomRowsMapa
+              ? infoRows.map((r, i, arr) => (
+                  <div key={r.id} ref={infoRowsCrud.dnd.registerItemRef(r.id)} className={`relative ${infoRowsCrud.dnd.dragId === r.id ? 'opacity-30' : ''}`}>
+                    {editable && (
+                      <div className="absolute -top-1 right-0">
+                        <ItemToolbar
+                          variant="inline"
+                          color={palette.ink}
+                          canMoveUp={i > 0}
+                          canMoveDown={i < arr.length - 1}
+                          onMoveUp={() => infoRowsCrud.move(r.id, -1)}
+                          onMoveDown={() => infoRowsCrud.move(r.id, 1)}
+                          onDuplicate={() => {}}
+                          onRemove={() => onUpdateInfoRows?.(infoRows.filter((x) => x.id !== r.id))}
+                          onDragStart={infoRowsCrud.dnd.startDrag(r)}
+                          removeLabel={`Quitar ${r.label}`}
+                        />
+                      </div>
+                    )}
+                    <Editable
+                      editable={editable}
+                      value={r.label}
+                      onChange={(v) => onUpdateInfoRows?.(infoRows.map((x) => (x.id === r.id ? { ...x, label: v } : x)))}
+                      tag="p"
+                      block
+                      placeholder="Etiqueta"
+                      className="font-mono text-xs uppercase tracking-wide mb-1"
+                      style={{ color: palette.inkSoft }}
+                      maxLength={40}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={r.value ?? ''}
+                      onChange={(v) => onUpdateInfoRows?.(infoRows.map((x) => (x.id === r.id ? { ...x, value: v } : x)))}
+                      tag="p"
+                      block
+                      placeholder="—"
+                      style={{ color: palette.ink }}
+                      className="text-[15px]"
+                      maxLength={120}
+                    />
+                  </div>
+                ))
+              : [dato('Horarios', horarios, onUpdateHorarios, 60), dato('Dirección', direccion, onUpdateDireccion, 120), dato('Contacto', telefono, onUpdateTelefono, 40)]}
+            {useCustomRowsMapa && editable && (
+              <button
+                type="button"
+                onClick={() => onUpdateInfoRows?.([...infoRows, { id: `info-${Date.now()}`, label: 'Dato', value: '' }])}
+                className="font-mono text-xs uppercase self-start"
+                style={{ color: accent }}
+              >
+                + Agregar dato
+              </button>
+            )}
           </div>
         </div>
         <label
@@ -24818,6 +25109,285 @@ function SeccionMedidor({
             </p>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// Combos/menús armados: pestañas por grupo (Todos + cada grupo real) que
+// filtran una grilla de tarjetas — cada una con foto, una etiqueta de
+// franja horaria superpuesta, nombre+precio, descripción, lista de items
+// incluidos, y un pie con "para cuántos" + link de WhatsApp — más una fila
+// de notas chicas debajo de todo (política de cambios, sin TACC, etc). A
+// diferencia de "productos" (un solo tipo de tarjeta plana), acá cada
+// combo trae su propia lista de items incluidos, por eso es una sección
+// propia con su propio modelo de datos.
+function SeccionCombos({
+  combos = [],
+  onUpdateCombos,
+  notas = [],
+  onUpdateNotas,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+}) {
+  const [grupoFiltro, setGrupoFiltro] = useState('Todos');
+  const { move, duplicate, toggleOculto, remove, dnd } = useLocalListCrud(combos, onUpdateCombos);
+  const grupos = Array.from(new Set(combos.map((c) => c.grupo).filter(Boolean)));
+  const combosVisibles = (editable ? combos : combos.filter((c) => !c.oculto)).filter(
+    (c) => grupoFiltro === 'Todos' || c.grupo === grupoFiltro
+  );
+
+  const update = (id, patch) => onUpdateCombos?.(combos.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const add = () =>
+    onUpdateCombos?.([
+      ...combos,
+      { id: `combo-${Date.now()}`, grupo: 'Grupo', cuando: '', nombre: 'Nuevo combo', precio: 0, desc: '', items: [], sirve: '', imagen: '' },
+    ]);
+  const updateItem = (comboId, idx, value) =>
+    update(comboId, { items: combos.find((c) => c.id === comboId).items.map((it, i) => (i === idx ? value : it)) });
+  const addItem = (comboId) => update(comboId, { items: [...combos.find((c) => c.id === comboId).items, 'Nuevo ítem'] });
+  const removeItem = (comboId, idx) => update(comboId, { items: combos.find((c) => c.id === comboId).items.filter((_, i) => i !== idx) });
+
+  const handleImagen = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) update(id, { imagen: await uploadImage(file) });
+  };
+
+  const updateNota = (idx, value) => onUpdateNotas?.(notas.map((n, i) => (i === idx ? value : n)));
+  const addNota = () => onUpdateNotas?.([...notas, 'Nueva nota']);
+  const removeNota = (idx) => onUpdateNotas?.(notas.filter((_, i) => i !== idx));
+
+  return (
+    <section style={{ background: bgColor || palette.bg }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div className="flex flex-wrap items-end justify-between" style={{ gap: '1.25rem', marginBottom: '2.25rem' }}>
+          <div style={{ maxWidth: '34rem' }}>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="div"
+              block
+              styleKey="combos.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.62rem', letterSpacing: '0.2em', color: accent, marginBottom: '0.85rem', textTransform: 'uppercase' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Los combos que servimos'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="combos.titulo"
+              style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, margin: '0 0 0.9rem', color: headingColor || palette.ink }}
+              className="text-[clamp(1.9rem,4vw,3rem)]"
+              maxLength={80}
+            />
+            <Editable
+              editable={editable}
+              value={descripcion}
+              onChange={onUpdateDescripcion}
+              tag="p"
+              block
+              multiline
+              styleKey="combos.descripcion"
+              placeholder="Frase breve debajo del título (opcional)"
+              style={{ fontSize: '0.97rem', color: textColor || palette.inkSoft, lineHeight: 1.7 }}
+            />
+          </div>
+          <div className="flex flex-wrap" style={{ gap: '0.5rem' }}>
+            {['Todos', ...grupos].map((g) => {
+              const on = grupoFiltro === g;
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGrupoFiltro(g)}
+                  style={{
+                    cursor: 'pointer',
+                    fontFamily: palette.fonts?.mono,
+                    fontSize: '0.62rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    padding: '0.55rem 1rem',
+                    border: `1px solid ${on ? palette.ink : `${palette.ink}33`}`,
+                    background: on ? palette.ink : 'transparent',
+                    color: on ? palette.bg : `${palette.ink}99`,
+                    transition: 'all .25s',
+                  }}
+                >
+                  {g}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 @[820px]:grid-cols-2" style={{ gap: '1.5rem' }}>
+          {combosVisibles.map((c, i, arr) => (
+            <div key={c.id} ref={dnd.registerItemRef(c.id)} className={`relative flex flex-col ${c.oculto ? 'opacity-40' : ''} ${dnd.dragId === c.id ? 'opacity-30' : ''}`} style={{ border: `1px solid ${palette.line}`, background: palette.bg }}>
+              {editable && (
+                <div className="absolute top-2 right-2 z-10">
+                  <ItemToolbar
+                    variant="overlay"
+                    oculto={c.oculto}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < arr.length - 1}
+                    onMoveUp={() => move(c.id, -1)}
+                    onMoveDown={() => move(c.id, 1)}
+                    onDuplicate={() => duplicate(c.id)}
+                    onToggleOculto={() => toggleOculto(c.id)}
+                    onRemove={() => remove(c.id)}
+                    onDragStart={dnd.startDrag(c)}
+                    removeLabel={`Quitar ${c.nombre}`}
+                  />
+                </div>
+              )}
+              <label className={`relative block ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '16/9' }} title={editable ? 'Cambiar foto' : undefined}>
+                {c.imagen ? (
+                  <img src={c.imagen} alt={c.nombre} className="w-full h-full object-cover" style={{ display: 'block' }} />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                )}
+                {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen(c.id)} />}
+                <div style={{ position: 'absolute', top: '0.85rem', left: '0.85rem' }} onClick={(e) => editable && e.preventDefault()}>
+                  <Editable
+                    editable={editable}
+                    value={c.cuando}
+                    onChange={(v) => update(c.id, { cuando: v })}
+                    tag="span"
+                    placeholder="Franja horaria"
+                    style={{ background: palette.ink, color: palette.bg, fontFamily: palette.fonts?.mono, fontSize: '0.55rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0.32rem 0.6rem' }}
+                    maxLength={30}
+                  />
+                </div>
+              </label>
+              <div className="flex flex-col flex-1" style={{ padding: '1.4rem clamp(1.25rem,2.5vw,1.6rem)' }}>
+                <div className="flex flex-wrap items-baseline justify-between" style={{ gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <Editable
+                    editable={editable}
+                    value={c.nombre}
+                    onChange={(v) => update(c.id, { nombre: v })}
+                    tag="h3"
+                    styleKey={`combo.${c.id}.nombre`}
+                    placeholder="Nombre del combo"
+                    style={{ fontFamily: palette.fonts?.serif, fontWeight: 400, fontSize: '1.6rem', margin: 0, color: palette.ink }}
+                    maxLength={50}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={c.precio}
+                    onChange={(v) => update(c.id, { precio: Number(v) || 0 })}
+                    tag="span"
+                    type="number"
+                    format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                    style={{ fontFamily: palette.fonts?.mono, fontSize: '0.92rem', color: accent, whiteSpace: 'nowrap' }}
+                  />
+                </div>
+                <Editable
+                  editable={editable}
+                  value={c.desc}
+                  onChange={(v) => update(c.id, { desc: v })}
+                  tag="p"
+                  block
+                  multiline
+                  placeholder="Descripción breve"
+                  style={{ fontSize: '0.89rem', color: palette.inkSoft, lineHeight: 1.6, margin: '0 0 1.15rem' }}
+                  maxLength={120}
+                />
+                <div className="flex flex-col flex-1" style={{ gap: '0.5rem' }}>
+                  {c.items.map((it, ii) => (
+                    <div key={ii} className="flex items-start" style={{ gap: '0.6rem', fontSize: '0.88rem', color: `${palette.ink}c7` }}>
+                      <span style={{ color: accent, flexShrink: 0 }}>—</span>
+                      {editable ? (
+                        <>
+                          <Editable editable value={it} onChange={(v) => updateItem(c.id, ii, v)} tag="span" style={{ flex: 1 }} maxLength={60} />
+                          <button type="button" onClick={() => removeItem(c.id, ii)} aria-label="Quitar ítem" className="text-xs opacity-40 hover:opacity-100">
+                            ×
+                          </button>
+                        </>
+                      ) : (
+                        <span>{it}</span>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <button type="button" onClick={() => addItem(c.id)} className="text-xs font-semibold self-start" style={{ color: accent }}>
+                      + Ítem
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center justify-between" style={{ gap: '1rem', marginTop: '1.25rem', paddingTop: '0.9rem', borderTop: `1px dashed ${palette.line}` }}>
+                  <Editable
+                    editable={editable}
+                    value={c.sirve}
+                    onChange={(v) => update(c.id, { sirve: v })}
+                    tag="span"
+                    placeholder="Para cuántos"
+                    style={{ fontFamily: palette.fonts?.mono, fontSize: '0.56rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: palette.inkSoft }}
+                    maxLength={30}
+                  />
+                  <a
+                    href={waLink(whatsapp, nombreNegocio, `Hola! Quiero pedir "${c.nombre}".`)}
+                    style={{ fontFamily: palette.fonts?.mono, fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: accent, borderBottom: `1px solid ${accent}80`, paddingBottom: '0.1rem' }}
+                  >
+                    Pedirlo
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+          {editable && (
+            <button
+              type="button"
+              onClick={add}
+              className="border-2 border-dashed flex flex-col items-center justify-center gap-1.5 text-sm font-semibold"
+              style={{ borderColor: palette.line, color: palette.inkSoft, minHeight: '16rem' }}
+            >
+              <PlusIcon className="w-4 h-4" /> Agregar combo
+            </button>
+          )}
+        </div>
+
+        {(notas.length > 0 || editable) && (
+          <div className="flex flex-wrap items-center" style={{ gap: '1.5rem', marginTop: '1.5rem', fontFamily: palette.fonts?.mono, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: palette.inkSoft }}>
+            {notas.map((n, i) => (
+              <span key={i} className="inline-flex items-center gap-1.5">
+                {editable ? (
+                  <>
+                    <Editable editable value={n} onChange={(v) => updateNota(i, v)} tag="span" maxLength={60} />
+                    <button type="button" onClick={() => removeNota(i)} aria-label="Quitar nota" className="opacity-40 hover:opacity-100 normal-case">
+                      ×
+                    </button>
+                  </>
+                ) : (
+                  n
+                )}
+              </span>
+            ))}
+            {editable && (
+              <button type="button" onClick={addNota} className="opacity-70 hover:opacity-100">
+                + Nota
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

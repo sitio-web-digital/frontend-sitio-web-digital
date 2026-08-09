@@ -5,6 +5,18 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.59.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Combos armados": pestañas por grupo + grilla de combos con foto, franja horaria, lista de items incluidos y pie con "para cuántos" + WhatsApp — para desayunos, meriendas o menús armados.' },
+      { type: 'nuevo', text: 'Distribución de Productos "Lista con línea punteada, pestañas por categoría": las pestañas cambian toda la lista visible en vez de filtrar dentro de una sola grilla.' },
+      { type: 'nuevo', text: 'Distribución de Galería "Grilla 3/4, sin desaturar".' },
+      { type: 'mejora', text: 'Hero "Texto llano + foto con una ficha en la esquina" ahora admite elegir la relación de aspecto de la foto y una versión en cursiva del valor de la ficha, sin afectar plantillas que ya la usan con los valores por defecto.' },
+      { type: 'mejora', text: 'Contacto "Formulario + mapa" ahora admite una tabla semanal de horarios (día, horario y abierto/cerrado) y una lista de datos personalizada, en vez del campo fijo "Horarios".' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Molienda", cafetería de especialidad con combos de desayuno y merienda, carta agrupada por categoría y pedidos por WhatsApp.' },
+    ],
+  },
+  {
     version: '1.58.0',
     date: '2026-08-09',
     changes: [

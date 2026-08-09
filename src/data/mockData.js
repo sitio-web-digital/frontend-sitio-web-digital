@@ -968,6 +968,11 @@ export const SECCIONES_CATALOGO = [
     desc: 'Sliders de ancho/largo del ambiente + selector de uso, calcula la medida de stock más grande que entra (o "a medida" si no entra ninguna) — para alfombras, muebles a medida, etc.',
   },
   {
+    id: 'combos',
+    label: 'Combos armados',
+    desc: 'Pestañas por grupo + grilla de combos con foto, franja horaria, lista de items incluidos y pie con "para cuántos" + WhatsApp — para desayunos, meriendas o menús armados.',
+  },
+  {
     id: 'agenda',
     label: 'Agenda / disponibilidad por mes',
     desc: 'Grilla de 12 meses con estado (disponible, últimos lugares, completo) — para negocios que toman un trabajo por fecha.',
@@ -1291,6 +1296,7 @@ export const SECTION_VARIANTS = {
     { id: 'masonry', label: 'Masonry', skeleton: 'masonry' },
     { id: 'bento', label: 'Destacado + grilla', skeleton: 'galeriaBento' },
     { id: 'scroll', label: 'Fila con scroll', skeleton: 'carousel' },
+    { id: 'sencilla', label: 'Grilla 3/4, sin desaturar', skeleton: 'grid4' },
   ],
   testimonios: [
     { id: 'grid', label: 'Tarjetas', skeleton: 'grid3' },
@@ -1325,6 +1331,7 @@ export const SECTION_VARIANTS = {
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'detalle', label: 'Tarjetas con duración, descripción y precio', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'vitrina', label: 'Foto 3/4, categorías con línea inferior', skeleton: 'productosCatalogo', group: 'Productos' },
+    { id: 'carta', label: 'Lista con línea punteada, pestañas por categoría', skeleton: 'productosLista', group: 'Productos' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
   ],
   'sobre-nosotros': [
@@ -1372,6 +1379,7 @@ export const SECTION_VARIANTS = {
   ambientes: [{ id: 'hotspots', label: 'Foto con puntos + panel de producto', skeleton: 'split' }],
   paleta: [{ id: 'grid', label: 'Grilla de swatches', skeleton: 'grid4' }],
   medidor: [{ id: 'sliders', label: 'Sliders + panel de resultado', skeleton: 'split' }],
+  combos: [{ id: 'grilla', label: 'Pestañas + grilla de combos', skeleton: 'productosCatalogo' }],
   cursos: [{ id: 'grilla', label: 'Grilla + temario con acordeón', skeleton: 'split' }],
   camadas: [{ id: 'lista', label: 'Lista con barra de cupos', skeleton: 'pagosFila' }],
   agenda: [{ id: 'meses', label: 'Grilla de 12 meses', skeleton: 'grid4' }],
