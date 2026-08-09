@@ -1199,7 +1199,7 @@ export const SECTION_VARIANTS = {
     { id: 'centrado', label: 'Centrado', skeleton: 'centered', group: 'Distribuciones fijas' },
     { id: 'split', label: 'Imagen + texto', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'minimal', label: 'Minimalista', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
-    { id: 'dividido', label: 'Título y texto en columnas, sin foto', skeleton: 'split', group: 'Distribuciones fijas' },
+    { id: 'dividido', label: 'Título grande, texto y botones apilados, sin foto', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },

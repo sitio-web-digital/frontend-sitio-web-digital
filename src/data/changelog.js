@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.48.1',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Hero "Título grande, texto y botones apilados, sin foto": iba en dos columnas (título a la izquierda, texto a la derecha) — ahora va todo apilado en una sola columna, como se pidió.' },
+    ],
+  },
+  {
     version: '1.48.0',
     date: '2026-08-09',
     changes: [

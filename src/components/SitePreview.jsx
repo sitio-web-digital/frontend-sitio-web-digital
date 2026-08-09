@@ -6797,21 +6797,19 @@ function SeccionHero({
     );
   }
 
-  // Dos columnas sin foto — título grande a la izquierda, párrafo y botones
-  // a la derecha, alineados con la base del título (a diferencia de "centro",
-  // que apila todo en una sola columna centrada). Para rubros que quieren un
-  // hero editorial sin foto pero con más peso tipográfico que "minimal". Sin
+  // Sin foto, todo apilado en una sola columna: título enorme arriba,
+  // párrafo debajo y los botones al final — a diferencia de "centro" (que
+  // apila igual pero centrado, con manchas de color de fondo) esto va
+  // alineado a la izquierda y sin decoración, puro peso tipográfico. Sin
   // eyebrow (a diferencia del resto de variantes fijas): el título entra
   // directo, pensado para cuando el rubro ya se lee en el header.
   if (variant === 'dividido') {
     return (
       <section className="px-6 @lg:px-10 py-20 @lg:py-28" style={{ background: bgColor || palette.bg }}>
-        <div className="max-w-6xl mx-auto grid @lg:grid-cols-2 gap-8 @lg:gap-16 items-end">
-          <div>{heading('text-5xl @lg:text-7xl @lg:leading-[0.86]')}</div>
-          <div className="@lg:pb-2">
-            {paragraph()}
-            {botones()}
-          </div>
+        <div className="max-w-4xl">
+          {heading('text-5xl @lg:text-7xl leading-[0.9]')}
+          {paragraph('max-w-lg')}
+          {botones()}
         </div>
       </section>
     );
