@@ -5,6 +5,14 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.49.1',
+    date: '2026-08-09',
+    changes: [
+      { type: 'fix', text: 'Productos "Con color y talle": la grilla era de 3 columnas (tarjetas muy grandes) — ahora son 4.' },
+      { type: 'fix', text: 'Plantilla "Atelier Norte": usa las mismas fotos del archivo original en vez de placeholders.' },
+    ],
+  },
+  {
     version: '1.49.0',
     date: '2026-08-09',
     changes: [
