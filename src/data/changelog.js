@@ -5,6 +5,19 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.53.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'nuevo', text: 'Sección nueva "Armá tu combinación (mitad y mitad)": elegís un producto para cada mitad del catálogo compartido y se arma un ítem de carrito con precio propio, con una visualización circular partida al medio.' },
+      { type: 'nuevo', text: 'Sección nueva "Promoción del día": un botón por día que cambia la promo mostrada (foto, título, descripción y precio) — para negocios con ofertas semanales fijas.' },
+      { type: 'nuevo', text: 'Distribución de Hero "Foto circular con medallita, a la derecha": foto redonda con una medallita rotada encima (ej. "48h de fermento").' },
+      { type: 'nuevo', text: 'Distribución de Productos "Fotos circulares + precio en medallón": pensada para catálogos de comida (pizzerías, panaderías) con foto redonda y precio superpuesto.' },
+      { type: 'nuevo', text: 'Distribución de Pasos "Lista de pasos + una foto fija a la derecha".' },
+      { type: 'nuevo', text: 'Distribución de Contacto "Zonas de envío + datos, sin mapa": grilla de zonas de delivery (tiempo, nombre, costo) + datos de contacto, para negocios de delivery propio.' },
+      { type: 'nuevo', text: 'Plantilla nueva: "Pizzería La Piedra", con carta con carrito, armador de mitad y mitad, promos por día de la semana y zonas de delivery.' },
+    ],
+  },
+  {
     version: '1.52.0',
     date: '2026-08-09',
     changes: [

@@ -1328,6 +1328,47 @@ export default function SitePreview({
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
               />
             )}
+            {sec.type === 'mitad-y-mitad' && (
+              <SeccionMitadYMitad
+                productos={productos}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                descripcion={sec.descripcion}
+                onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
+                recargo={sec.recargo}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+                cartEnabled={widgets.carrito === true}
+                onAddToCart={cart.addItem}
+              />
+            )}
+            {sec.type === 'promo-dia' && (
+              <SeccionPromoDia
+                promos={sec.promos ?? []}
+                onUpdate={(promos) => onSetSectionStyle?.(sec.id, { promos })}
+                eyebrow={sec.eyebrow}
+                onUpdateEyebrow={(v) => onSetSectionStyle?.(sec.id, { eyebrow: v })}
+                titulo={sec.titulo}
+                onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
+                editable={editable}
+                bgColor={sec.bgColor}
+                headingColor={sec.headingColor}
+                textColor={sec.textColor}
+                accent={accent}
+                palette={palette}
+                whatsapp={whatsapp}
+                nombreNegocio={nombreNegocio}
+                seccionesDisponibles={sections
+                  .filter((s) => s.id !== sec.id)
+                  .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+              />
+            )}
             {sec.type === 'proceso-taller' && (
               <SeccionProcesoTaller
                 pasos={sec.pasos ?? []}
@@ -1566,6 +1607,9 @@ export default function SitePreview({
                 onUpdateHorarios={field('horarios')}
                 onUpdateDireccion={field('direccion')}
                 onUpdateTelefono={field('telefono')}
+                textColor={sec.textColor}
+                zonasEntrega={sec.zonasEntrega ?? []}
+                onUpdateZonasEntrega={(zonasEntrega) => onSetSectionStyle?.(sec.id, { zonasEntrega })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -7176,6 +7220,159 @@ function SeccionHero({
     );
   }
 
+  // Foto circular a la derecha con una medallita rotada encima (valor +
+  // etiqueta, reusa caption/destacadoEtiqueta que ya existen en el Hero en
+  // vez de sumar props nuevas) y texto a la izquierda con eyebrow simple —
+  // a diferencia de "foto-derecha" (foto rectangular, sin medallita, con
+  // barra inferior). Copiada con valores literales del diseño de La
+  // Piedra.
+  if (variant === 'circular') {
+    const heroImg = heroImagen || galeria?.[0];
+    return (
+      <section style={{ maxWidth: 1260, margin: '0 auto', padding: 'clamp(2.25rem,5vw,3.75rem) clamp(1.25rem,3vw,2.5rem)', background: bgColor || palette.bg }}>
+        <div className="grid @lg:grid-cols-[1.02fr_0.98fr] items-center" style={{ gap: 'clamp(1.75rem,4vw,3rem)' }}>
+          <div>
+            <Editable
+              editable={editable}
+              value={rubroLabel}
+              onChange={field('rubroLabel')}
+              tag="div"
+              block
+              styleKey="hero.rubroLabel"
+              placeholder="Frase corta (ej: Desde 1987 · Villa Crespo)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.8rem', letterSpacing: '0.16em', color: accent, textTransform: 'uppercase', marginBottom: '1.1rem' }}
+            />
+            <h1 style={{ fontFamily: palette.fonts?.serif, lineHeight: 0.92, letterSpacing: '-0.02em', margin: '0 0 1.2rem' }} className="text-[clamp(2.6rem,7vw,5.2rem)]">
+              <Editable
+                editable={editable}
+                value={titulo ?? nombreNegocio}
+                onChange={onUpdateTitulo || field('nombreNegocio')}
+                tag="div"
+                block
+                multiline
+                styleKey="hero.nombreNegocio"
+                placeholder="Título, hasta dos líneas (ej: Masa madre y / horno a leña)"
+                style={{ color: headingColor || palette.ink, whiteSpace: 'pre-line' }}
+              />
+              <Editable
+                editable={editable}
+                value={tituloAcento}
+                onChange={onUpdateTituloAcento}
+                tag="div"
+                block
+                styleKey="hero.tituloAcento"
+                placeholder="Línea final (opcional, en el color de acento)"
+                style={{ color: accent }}
+              />
+            </h1>
+            <Editable
+              editable={editable}
+              value={descripcion ?? sobreNosotros}
+              onChange={onUpdateDescripcion || field('sobreNosotros')}
+              tag="p"
+              multiline
+              block
+              styleKey="hero.sobreNosotros"
+              style={{ fontSize: '1.02rem', color: textColor || palette.inkSoft, lineHeight: 1.7, maxWidth: '29rem', margin: '0 0 1.9rem' }}
+            />
+            <div className="flex flex-wrap" style={{ gap: '0.85rem', marginBottom: '2rem' }}>
+              {HERO_BUTTON_SLOTS.map((slot, idx) => {
+                const v = botonesData[slot.key];
+                const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
+                if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+                return (
+                  <ButtonObject
+                    key={slot.key}
+                    value={v}
+                    onChange={(patch) =>
+                      onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
+                    }
+                    editable={editable}
+                    seccionesDisponibles={seccionesDisponibles}
+                    nombreNegocio={nombreNegocio}
+                    defaultFuncion={slot.defaultFuncion}
+                    defaultLabel={slot.defaultLabel}
+                    defaultColor={palette.inkHex || palette.ink}
+                    defaultTarget={defaultTarget}
+                    outline={idx > 0}
+                  />
+                );
+              })}
+            </div>
+            {stats.length > 0 && (
+              <div className="grid grid-cols-3" style={{ gap: '1rem', borderTop: `2px solid ${palette.inkHex || palette.ink}`, paddingTop: '1.25rem' }}>
+                {stats.map((s, i) => (
+                  <div key={i}>
+                    <div style={{ fontFamily: palette.fonts?.serif, fontSize: '1.55rem', color: accent, lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.74rem', textTransform: 'uppercase', color: palette.inkSoft, marginTop: '0.3rem' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ position: 'relative' }} className="group/hero">
+            <label
+              className={`block relative overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
+              style={{ aspectRatio: '1/1', borderRadius: '50%' }}
+              title={editable ? 'Cambiar foto' : undefined}
+            >
+              {heroImg ? (
+                <img src={heroImg} alt={nombreNegocio || ''} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft, background: 'rgba(0,0,0,0.05)' }}>
+                  Agregá fotos en tu galería
+                </div>
+              )}
+              {editable && (
+                <>
+                  <span className="absolute inset-0 bg-black/0 group-hover/hero:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/hero:opacity-100">
+                    <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
+                </>
+              )}
+            </label>
+            {(caption || destacadoEtiqueta || editable) && (
+              <div
+                className="absolute flex flex-col items-center justify-center text-center"
+                style={{
+                  top: '2%',
+                  right: '2%',
+                  width: 104,
+                  height: 104,
+                  borderRadius: '50%',
+                  background: '#3f6b45',
+                  color: '#f7f1e4',
+                  transform: 'rotate(-10deg)',
+                  padding: '0.5rem',
+                }}
+              >
+                <Editable
+                  editable={editable}
+                  value={caption}
+                  onChange={onUpdateCaption}
+                  tag="span"
+                  placeholder="48h"
+                  maxLength={10}
+                  style={{ fontFamily: palette.fonts?.serif, fontSize: '1.5rem', lineHeight: 1, color: '#f7f1e4' }}
+                />
+                <Editable
+                  editable={editable}
+                  value={destacadoEtiqueta}
+                  onChange={onUpdateDestacadoEtiqueta}
+                  tag="span"
+                  placeholder="de fermento"
+                  maxLength={20}
+                  style={{ fontFamily: palette.fonts?.mono, fontSize: '0.62rem', textTransform: 'uppercase', marginTop: '0.15rem', color: '#f7f1e4' }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Imagen a la izquierda, texto a la derecha — variedad respecto al default.
   if (variant === 'split') {
     const heroImg = heroImagen || galeria?.[0];
@@ -10252,6 +10449,300 @@ function SeccionProductos({
             </button>
           )}
         </div>
+      ) : variant === 'pizza' ? (
+        (() => {
+          const SIDE_CAT = 'Para acompañar';
+          const categoriasMenu = categorias.filter((c) => c !== SIDE_CAT);
+          const sidesItems = productosVisibles.filter((p) => p.categoria === SIDE_CAT);
+          const pizzaItems = productosFiltrados.filter((p) => p.categoria !== SIDE_CAT);
+          return (
+            <div className="max-w-5xl mx-auto">
+              {categoriasMenu.length > 0 && (
+                <div className="flex flex-wrap justify-center" style={{ gap: '0.5rem', marginBottom: '2.5rem' }}>
+                  {['Todos', ...categoriasMenu].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCategoriaFiltro(c)}
+                      style={{
+                        fontFamily: palette.fonts?.mono,
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        padding: '0.55rem 1.15rem',
+                        border: `2px solid ${palette.inkHex || palette.ink}`,
+                        background: categoriaFiltro === c ? palette.inkHex || palette.ink : 'transparent',
+                        color: categoriaFiltro === c ? palette.bg : palette.ink,
+                        transition: 'all .2s',
+                      }}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 @lg:grid-cols-4" style={{ gap: 'clamp(1.75rem,3vw,2.5rem)' }}>
+                {pizzaItems.map((p) => (
+                  <div key={p.id} className="relative text-center">
+                    {editable && (
+                      <div className="absolute top-0 right-0 z-10">
+                        <ItemToolbar
+                          variant="overlay"
+                          oculto={p.oculto}
+                          onDuplicate={() => onDuplicateProducto?.(p.id)}
+                          onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                          onRemove={() => onRemoveProducto?.(p.id)}
+                          onDragStart={productosDnd.startDrag(p)}
+                          removeLabel={`Quitar ${p.nombre}`}
+                        />
+                      </div>
+                    )}
+                    <div className="relative" style={{ width: '100%', maxWidth: 230, margin: '0 auto 1.1rem' }}>
+                      <div style={{ borderRadius: '50%', overflow: 'hidden', border: `3px solid ${palette.inkHex || palette.ink}`, aspectRatio: '1/1' }}>
+                        <MediaCarousel
+                          images={p.imagenes}
+                          editable={editable}
+                          onAddImages={async (files) => {
+                            const urls = await Promise.all(files.map(uploadImage));
+                            urls.forEach((url) => onAddProductoImagen?.(p.id, url));
+                          }}
+                          onRemoveImage={(imgIdx) => onRemoveProductoImagen?.(p.id, imgIdx)}
+                          mediaVariant={p.mediaVariant}
+                          onChangeMediaVariant={(v) => onUpdateProducto?.(p.id, { mediaVariant: v })}
+                          limitKey="productos"
+                          aspect="aspect-square"
+                        />
+                      </div>
+                      <div
+                        className="absolute left-1/2"
+                        style={{
+                          bottom: '-0.55rem',
+                          transform: 'translateX(-50%)',
+                          background: accent,
+                          color: palette.bg,
+                          fontFamily: palette.fonts?.mono,
+                          fontWeight: 700,
+                          fontSize: '0.92rem',
+                          padding: '0.3rem 0.85rem',
+                          whiteSpace: 'nowrap',
+                          border: `2px solid ${palette.inkHex || palette.ink}`,
+                        }}
+                      >
+                        <Editable
+                          editable={editable}
+                          value={p.precio}
+                          onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                          tag="span"
+                          type="number"
+                          format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                          style={{ color: palette.bg }}
+                        />
+                      </div>
+                      {p.etiqueta && (
+                        <div
+                          className="absolute flex items-center justify-center text-center"
+                          style={{
+                            top: '0.35rem',
+                            right: '0.35rem',
+                            width: 54,
+                            height: 54,
+                            borderRadius: '50%',
+                            background: '#3f6b45',
+                            color: '#f7f1e4',
+                            fontFamily: palette.fonts?.mono,
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            lineHeight: 1.15,
+                            transform: 'rotate(-12deg)',
+                            border: `2px solid ${palette.inkHex || palette.ink}`,
+                          }}
+                        >
+                          {p.etiqueta}
+                        </div>
+                      )}
+                    </div>
+                    <Editable
+                      editable={editable}
+                      value={p.nombre}
+                      onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                      tag="div"
+                      block
+                      styleKey={`producto.${p.id}.nombre`}
+                      placeholder="Nombre"
+                      style={{ fontFamily: palette.fonts?.serif, fontSize: '1.2rem', marginBottom: '0.35rem', color: palette.ink }}
+                      maxLength={40}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.desc}
+                      onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                      tag="p"
+                      block
+                      multiline
+                      styleKey={`producto.${p.id}.desc`}
+                      placeholder="Descripción"
+                      style={{ fontSize: '0.87rem', color: palette.inkSoft, lineHeight: 1.55, margin: '0 auto 0.9rem', maxWidth: '22rem' }}
+                    />
+                    {cartEnabled ? (
+                      <button
+                        type="button"
+                        disabled={editable}
+                        onClick={() => onAddToCart?.(p)}
+                        style={{
+                          display: 'inline-block',
+                          border: `2px solid ${palette.inkHex || palette.ink}`,
+                          background: 'transparent',
+                          color: palette.ink,
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          padding: '0.5rem 1.2rem',
+                        }}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Agregar
+                      </button>
+                    ) : (
+                      buttonSlotVisible(editable, p.boton, 'whatsapp', whatsapp) && (
+                        <ButtonObject
+                          value={p.boton}
+                          onChange={(patch) => onUpdateProducto?.(p.id, { boton: { ...(p.boton || {}), ...patch } })}
+                          editable={editable}
+                          seccionesDisponibles={seccionesDisponibles}
+                          nombreNegocio={nombreNegocio}
+                          defaultFuncion="whatsapp"
+                          defaultLabel="Consultar"
+                          defaultColor={palette.inkHex || palette.ink}
+                          defaultTarget={whatsapp}
+                          waMessage={p.nombre ? `Hola! Quiero consultar por "${p.nombre}".` : undefined}
+                          outline
+                        />
+                      )
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() => onAddProducto?.({ nombre: 'Pizza nueva', precio: 0, categoria: categoriasMenu[0] || '' })}
+                  className="mt-8 border-2 border-dashed w-full py-6 flex items-center justify-center gap-1.5 text-sm font-semibold"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-4 h-4" /> Agregar pizza
+                </button>
+              )}
+
+              {(sidesItems.length > 0 || editable) && (
+                <div style={{ marginTop: 'clamp(2.5rem,5vw,3.5rem)', borderTop: `2px solid ${palette.inkHex || palette.ink}`, paddingTop: '1.75rem' }}>
+                  <div style={{ fontFamily: palette.fonts?.serif, fontSize: '1.15rem', color: '#3f6b45', textTransform: 'uppercase', marginBottom: '1.1rem' }}>
+                    {SIDE_CAT}
+                  </div>
+                  <div className="grid @sm:grid-cols-2 @lg:grid-cols-3" style={{ rowGap: '0.75rem', columnGap: 'clamp(1.5rem,4vw,3rem)' }}>
+                    {sidesItems.map((p) => (
+                      <div key={p.id} className="relative">
+                        {editable && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <ItemToolbar
+                              variant="overlay"
+                              oculto={p.oculto}
+                              onDuplicate={() => onDuplicateProducto?.(p.id)}
+                              onToggleOculto={() => onToggleOcultoProducto?.(p.id)}
+                              onRemove={() => onRemoveProducto?.(p.id)}
+                              onDragStart={productosDnd.startDrag(p)}
+                              removeLabel={`Quitar ${p.nombre}`}
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-baseline" style={{ gap: '0.5rem' }}>
+                          <Editable
+                            editable={editable}
+                            value={p.nombre}
+                            onChange={(v) => onUpdateProducto?.(p.id, { nombre: v })}
+                            tag="span"
+                            styleKey={`producto.${p.id}.nombre`}
+                            placeholder="Nombre"
+                            style={{ fontWeight: 700, fontSize: '0.98rem', whiteSpace: 'nowrap', color: palette.ink }}
+                            maxLength={30}
+                          />
+                          <span style={{ flex: 1, borderBottom: `1.5px dotted ${palette.line}`, transform: 'translateY(-0.25rem)' }} />
+                          <Editable
+                            editable={editable}
+                            value={p.precio}
+                            onChange={(v) => onUpdateProducto?.(p.id, { precio: Number(v) || 0 })}
+                            tag="span"
+                            type="number"
+                            format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                            style={{ fontFamily: palette.fonts?.mono, fontWeight: 700, fontSize: '0.95rem', color: accent, whiteSpace: 'nowrap' }}
+                          />
+                        </div>
+                        <Editable
+                          editable={editable}
+                          value={p.desc}
+                          onChange={(v) => onUpdateProducto?.(p.id, { desc: v })}
+                          tag="div"
+                          block
+                          multiline
+                          styleKey={`producto.${p.id}.desc`}
+                          placeholder="Descripción"
+                          style={{ fontSize: '0.84rem', color: palette.inkSoft, lineHeight: 1.5, marginTop: '0.15rem', marginBottom: '0.6rem' }}
+                        />
+                        {cartEnabled ? (
+                          <button
+                            type="button"
+                            disabled={editable}
+                            onClick={() => onAddToCart?.(p)}
+                            style={{
+                              display: 'inline-block',
+                              border: `2px solid ${palette.inkHex || palette.ink}`,
+                              background: 'transparent',
+                              color: palette.ink,
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              padding: '0.4rem 1rem',
+                            }}
+                            className="disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Agregar
+                          </button>
+                        ) : (
+                          buttonSlotVisible(editable, p.boton, 'whatsapp', whatsapp) && (
+                            <ButtonObject
+                              value={p.boton}
+                              onChange={(patch) => onUpdateProducto?.(p.id, { boton: { ...(p.boton || {}), ...patch } })}
+                              editable={editable}
+                              seccionesDisponibles={seccionesDisponibles}
+                              nombreNegocio={nombreNegocio}
+                              defaultFuncion="whatsapp"
+                              defaultLabel="Consultar"
+                              defaultColor={palette.inkHex || palette.ink}
+                              defaultTarget={whatsapp}
+                              size="sm"
+                              outline
+                            />
+                          )
+                        )}
+                      </div>
+                    ))}
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => onAddProducto?.({ nombre: 'Nuevo acompañamiento', precio: 0, categoria: SIDE_CAT })}
+                        className="border-2 border-dashed flex items-center justify-center gap-1.5 py-4 text-xs font-semibold self-start"
+                        style={{ borderColor: palette.line, color: palette.inkSoft }}
+                      >
+                        <PlusIcon className="w-3.5 h-3.5" /> Agregar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : (
         <div className="max-w-5xl mx-auto">
           {categorias.length > 0 && (
@@ -16986,9 +17477,16 @@ function SeccionContacto({
   onUpdateHorarios,
   onUpdateDireccion,
   onUpdateTelefono,
+  textColor,
+  zonasEntrega = [],
+  onUpdateZonasEntrega,
 }) {
   const btnColor = buttonColor || palette.inkHex || '#171717';
   const set = (field) => (v) => onUpdateContacto?.({ [field]: v });
+  // Solo la variante "delivery" usa esta lista, pero el hook se llama
+  // siempre acá arriba (nunca adentro de un `if (variant === ...)`) por
+  // las reglas de hooks.
+  const zonasCrud = useLocalListCrud(zonasEntrega, onUpdateZonasEntrega);
 
   const formProps = {
     editable,
@@ -17250,6 +17748,152 @@ function SeccionContacto({
             </>
           )}
         </label>
+      </section>
+    );
+  }
+
+  // "delivery" — encabezado + una grilla de zonas de envío (tiempo, nombre,
+  // costo) + los datos de contacto en fila abajo, sin mapa ni formulario.
+  // A diferencia de "mapa"/"directo" (2 columnas), acá todo va apilado a lo
+  // ancho — pensado para el bloque de delivery propio de una plantilla de
+  // gastronomía. Copiada con valores literales del diseño de referencia.
+  if (variant === 'delivery') {
+    const { move, toggleOculto, dnd } = zonasCrud;
+    const zonasVisibles = editable ? zonasEntrega : zonasEntrega.filter((z) => !z.oculto);
+    const updateZona = (id, patch) => onUpdateZonasEntrega?.(zonasEntrega.map((z) => (z.id === id ? { ...z, ...patch } : z)));
+    const addZona = () => onUpdateZonasEntrega?.([...zonasEntrega, { id: `zona-${Date.now()}`, nombre: 'Zona', tiempo: '30′', costo: 'Envío $0' }]);
+    const removeZona = (id) => onUpdateZonasEntrega?.(zonasEntrega.filter((z) => z.id !== id));
+    const rows = [
+      { label: 'Dirección', value: direccion, onChangeValue: onUpdateDireccion, maxLength: 120 },
+      { label: 'Horarios', value: horarios, onChangeValue: onUpdateHorarios, maxLength: 60 },
+      { label: 'Contacto', value: telefono, onChangeValue: onUpdateTelefono, maxLength: 40 },
+    ].filter((r) => r.value || editable);
+    return (
+      <section style={{ background: bgColor || palette.ink }}>
+        <div style={{ maxWidth: 1260, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+          <div style={{ marginBottom: '2rem' }}>
+            <Editable
+              editable={editable}
+              value={titulo}
+              onChange={set('contactoTitulo')}
+              tag="div"
+              block
+              styleKey="contacto.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.8rem', letterSpacing: '0.18em', color: '#f0a04b', textTransform: 'uppercase', marginBottom: '0.8rem' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={tituloPrincipal ?? 'Llegamos caliente'}
+              onChange={set('contactoTituloPrincipal')}
+              tag="h2"
+              block
+              styleKey="contacto.tituloPrincipal"
+              style={{ fontFamily: palette.fonts?.serif, margin: '0 0 0.8rem', color: headingColor || palette.bg }}
+              className="text-[clamp(2rem,4.5vw,3rem)]"
+              maxLength={70}
+            />
+            <Editable
+              editable={editable}
+              value={subtitulo}
+              onChange={set('contactoSubtitulo')}
+              tag="p"
+              block
+              multiline
+              styleKey="contacto.subtitulo"
+              placeholder="Párrafo debajo del título (opcional)"
+              style={{ fontSize: '0.97rem', color: `${palette.bg}b8`, lineHeight: 1.7, maxWidth: '32rem' }}
+              maxLength={220}
+            />
+          </div>
+
+          {(zonasVisibles.length > 0 || editable) && (
+            <div className="grid grid-cols-2 @lg:grid-cols-4" style={{ gap: '0.9rem', marginBottom: '2rem' }}>
+              {zonasVisibles.map((z, i, arr) => (
+                <div key={z.id} ref={dnd.registerItemRef(z.id)} className={`relative ${z.oculto ? 'opacity-40' : ''} ${dnd.dragId === z.id ? 'opacity-30' : ''}`} style={{ border: `1px solid ${textColor ? 'rgba(255,255,255,0.25)' : palette.line}`, padding: '1.35rem 1.4rem' }}>
+                  {editable && (
+                    <div className="absolute top-1 right-1">
+                      <ItemToolbar
+                        variant="inline"
+                        color={palette.bg}
+                        oculto={z.oculto}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => move(z.id, -1)}
+                        onMoveDown={() => move(z.id, 1)}
+                        onDuplicate={() => {}}
+                        onToggleOculto={() => toggleOculto(z.id)}
+                        onRemove={() => removeZona(z.id)}
+                        onDragStart={dnd.startDrag(z)}
+                        removeLabel={`Quitar ${z.nombre}`}
+                      />
+                    </div>
+                  )}
+                  <Editable
+                    editable={editable}
+                    value={z.tiempo}
+                    onChange={(v) => updateZona(z.id, { tiempo: v })}
+                    tag="div"
+                    block
+                    placeholder="30′"
+                    style={{ fontFamily: palette.fonts?.serif, fontSize: '1.7rem', color: '#f0a04b', lineHeight: 1, marginBottom: '0.5rem' }}
+                    maxLength={10}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={z.nombre}
+                    onChange={(v) => updateZona(z.id, { nombre: v })}
+                    tag="div"
+                    block
+                    placeholder="Zona"
+                    style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.3rem', color: palette.bg }}
+                    maxLength={30}
+                  />
+                  <Editable
+                    editable={editable}
+                    value={z.costo}
+                    onChange={(v) => updateZona(z.id, { costo: v })}
+                    tag="div"
+                    block
+                    placeholder="Envío sin cargo"
+                    style={{ fontFamily: palette.fonts?.mono, fontSize: '0.76rem', color: `${palette.bg}99` }}
+                    maxLength={30}
+                  />
+                </div>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addZona}
+                  className="border-2 border-dashed flex items-center justify-center gap-1.5 text-sm font-semibold"
+                  style={{ borderColor: 'rgba(255,255,255,0.3)', color: `${palette.bg}b8` }}
+                >
+                  <PlusIcon className="w-4 h-4" /> Agregar zona
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="grid @sm:grid-cols-3" style={{ gap: '1.5rem', borderTop: `1px solid ${palette.bg}38`, paddingTop: '1.75rem' }}>
+            {rows.map((r) => (
+              <div key={r.label}>
+                <p style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: `${palette.bg}80`, marginBottom: '0.3rem' }}>{r.label}</p>
+                <Editable
+                  editable={editable}
+                  value={r.value ?? ''}
+                  onChange={r.onChangeValue}
+                  tag="p"
+                  block
+                  placeholder="—"
+                  styleKey={`contacto.delivery.${r.label}`}
+                  style={{ fontSize: '1rem', fontWeight: 600, color: palette.bg }}
+                  maxLength={r.maxLength}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     );
   }
@@ -19029,6 +19673,144 @@ function SeccionPasos({
     );
   }
 
+  // Texto + lista de pasos a la izquierda, una sola foto fija a la derecha
+  // (sin "sticky" ni datos técnicos aparte) — a diferencia de "sticky"
+  // (foto arriba del texto, en la MISMA columna que el texto), acá la foto
+  // queda aislada en su propia columna. Copiada con valores literales del
+  // diseño de referencia de La Piedra.
+  if (variant === 'con-foto-derecha') {
+    return (
+      <section style={{ background: bgColor || palette.bg }}>
+        <div className="grid @lg:grid-cols-[1.1fr_0.9fr] items-center" style={{ maxWidth: 1260, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)', gap: 'clamp(1.75rem,4vw,3rem)' }}>
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="div"
+              block
+              styleKey="pasos.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.8rem', letterSpacing: '0.18em', color: accent, textTransform: 'uppercase', marginBottom: '0.8rem' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Cómo lo hacemos'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="pasos.titulo"
+              style={{ fontFamily: palette.fonts?.serif, margin: '0 0 1rem', lineHeight: 1.08, color: headingColor || palette.ink }}
+              className="text-[clamp(1.9rem,4vw,2.7rem)]"
+              maxLength={90}
+            />
+            <Editable
+              editable={editable}
+              value={descripcion}
+              onChange={onUpdateDescripcion}
+              tag="p"
+              block
+              multiline
+              styleKey="pasos.descripcion"
+              placeholder="Contexto breve (opcional)"
+              style={{ fontSize: '0.96rem', color: textColor || palette.inkSoft, lineHeight: 1.7, margin: '0 0 1.75rem', maxWidth: '31rem' }}
+              maxLength={220}
+            />
+            <div style={{ borderTop: `2px solid ${palette.inkHex || palette.ink}` }}>
+              {pasosVisibles.map((p, i, arr) => (
+                <div
+                  key={p.id}
+                  ref={dnd.registerItemRef(p.id)}
+                  className={`relative grid gap-5 ${p.oculto ? 'opacity-40' : ''} ${dnd.dragId === p.id ? 'opacity-30' : ''}`}
+                  style={{ gridTemplateColumns: 'auto 1fr', padding: '1.05rem 0', borderBottom: `1px solid ${palette.line}` }}
+                >
+                  <span style={{ fontFamily: palette.fonts?.serif, fontSize: '1.5rem', color: '#3f6b45', lineHeight: 1, minWidth: '2.2rem' }}>
+                    {numeroPad ? String(i + 1).padStart(2, '0') : i + 1}
+                  </span>
+                  <div>
+                    {editable && (
+                      <div className="float-right">
+                        <ItemToolbar
+                          variant="inline"
+                          color={palette.ink}
+                          oculto={p.oculto}
+                          canMoveUp={i > 0}
+                          canMoveDown={i < arr.length - 1}
+                          onMoveUp={() => move(p.id, -1)}
+                          onMoveDown={() => move(p.id, 1)}
+                          onDuplicate={() => duplicate(p.id)}
+                          onToggleOculto={() => toggleOculto(p.id)}
+                          onRemove={() => remove(p.id)}
+                          onDragStart={dnd.startDrag(p)}
+                          removeLabel="Quitar paso"
+                        />
+                      </div>
+                    )}
+                    <Editable
+                      editable={editable}
+                      value={p.titulo}
+                      onChange={(v) => update(p.id, { titulo: v })}
+                      tag="p"
+                      block
+                      styleKey={`paso.${p.id}.titulo`}
+                      placeholder="Título del paso"
+                      style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem', color: palette.ink }}
+                      maxLength={50}
+                    />
+                    <Editable
+                      editable={editable}
+                      value={p.desc}
+                      onChange={(v) => update(p.id, { desc: v })}
+                      tag="p"
+                      multiline
+                      block
+                      styleKey={`paso.${p.id}.desc`}
+                      placeholder="Descripción breve"
+                      style={{ fontSize: '0.88rem', color: palette.inkSoft, lineHeight: 1.6 }}
+                      maxLength={160}
+                    />
+                  </div>
+                </div>
+              ))}
+              {editable && (
+                <button
+                  type="button"
+                  onClick={add}
+                  className="border-2 border-dashed flex items-center justify-center gap-1.5 py-4 mt-4 text-sm font-semibold"
+                  style={{ borderColor: palette.line, color: palette.inkSoft }}
+                >
+                  <PlusIcon className="w-4 h-4" /> Agregar paso
+                </button>
+              )}
+            </div>
+          </div>
+          <label className={`block relative overflow-hidden ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '4/5' }} title={editable ? 'Cambiar foto' : undefined}>
+            {imagen ? (
+              <img src={imagen} alt="" className="w-full h-full object-cover" style={{ display: 'block' }} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft, background: 'rgba(0,0,0,0.05)' }}>
+                Agregá una foto
+              </div>
+            )}
+            {editable && (
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+                }}
+              />
+            )}
+          </label>
+        </div>
+      </section>
+    );
+  }
+
   // Grilla con bordes finas, número grande en un color de acento y fondo
   // claro — a diferencia de "numerados"/"timeline" (pensadas para fondo
   // oscuro, con el número en un chip), esta es una tabla de criterios: el
@@ -20194,6 +20976,443 @@ function SeccionEnviosTabs({
                 <PlusIcon className="w-3.5 h-3.5" /> Agregar dato
               </button>
             )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Armador de "mitad y mitad": elegís un producto para cada mitad de una
+// lista compartida (la de productos del sitio, no una lista propia) y se
+// arma un ítem de carrito con la combinación — pensado para pizzerías,
+// pero reutilizable por cualquier catálogo con esta lógica de "medio y
+// medio". La foto partida al medio (clip-path) es puramente visual, no
+// hace falta que las fotos originales estén recortadas. El precio final
+// es el mayor de los dos + un recargo fijo por armar la combinación
+// (mismo criterio que el diseño de referencia: cubre el desperdicio de
+// producir dos mitades en vez de una unidad entera).
+function SeccionMitadYMitad({
+  productos = [],
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  descripcion,
+  onUpdateDescripcion,
+  recargo = 900,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+  cartEnabled = false,
+  onAddToCart,
+}) {
+  const opciones = productos.filter((p) => !p.oculto);
+  const [editingSide, setEditingSide] = useState('A');
+  const [idxA, setIdxA] = useState(0);
+  const [idxB, setIdxB] = useState(Math.min(1, Math.max(0, opciones.length - 1)));
+  const a = opciones[idxA];
+  const b = opciones[idxB];
+
+  if (opciones.length < 2) {
+    return editable ? (
+      <section className="px-6 @lg:px-10 py-14" style={{ background: bgColor || palette.bg }}>
+        <p className="max-w-lg mx-auto text-center text-sm" style={{ color: palette.inkSoft }}>
+          Armá primero el catálogo de productos (necesitás al menos dos) para poder armar combinaciones de mitad y mitad.
+        </p>
+      </section>
+    ) : null;
+  }
+
+  const precioMitad = Math.max(Number(a.precio) || 0, Number(b.precio) || 0) + recargo;
+  const idCombo = `half-${a.id}-${b.id}`;
+
+  const agregar = () =>
+    onAddToCart?.({
+      id: idCombo,
+      nombre: `Mitad ${a.nombre} / mitad ${b.nombre}`,
+      precio: precioMitad,
+    });
+
+  return (
+    <section style={{ background: bgColor || palette.ink, color: textColor || palette.bg }}>
+      <div style={{ maxWidth: 1260, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div style={{ marginBottom: '2.25rem', maxWidth: '34rem' }}>
+          <Editable
+            editable={editable}
+            value={eyebrow}
+            onChange={onUpdateEyebrow}
+            tag="div"
+            block
+            styleKey="mitadymitad.eyebrow"
+            placeholder="Eyebrow (opcional)"
+            style={{ fontFamily: palette.fonts?.mono, fontSize: '0.8rem', letterSpacing: '0.18em', color: '#f0a04b', textTransform: 'uppercase', marginBottom: '0.8rem' }}
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'Mitad y mitad'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="mitadymitad.titulo"
+            style={{ fontFamily: palette.fonts?.serif, margin: '0 0 0.8rem', color: headingColor || palette.bg }}
+            className="text-[clamp(2rem,4.5vw,3rem)]"
+            maxLength={90}
+          />
+          <Editable
+            editable={editable}
+            value={descripcion}
+            onChange={onUpdateDescripcion}
+            tag="p"
+            block
+            multiline
+            styleKey="mitadymitad.descripcion"
+            placeholder="Texto de contexto (opcional)"
+            style={{ fontSize: '0.97rem', color: `${palette.bg}a6`, lineHeight: 1.7 }}
+            maxLength={220}
+          />
+        </div>
+
+        <div className="grid @lg:grid-cols-[0.8fr_1.2fr] items-center" style={{ gap: 'clamp(1.75rem,4vw,3.25rem)' }}>
+          <div>
+            <div
+              className="relative"
+              style={{
+                width: '100%',
+                maxWidth: 320,
+                margin: '0 auto',
+                aspectRatio: '1/1',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: `4px solid ${palette.bg}`,
+                boxShadow: '0 18px 44px -18px rgba(0,0,0,0.8)',
+              }}
+            >
+              <div className="absolute inset-0 overflow-hidden" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}>
+                {a?.imagenes?.[0] && <img src={a.imagenes[0]} alt={a.nombre} className="w-full h-full object-cover" />}
+              </div>
+              <div className="absolute inset-0 overflow-hidden" style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }}>
+                {b?.imagenes?.[0] && <img src={b.imagenes[0]} alt={b.nombre} className="w-full h-full object-cover" />}
+              </div>
+              <div className="absolute inset-y-0 left-1/2" style={{ width: 4, transform: 'translateX(-50%)', background: palette.bg }} />
+            </div>
+            <div className="flex justify-center" style={{ gap: '0.6rem', marginTop: '1.1rem' }}>
+              {[
+                { key: 'A', label: 'Mitad izquierda' },
+                { key: 'B', label: 'Mitad derecha' },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setEditingSide(t.key)}
+                  style={{
+                    fontFamily: palette.fonts?.mono,
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    padding: '0.5rem 1rem',
+                    border: `1px solid ${editingSide === t.key ? '#f0a04b' : `${palette.bg}40`}`,
+                    background: editingSide === t.key ? '#f0a04b' : 'transparent',
+                    color: editingSide === t.key ? palette.ink : `${palette.bg}bf`,
+                    transition: 'all .2s',
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: `${palette.bg}80`, marginBottom: '0.9rem' }}>
+              Elegí el gusto de la {editingSide === 'A' ? 'izquierda' : 'derecha'}
+            </div>
+            <div className="flex flex-wrap" style={{ gap: '0.5rem', marginBottom: '1.75rem' }}>
+              {opciones.map((p, i) => {
+                const on = editingSide === 'A' ? i === idxA : i === idxB;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => (editingSide === 'A' ? setIdxA(i) : setIdxB(i))}
+                    style={{
+                      border: `1px solid ${on ? '#f0a04b' : `${palette.bg}33`}`,
+                      background: on ? '#f0a04b' : 'transparent',
+                      color: on ? palette.ink : `${palette.bg}d1`,
+                      padding: '0.5rem 0.9rem',
+                      fontSize: '0.87rem',
+                      fontWeight: 600,
+                      transition: 'all .2s',
+                    }}
+                  >
+                    {p.nombre}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto] items-end" style={{ borderTop: `1px solid ${palette.bg}33`, paddingTop: '1.35rem', gap: '1.5rem' }}>
+              <div className="flex flex-col" style={{ gap: '0.7rem' }}>
+                {[
+                  { label: 'Izquierda', value: a?.nombre, dot: '#f0a04b' },
+                  { label: 'Derecha', value: b?.nombre, dot: '#3f6b45' },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-baseline" style={{ gap: '0.75rem' }}>
+                    <span className="shrink-0" style={{ width: 9, height: 9, borderRadius: '50%', background: row.dot }} />
+                    <span style={{ fontFamily: palette.fonts?.mono, fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: `${palette.bg}73`, whiteSpace: 'nowrap' }}>
+                      {row.label}
+                    </span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: `${palette.bg}80`, marginBottom: '0.25rem' }}>
+                  Precio
+                </div>
+                <div style={{ fontFamily: palette.fonts?.serif, fontSize: '2rem', color: '#f0a04b', lineHeight: 1 }}>
+                  ${precioMitad.toLocaleString('es-AR')}
+                </div>
+              </div>
+            </div>
+
+            {cartEnabled ? (
+              <button
+                type="button"
+                disabled={editable}
+                onClick={agregar}
+                className="disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ display: 'block', width: '100%', textAlign: 'center', background: accent, color: palette.bg, fontWeight: 700, padding: '0.85rem', fontSize: '0.93rem', marginTop: '1.5rem' }}
+              >
+                Agregar al pedido
+              </button>
+            ) : (
+              editable && (
+                <p className="text-xs mt-4" style={{ color: `${palette.bg}80` }}>
+                  Esta sección arma el pedido en el carrito — activá el widget de carrito (rubro gastronomía o tag
+                  "carrito" en la plantilla) para que el botón de agregar funcione en el sitio publicado.
+                </p>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Promoción del día: un botón cuadrado por día (una letra) que cambia qué
+// promo se ve en el panel — mismo patrón de estado local que envios-tabs/
+// guia-talles, pero acá cada "tab" es un día completo con su propia foto,
+// título, descripción y precio (no una lista de datos chicos).
+function SeccionPromoDia({
+  promos = [],
+  onUpdate,
+  eyebrow,
+  onUpdateEyebrow,
+  titulo,
+  onUpdateTitulo,
+  editable,
+  bgColor,
+  headingColor,
+  textColor,
+  accent,
+  palette = {},
+  whatsapp,
+  nombreNegocio,
+  seccionesDisponibles = [],
+}) {
+  const [activeId, setActiveId] = useState(promos[0]?.id ?? null);
+  useEffect(() => {
+    if (!promos.some((p) => p.id === activeId)) setActiveId(promos[0]?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promos]);
+
+  const { move, toggleOculto, dnd } = useLocalListCrud(promos, onUpdate);
+  const promosVisibles = editable ? promos : promos.filter((p) => !p.oculto);
+  const updatePromo = (id, patch) => onUpdate?.(promos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const addPromo = () =>
+    onUpdate?.([...promos, { id: `promo-${Date.now()}`, dia: 'Día', letra: '?', titulo: 'Nueva promo', desc: '', precio: '' }]);
+  const removePromo = (id) => onUpdate?.(promos.filter((p) => p.id !== id));
+  const active = promos.find((p) => p.id === activeId);
+
+  if (promosVisibles.length === 0 && !editable) return null;
+
+  return (
+    <section style={{ background: bgColor || palette.bg }}>
+      <div style={{ maxWidth: 1260, margin: '0 auto', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)' }}>
+        <div className="flex flex-wrap items-end justify-between" style={{ gap: '1.5rem', marginBottom: '1.75rem' }}>
+          <div>
+            <Editable
+              editable={editable}
+              value={eyebrow}
+              onChange={onUpdateEyebrow}
+              tag="div"
+              block
+              styleKey="promodia.eyebrow"
+              placeholder="Eyebrow (opcional)"
+              style={{ fontFamily: palette.fonts?.mono, fontSize: '0.8rem', letterSpacing: '0.18em', color: accent, textTransform: 'uppercase', marginBottom: '0.8rem' }}
+              maxLength={40}
+            />
+            <Editable
+              editable={editable}
+              value={titulo ?? 'Promo del día'}
+              onChange={onUpdateTitulo}
+              tag="h2"
+              block
+              styleKey="promodia.titulo"
+              style={{ fontFamily: palette.fonts?.serif, margin: 0, color: headingColor || palette.ink }}
+              className="text-[clamp(2rem,4.5vw,3rem)]"
+              maxLength={70}
+            />
+          </div>
+          <div className="flex flex-wrap" style={{ gap: '0.4rem' }}>
+            {promosVisibles.map((p, i, arr) => (
+              <div key={p.id} ref={dnd.registerItemRef(p.id)} className={`relative ${p.oculto ? 'opacity-40' : ''} ${dnd.dragId === p.id ? 'opacity-30' : ''}`}>
+                <button
+                  type="button"
+                  onClick={() => setActiveId(p.id)}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: palette.fonts?.mono,
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    border: `1px solid ${activeId === p.id ? accent : palette.line}`,
+                    background: activeId === p.id ? accent : 'transparent',
+                    color: activeId === p.id ? palette.bg : palette.inkSoft,
+                    transition: 'all .2s',
+                  }}
+                >
+                  <Editable
+                    editable={editable}
+                    value={p.letra}
+                    onChange={(v) => updatePromo(p.id, { letra: v.slice(0, 1) })}
+                    tag="span"
+                    placeholder="?"
+                    maxLength={1}
+                  />
+                </button>
+                {editable && (
+                  <div className="absolute -top-2 -right-2">
+                    <ItemToolbar
+                      variant="overlay"
+                      oculto={p.oculto}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < arr.length - 1}
+                      onMoveUp={() => move(p.id, -1)}
+                      onMoveDown={() => move(p.id, 1)}
+                      onToggleOculto={() => toggleOculto(p.id)}
+                      onRemove={() => removePromo(p.id)}
+                      onDragStart={dnd.startDrag(p)}
+                      removeLabel={`Quitar promo de ${p.dia}`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+            {editable && (
+              <button
+                type="button"
+                onClick={addPromo}
+                className="flex items-center justify-center"
+                style={{ width: 44, height: 44, border: `2px dashed ${palette.line}`, color: palette.inkSoft }}
+              >
+                <PlusIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {active && (
+          <div className="grid @lg:grid-cols-[0.9fr_1.1fr]" style={{ border: `1px solid ${palette.line}` }}>
+            <label className={`relative block ${editable ? 'cursor-pointer' : ''}`} style={{ minHeight: 230 }}>
+              {active.imagen ? (
+                <img src={active.imagen} alt={active.titulo || ''} className="w-full h-full object-cover" style={{ display: 'block' }} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ minHeight: 230, background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+              )}
+              {editable && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (file && (await validateImageFile(file, 'galeria'))) updatePromo(active.id, { imagen: await uploadImage(file) });
+                  }}
+                />
+              )}
+            </label>
+            <div className="flex flex-col justify-center" style={{ padding: 'clamp(1.5rem,3vw,2.25rem)', gap: '0.9rem' }}>
+              <Editable
+                editable={editable}
+                value={active.dia}
+                onChange={(v) => updatePromo(active.id, { dia: v })}
+                tag="div"
+                block
+                placeholder="Día (ej: Miércoles)"
+                style={{ fontFamily: palette.fonts?.mono, fontSize: '0.78rem', letterSpacing: '0.1em', color: '#3f6b45', textTransform: 'uppercase' }}
+                maxLength={20}
+              />
+              <Editable
+                editable={editable}
+                value={active.titulo}
+                onChange={(v) => updatePromo(active.id, { titulo: v })}
+                tag="h3"
+                block
+                placeholder="Título de la promo"
+                style={{ fontFamily: palette.fonts?.serif, margin: 0, lineHeight: 1.1, color: palette.ink }}
+                className="text-[clamp(1.5rem,3vw,2.2rem)]"
+                maxLength={70}
+              />
+              <Editable
+                editable={editable}
+                value={active.desc}
+                onChange={(v) => updatePromo(active.id, { desc: v })}
+                tag="p"
+                block
+                multiline
+                placeholder="Descripción de la promo"
+                style={{ fontSize: '0.95rem', color: palette.inkSoft, lineHeight: 1.65, margin: 0, maxWidth: '30rem' }}
+                maxLength={220}
+              />
+              <div className="flex flex-wrap items-center" style={{ gap: '1.25rem', marginTop: '0.4rem' }}>
+                <Editable
+                  editable={editable}
+                  value={active.precio}
+                  onChange={(v) => updatePromo(active.id, { precio: v })}
+                  tag="span"
+                  placeholder="$0 o −25%"
+                  style={{ fontFamily: palette.fonts?.serif, fontSize: '1.8rem', color: accent }}
+                  maxLength={12}
+                />
+                <ButtonObject
+                  value={active.boton}
+                  onChange={(patch) => updatePromo(active.id, { boton: { ...(active.boton || {}), ...patch } })}
+                  editable={editable}
+                  seccionesDisponibles={seccionesDisponibles}
+                  nombreNegocio={nombreNegocio}
+                  defaultFuncion="whatsapp"
+                  defaultLabel="Pedir esta promo"
+                  defaultColor={palette.inkHex || palette.ink}
+                  defaultTarget={whatsapp}
+                  waMessage={`Hola! Quiero la promo de ${active.dia}: ${active.titulo}.`}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>

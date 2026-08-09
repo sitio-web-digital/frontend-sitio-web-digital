@@ -933,6 +933,16 @@ export const SECCIONES_CATALOGO = [
     desc: 'Grilla semanal (horario × día) con una disciplina o clase asignada a cada celda — para gimnasios y estudios.',
   },
   {
+    id: 'mitad-y-mitad',
+    label: 'Armá tu combinación (mitad y mitad)',
+    desc: 'Elegí un producto para cada mitad y armá una combinación con precio propio — para pizzerías y catálogos similares.',
+  },
+  {
+    id: 'promo-dia',
+    label: 'Promoción del día',
+    desc: 'Un botón por día que cambia la promo mostrada (foto, título, descripción y precio) — para negocios con ofertas semanales fijas.',
+  },
+  {
     id: 'financiacion',
     label: 'Simulador de cuotas',
     desc: 'Un simulador de financiación: elegí un precio y mostrá la cuota estimada en distintos plazos.',
@@ -1212,6 +1222,7 @@ export const SECTION_VARIANTS = {
     { id: 'dividido', label: 'Título grande, texto y botones apilados, sin foto', skeleton: 'heroMinimal', group: 'Distribuciones fijas' },
     { id: 'carrusel', label: 'Foto de fondo que rota + riel de miniaturas', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'foto-derecha', label: 'Texto + eyebrow con borde, foto a la derecha', skeleton: 'split', group: 'Distribuciones fijas' },
+    { id: 'circular', label: 'Foto circular con medallita, a la derecha', skeleton: 'split', group: 'Distribuciones fijas' },
     { id: 'fondo', label: 'Imagen de fondo', skeleton: 'heroFondo', group: 'Distribuciones fijas' },
     { id: 'ofertas', label: 'Vidriera rotativa', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
     { id: 'cuenta-regresiva', label: 'Cuenta regresiva a una fecha', skeleton: 'heroVidriera', group: 'Distribuciones fijas' },
@@ -1238,6 +1249,7 @@ export const SECTION_VARIANTS = {
     { id: 'split', label: 'Imagen + formulario', skeleton: 'split' },
     { id: 'mapa', label: 'Formulario + mapa', skeleton: 'contactoMapa' },
     { id: 'directo', label: 'Sin formulario, directo a WhatsApp', skeleton: 'contactoDirecto' },
+    { id: 'delivery', label: 'Zonas de envío + datos, sin mapa', skeleton: 'contactoDirecto' },
   ],
   faq: [
     { id: 'lista', label: 'Lista centrada', skeleton: 'centered' },
@@ -1254,6 +1266,7 @@ export const SECTION_VARIANTS = {
     { id: 'catalogo', label: 'Catálogo con filtro', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'moda', label: 'Con color y talle', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'disciplinas', label: 'Con franja de color', skeleton: 'productosFila', group: 'Productos' },
+    { id: 'pizza', label: 'Fotos circulares + precio en medallón', skeleton: 'productosCatalogo', group: 'Productos' },
     { id: 'servicios', label: 'Tarjetas sin foto', skeleton: 'productosServicios', group: 'Servicios' },
     { id: 'tarifario', label: 'Lista de precios (con WhatsApp)', skeleton: 'productosTarifario', group: 'Precios' },
   ],
@@ -1284,6 +1297,7 @@ export const SECTION_VARIANTS = {
     { id: 'timeline', label: 'Línea de tiempo vertical', skeleton: 'pasosTimeline' },
     { id: 'sticky', label: 'Con foto fija + datos técnicos', skeleton: 'pasosSticky' },
     { id: 'criterio', label: 'Grilla con bordes, fondo claro', skeleton: 'pasosNumerados' },
+    { id: 'con-foto-derecha', label: 'Lista de pasos + una foto fija a la derecha', skeleton: 'pasosSticky' },
   ],
   reservas: [{ id: 'calendario', label: 'Calendario y horarios', skeleton: 'reservasCalendario' }],
   areas: [{ id: 'lista-detalle', label: 'Lista + detalle', skeleton: 'areasListaDetalle' }],
@@ -1291,6 +1305,8 @@ export const SECTION_VARIANTS = {
   'envios-tabs': [{ id: 'tabs', label: 'Pestañas con datos', skeleton: 'pagosFila' }],
   'guia-talles': [{ id: 'tabs', label: 'Selector + medidas', skeleton: 'pagosFila' }],
   horarios: [{ id: 'grilla', label: 'Grilla semanal', skeleton: 'pagosFila' }],
+  'mitad-y-mitad': [{ id: 'circular', label: 'Foto circular partida al medio', skeleton: 'split' }],
+  'promo-dia': [{ id: 'tabs', label: 'Botones por día', skeleton: 'pagosFila' }],
   financiacion: [{ id: 'simulador', label: 'Simulador de cuotas', skeleton: 'financiacionSimulador' }],
   beneficios: [
     { id: 'fila', label: 'Fila con íconos', skeleton: 'beneficiosFila' },
