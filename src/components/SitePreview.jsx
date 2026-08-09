@@ -525,6 +525,8 @@ export default function SitePreview({
                 onUpdateZonas={(zonas) => onSetSectionStyle?.(sec.id, { zonas })}
                 looks={sec.looks ?? []}
                 onUpdateLooks={(looks) => onSetSectionStyle?.(sec.id, { looks })}
+                tituloAcento={sec.tituloAcento}
+                onUpdateTituloAcento={(v) => onSetSectionStyle?.(sec.id, { tituloAcento: v })}
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
@@ -6279,6 +6281,8 @@ function SeccionHero({
   onUpdateZonas,
   looks = [],
   onUpdateLooks,
+  tituloAcento,
+  onUpdateTituloAcento,
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
   // Solo la variante "carrusel" usa este estado, pero se declara siempre acá
@@ -7025,39 +7029,103 @@ function SeccionHero({
     );
   }
 
-  // Texto a la izquierda con un eyebrow tipo badge (con borde, no el eyebrow
-  // simple de texto plano de las demás variantes) y foto a la derecha con
-  // una barra inferior de dos datos (label + valor, ej. "Próxima clase" +
-  // el dato) — a diferencia de "split" (foto a la izquierda, sin badge ni
-  // barra inferior con dos datos).
+  // Copia directa (valores literales, no aproximados con la escala de
+  // Tailwind) de los estilos inline del diseño de referencia "Gimnasio
+  // Base 9": eyebrow tipo badge con borde, título en dos líneas + una
+  // tercera línea coloreada con el acento (dos campos editables en vez de
+  // uno solo, porque el editor no soporta texto con colores mezclados
+  // adentro de un mismo campo), foto a la derecha con una barra inferior
+  // de dos datos (label + valor).
   if (variant === 'foto-derecha') {
     const heroImg = heroImagen || galeria?.[0];
     return (
-      <section className="relative px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
-        <div className="max-w-6xl mx-auto grid @lg:grid-cols-[1.05fr_0.95fr] gap-10 @lg:gap-16 items-center">
+      <section style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2.25rem,5vw,4rem) clamp(1.25rem,3vw,2.5rem)', background: bgColor || palette.bg }}>
+        <div className="grid @lg:grid-cols-[1.05fr_0.95fr] items-center" style={{ gap: 'clamp(1.75rem,4vw,3rem)' }}>
           <div>
             <Editable
               editable={editable}
               value={rubroLabel}
               onChange={field('rubroLabel')}
-              tag="span"
+              tag="div"
               block
               styleKey="hero.rubroLabel"
               placeholder="Frase corta (ej: Primera clase sin cargo)"
-              style={{ color: accent, borderColor: `${accent}66` }}
-              className="inline-block font-mono text-xs uppercase tracking-[0.14em] border px-3 py-1.5 mb-5"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontFamily: palette.fonts?.mono,
+                fontSize: '0.74rem',
+                letterSpacing: '0.14em',
+                color: accent,
+                border: `1px solid ${accent}66`,
+                padding: '0.35rem 0.75rem',
+                marginBottom: '1.3rem',
+                textTransform: 'uppercase',
+              }}
             />
-            {heading('text-4xl @lg:text-6xl leading-[0.92]')}
-            {paragraph()}
-            {botones()}
+            <h1 style={{ fontFamily: palette.fonts?.serif, fontWeight: 800, lineHeight: 0.85, letterSpacing: '0.005em', textTransform: 'uppercase', margin: '0 0 1.3rem' }} className="text-[clamp(3rem,8.5vw,6.5rem)]">
+              <Editable
+                editable={editable}
+                value={titulo ?? nombreNegocio}
+                onChange={onUpdateTitulo || field('nombreNegocio')}
+                tag="div"
+                block
+                multiline
+                styleKey="hero.nombreNegocio"
+                placeholder="Título, hasta dos líneas (ej: Entrená / en serio,)"
+                style={{ color: headingColor || palette.ink, whiteSpace: 'pre-line' }}
+              />
+              <Editable
+                editable={editable}
+                value={tituloAcento}
+                onChange={onUpdateTituloAcento}
+                tag="div"
+                block
+                styleKey="hero.tituloAcento"
+                placeholder="Línea final (ej: sin apuro)"
+                style={{ color: accent }}
+              />
+            </h1>
+            <Editable
+              editable={editable}
+              value={descripcion ?? sobreNosotros}
+              onChange={onUpdateDescripcion || field('sobreNosotros')}
+              tag="p"
+              multiline
+              block
+              styleKey="hero.sobreNosotros"
+              style={{ fontSize: '1.02rem', color: textColor || palette.inkSoft, lineHeight: 1.7, maxWidth: '29rem', margin: '0 0 1.9rem' }}
+            />
+            <div className="flex flex-wrap" style={{ gap: '0.85rem', marginBottom: '2rem' }}>
+              {HERO_BUTTON_SLOTS.map((slot, idx) => {
+                const v = botonesData[slot.key];
+                const defaultTarget = slot.targetField ? heroTargetDefaults[slot.targetField] : undefined;
+                if (!buttonSlotVisible(editable, v, slot.defaultFuncion, defaultTarget)) return null;
+                return (
+                  <ButtonObject
+                    key={slot.key}
+                    value={v}
+                    onChange={(patch) =>
+                      onUpdateBotones?.({ ...botonesData, [slot.key]: { ...(botonesData[slot.key] || {}), ...patch } })
+                    }
+                    editable={editable}
+                    seccionesDisponibles={seccionesDisponibles}
+                    nombreNegocio={nombreNegocio}
+                    defaultFuncion={slot.defaultFuncion}
+                    defaultLabel={slot.defaultLabel}
+                    defaultColor={idx === 0 ? accent : palette.ink}
+                    defaultTarget={defaultTarget}
+                    outline={idx > 0}
+                  />
+                );
+              })}
+            </div>
             {stats.length > 0 && (
-              <div className="flex gap-8 border-t pt-5 mt-7 flex-wrap" style={{ borderColor: palette.line }}>
+              <div className="flex flex-wrap" style={{ gap: '2rem', borderTop: `1px solid ${palette.line}`, paddingTop: '1.3rem' }}>
                 {stats.map((s, i) => (
                   <div key={i}>
-                    <div className="font-serif font-bold text-2xl leading-none" style={{ color: accent }}>
-                      {s.value}
-                    </div>
-                    <div className="font-mono text-[0.65rem] uppercase tracking-wide mt-1.5" style={{ color: palette.inkSoft }}>
+                    <div style={{ fontFamily: palette.fonts?.serif, fontWeight: 800, fontSize: '1.9rem', color: accent, lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: palette.inkSoft, marginTop: '0.3rem' }}>
                       {s.label}
                     </div>
                   </div>
@@ -7065,10 +7133,10 @@ function SeccionHero({
               </div>
             )}
           </div>
-          <div className="relative aspect-[4/5] bg-black/5 overflow-hidden group/hero">
-            <label className={`absolute inset-0 ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
+          <div style={{ position: 'relative' }} className="group/hero">
+            <label className={`block relative aspect-[4/5] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
               {heroImg ? (
-                <img src={heroImg} alt="" className="w-full h-full object-cover" style={{ filter: 'grayscale(0.15) contrast(1.05)' }} />
+                <img src={heroImg} alt={nombreNegocio || ''} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
                   Agregá fotos en tu galería
@@ -7084,8 +7152,11 @@ function SeccionHero({
               )}
             </label>
             {(caption || editable) && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/85 px-4 @lg:px-5 py-3.5 flex items-center justify-between gap-3">
-                <span className="font-mono text-xs uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <div
+                className="absolute bottom-0 left-0 right-0 flex items-center justify-between"
+                style={{ background: `${palette.bg}eb`, padding: '0.9rem 1.15rem', gap: '1rem' }}
+              >
+                <span style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: palette.inkSoft }}>
                   Próxima clase
                 </span>
                 <Editable
@@ -7095,8 +7166,7 @@ function SeccionHero({
                   tag="span"
                   placeholder="Hoy 20:00 · Funcional"
                   maxLength={50}
-                  style={{ color: accent }}
-                  className="font-mono text-sm"
+                  style={{ fontFamily: palette.fonts?.mono, fontSize: '0.82rem', color: accent }}
                 />
               </div>
             )}

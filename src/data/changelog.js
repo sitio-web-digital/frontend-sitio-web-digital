@@ -5,6 +5,13 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.52.0',
+    date: '2026-08-09',
+    changes: [
+      { type: 'mejora', text: 'Hero "Texto + eyebrow con borde, foto a la derecha": reescrito con los valores exactos (clamp(), colores, espaciados) del diseño original de Gimnasio Base 9, en vez de aproximarlos con la escala genérica. El título ahora admite una línea final en el color de acento, separada del resto del título.' },
+    ],
+  },
+  {
     version: '1.51.0',
     date: '2026-08-09',
     changes: [
