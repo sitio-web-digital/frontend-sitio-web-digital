@@ -56,6 +56,7 @@ export default function Dashboard() {
     switchSite,
     startNewSite,
     cancelSubscription,
+    shareSite,
   } = useApp();
   const navigate = useNavigate();
   const [section, setSection] = useState('resumen');
@@ -327,7 +328,16 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switch
       </div>
       <div className="space-y-3">
         {pages.map((p) => (
-          <PageRow key={p.id} page={p} navigate={navigate} updateSubdomain={updateSubdomain} switchSite={switchSite} isFree={isFree} />
+          <PageRow
+            key={p.id}
+            page={p}
+            navigate={navigate}
+            updateSubdomain={updateSubdomain}
+            switchSite={switchSite}
+            isFree={isFree}
+            canShare={user?.role === 'vendedor' || user?.role === 'admin'}
+            shareSite={shareSite}
+          />
         ))}
         {pages.length === 0 && (
           <div className="border border-dashed border-white/15 bg-navy-850 p-6 text-center">
@@ -372,12 +382,24 @@ function StatStrip({ items, cols = 3 }) {
   );
 }
 
-function PageRow({ page, navigate, updateSubdomain, switchSite, isFree }) {
+function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare, shareSite }) {
   const status = STATUS_INFO[page.status];
   const proximoCobro =
     page.status === 'publicada' && !isFree && page.mpStatus === 'authorized' && page.nextPaymentDate
       ? new Date(page.nextPaymentDate).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
       : null;
+  const [shareLink, setShareLink] = useState('');
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    setSharing(true);
+    setCopied(false);
+    const result = await shareSite(page.id);
+    setSharing(false);
+    if (!result.ok) return;
+    setShareLink(`${window.location.origin}/#/compartida/${result.shareToken}`);
+  };
 
   return (
     <div className="border border-white/10 bg-navy-850 hover:border-white/20 transition-colors flex flex-col sm:flex-row gap-4 p-4">
@@ -480,10 +502,37 @@ function PageRow({ page, navigate, updateSubdomain, switchSite, isFree }) {
                   Editar
                 </RowButton>
               )}
+              {canShare && (
+                <RowButton onClick={handleShare}>{sharing ? 'Generando...' : 'Compartir'}</RowButton>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {shareLink && (
+        <div className="w-full sm:ml-44 border border-gold-500/30 bg-gold-500/5 p-3 flex flex-wrap items-center gap-2">
+          <p className="text-xs text-ink-300 shrink-0">
+            Link para el prospecto — al abrirlo ve la página armada y solo le falta pagar:
+          </p>
+          <input
+            readOnly
+            value={shareLink}
+            onFocus={(e) => e.target.select()}
+            className="flex-1 min-w-[200px] bg-navy-900 border border-white/10 px-2 py-1.5 text-xs text-gold-400 outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(shareLink);
+              setCopied(true);
+            }}
+            className="px-3 py-1.5 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+          >
+            {copied ? 'Copiado' : 'Copiar'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

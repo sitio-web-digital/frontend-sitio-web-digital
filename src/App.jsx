@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 import AnalyticsHome from './pages/AnalyticsHome';
 import PublicSite from './pages/PublicSite';
+import SharedSiteClaim from './pages/SharedSiteClaim';
 import { initClickTracking, trackPageView } from './utils/analytics';
 import { ROOT_DOMAIN, APP_HOSTNAME } from './utils/rootDomain';
 
@@ -84,6 +85,7 @@ export default function App() {
             <Route path="/editor" element={<Editor />} />
             <Route path="/preview" element={<SubdomainPreview />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/compartida/:token" element={<SharedSiteClaim />} />
             <Route path="/suscripcion/confirmar" element={<SuscripcionConfirmar />} />
             <Route path="/exito" element={<Success />} />
             <Route path="/estadisticas" element={<Stats />} />

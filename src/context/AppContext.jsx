@@ -27,6 +27,9 @@ import {
   apiGetSite,
   apiUpdateSite,
   apiSetSubdomain,
+  apiShareSite,
+  apiUnshareSite,
+  apiClaimSharedSite,
   apiUpdateMe,
   apiListSupportTickets,
   apiCreateSupportTicket,
@@ -1279,6 +1282,25 @@ export function AppProvider({ children }) {
     return { ok: true, subdomain: result.subdomain };
   };
 
+  // Rol vendedor/admin (Dashboard > Compartir) — no toca ningún estado local,
+  // el Dashboard solo necesita el token devuelto para armar el link a mostrar.
+  const shareSite = (siteId) => apiShareSite(siteId);
+  const unshareSite = (siteId) => apiUnshareSite(siteId);
+
+  // Reclamar una página compartida (SharedSiteClaim.jsx, vía <AuthGate> —
+  // mode 'login' o 'register' según qué pestaña haya usado el prospecto).
+  // Mismo criterio que login()/register(): limpia cualquier borrador anónimo
+  // ANTES de cargar la cuenta, para que no se filtre nada de un estado
+  // previo a la página recién reclamada.
+  const claimSharedSite = async (shareToken, mode, payload) => {
+    const result = await apiClaimSharedSite(shareToken, mode, payload);
+    if (!result.ok) return result;
+    resetAll();
+    setUser(result.user);
+    await switchSite(result.siteId);
+    return { ok: true };
+  };
+
   const resetAll = () => {
     clearHistory();
     setQuiz(initialQuiz);
@@ -1469,6 +1491,9 @@ export function AppProvider({ children }) {
     updateProfile,
     refreshUser,
     updateSubdomain,
+    shareSite,
+    unshareSite,
+    claimSharedSite,
     supportTickets,
     addSupportTicket,
     adminEditingSite,

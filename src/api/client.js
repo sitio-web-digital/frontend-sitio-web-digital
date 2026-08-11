@@ -158,12 +158,51 @@ export async function apiSetSubdomain(siteId, subdomain) {
   return request(`/sites/${siteId}/subdomain`, { method: 'PUT', body: { subdomain }, token });
 }
 
+// Rol vendedor/admin (Dashboard > Compartir) — genera o renueva el link
+// público de esta página, ver sites.share_token en el backend.
+export async function apiShareSite(siteId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/sites/${siteId}/share`, { method: 'POST', token });
+}
+
+export async function apiUnshareSite(siteId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/sites/${siteId}/unshare`, { method: 'POST', token });
+}
+
 // Pública, sin sesión — la usa PublicSite.jsx para renderizar la página de un
 // cliente a partir de su subdominio (ver ?site= en local, o el hostname real
 // en producción).
 export async function apiGetPublicSite(subdomain) {
   const result = await request(`/public/sites/${encodeURIComponent(subdomain)}`);
   return result.ok ? { ok: true, site: result.site } : { ok: false, error: result.error };
+}
+
+// Pública, sin sesión — la usa SharedSiteClaim.jsx para mostrar el preview de
+// una página compartida por un vendedor antes de reclamarla.
+export async function apiGetSharedSite(shareToken) {
+  const result = await request(`/public/shared/${encodeURIComponent(shareToken)}`);
+  return result.ok
+    ? { ok: true, site: result.site, nombreNegocio: result.nombreNegocio }
+    : { ok: false, error: result.error };
+}
+
+// Pública (con sesión opcional) — "reclama" una página compartida: con una
+// cuenta que el prospecto ya tenía (mode: 'login'), creando una nueva en el
+// mismo paso (mode: 'register' — ver SharedSiteClaim.jsx, que le pasa esto a
+// <AuthGate> tal cual ya usan Login/Checkout), o directo con la sesión ya
+// iniciada (mode: 'session', sin pedir contraseña de nuevo).
+export async function apiClaimSharedSite(shareToken, mode, payload) {
+  const result = await request(`/public/shared/${encodeURIComponent(shareToken)}/claim`, {
+    method: 'POST',
+    body: { mode, ...payload },
+    token: mode === 'session' ? getToken() : undefined,
+  });
+  if (!result.ok) return result;
+  setToken(result.token);
+  return { ok: true, user: result.user, siteId: result.siteId };
 }
 
 // Pública, sin sesión — el paso 1 del quiz la usa para mostrar en vivo si el

@@ -1657,6 +1657,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
               <option value="usuario">Usuario</option>
               <option value="admin">Admin</option>
               <option value="analytics">Analytics (Leads y Analytics nada más)</option>
+              <option value="vendedor">Vendedor (crea y comparte páginas)</option>
             </select>
           </div>
           <div className="sm:col-span-2">
@@ -1745,10 +1746,16 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
       <td className="py-2.5 pr-4">
         <span
           className={`text-xs font-semibold ${
-            u.role === 'admin' ? 'text-gold-500' : u.role === 'analytics' ? 'text-sky-400' : 'text-ink-400'
+            u.role === 'admin'
+              ? 'text-gold-500'
+              : u.role === 'analytics'
+                ? 'text-sky-400'
+                : u.role === 'vendedor'
+                  ? 'text-emerald-400'
+                  : 'text-ink-400'
           }`}
         >
-          {u.role === 'admin' ? 'Admin' : u.role === 'analytics' ? 'Analytics' : 'Usuario'}
+          {u.role === 'admin' ? 'Admin' : u.role === 'analytics' ? 'Analytics' : u.role === 'vendedor' ? 'Vendedor' : 'Usuario'}
         </span>
       </td>
       <td className="py-2.5 pr-4 text-ink-500">{new Date(u.createdAt).toLocaleDateString('es-AR')}</td>

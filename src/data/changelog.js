@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.60.0',
+    date: '2026-08-10',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Rol nuevo "Vendedor": puede crear páginas desde plantillas igual que cualquier cuenta y compartirlas con un link — quien lo abre ve la página ya armada y solo tiene que crear su cuenta (o iniciar sesión) y pagar para publicarla.',
+      },
+      {
+        type: 'fix',
+        text: 'Los mails de suscripción (confirmación de pago, aviso de cobro fallido, cancelación) ya llegan al comprador real en vez de a una sola casilla — se sacó el redirect temporal que existía mientras se aprobaba el acceso de producción de SES.',
+      },
+    ],
+  },
+  {
     version: '1.59.0',
     date: '2026-08-09',
     changes: [
