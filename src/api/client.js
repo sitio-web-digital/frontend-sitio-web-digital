@@ -553,6 +553,18 @@ export async function apiAdminListLeads({ page = 1, pageSize = 20, period, q } =
   return result.ok ? result : { leads: [], total: 0, page: 1, pageSize };
 }
 
+// Admin > Vendedores — páginas efectivamente reclamadas (ver sold_at en el
+// backend), filtrable por período (sobre la fecha de venta) y por vendedor.
+export async function apiAdminListVentas({ page = 1, pageSize = 20, period, vendedorId } = {}) {
+  const token = getToken();
+  if (!token) return { ventas: [], total: 0, page: 1, pageSize };
+  const params = new URLSearchParams({ page, pageSize });
+  if (period) params.set('period', period);
+  if (vendedorId) params.set('vendedorId', vendedorId);
+  const result = await request(`/admin/ventas?${params}`, { token });
+  return result.ok ? result : { ventas: [], total: 0, page: 1, pageSize };
+}
+
 // Se llama al tocar "Acepto y continúo" en TermsGate — deja constancia de
 // que esa sesión anónima aceptó los términos, para poder demostrarlo
 // después si guardamos algún dato suyo (ver leads.js). Si hay sesión

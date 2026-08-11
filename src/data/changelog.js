@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.61.0',
+    date: '2026-08-10',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Sección nueva "Vendedores" en Admin: qué páginas se vendieron (reclamadas desde un link compartido), quién las vendió y cuándo, con filtro por vendedor y por período.',
+      },
+      {
+        type: 'mejora',
+        text: 'Admin > Páginas y Admin > Suscripciones ahora muestran el vendedor de cada página, cuando la vendió un vendedor.',
+      },
+    ],
+  },
+  {
     version: '1.60.0',
     date: '2026-08-10',
     changes: [

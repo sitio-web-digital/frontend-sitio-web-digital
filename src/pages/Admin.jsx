@@ -26,6 +26,7 @@ import {
   apiAdminDeleteUser,
   apiAdminAnalyticsSummary,
   apiAdminListLeads,
+  apiAdminListVentas,
   apiDownloadLeadsReport,
   apiDownloadAnalyticsReport,
   apiAdminListCatalogTemplates,
@@ -51,6 +52,7 @@ const NAV_ITEMS = [
   { id: 'paginas', label: 'Páginas' },
   { id: 'plantillas', label: 'Plantillas' },
   { id: 'suscripciones', label: 'Suscripciones' },
+  { id: 'vendedores', label: 'Vendedores' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'soporte', label: 'Soporte' },
   { id: 'terminos', label: 'Términos y Condiciones' },
@@ -386,6 +388,7 @@ export default function Admin() {
               onRefresh={refreshSubscriptions}
             />
           )}
+          {section === 'vendedores' && <VendedoresSection vendedores={users.filter((u) => u.role === 'vendedor')} />}
           {section === 'usuarios' && (
             <UsuariosSection
               users={users}
@@ -1215,6 +1218,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish, onRefres
                 <th className="pb-2 pr-4 font-semibold">ID</th>
                 <th className="pb-2 pr-4 font-semibold">Página</th>
                 <th className="pb-2 pr-4 font-semibold">Cuenta</th>
+                <th className="pb-2 pr-4 font-semibold">Vendedor</th>
                 <th className="pb-2 pr-4 font-semibold">Estado</th>
                 <th className="pb-2 pr-4 font-semibold">Edición</th>
                 <th className="pb-2 font-semibold text-right">Acción</th>
@@ -1231,6 +1235,7 @@ function PaginasSection({ sites, onEdit, onToggleLock, onTogglePublish, onRefres
                       <span className="ml-2 text-xs font-semibold text-emerald-400">· Gratis</span>
                     )}
                   </td>
+                  <td className="py-2.5 pr-4 text-ink-400">{s.vendedor || '—'}</td>
                   <td className="py-2.5 pr-4">
                     <span
                       className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
@@ -1349,6 +1354,7 @@ function SuscripcionesSection({ subscriptions, onCancel, onRefresh }) {
               <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
                 <th className="pb-2 pr-4 font-semibold">Página</th>
                 <th className="pb-2 pr-4 font-semibold">Cuenta</th>
+                <th className="pb-2 pr-4 font-semibold">Vendedor</th>
                 <th className="pb-2 pr-4 font-semibold">Estado</th>
                 <th className="pb-2 pr-4 font-semibold">Próximo cobro</th>
                 <th className="pb-2 pr-4 font-semibold text-right">Precio</th>
@@ -1390,6 +1396,7 @@ function SuscripcionRow({ s, onCancel }) {
     <tr className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
       <td className="py-2.5 pr-4 font-semibold">{s.nombre || '—'}</td>
       <td className="py-2.5 pr-4 text-ink-300">{s.email}</td>
+      <td className="py-2.5 pr-4 text-ink-400">{s.vendedor || '—'}</td>
       <td className="py-2.5 pr-4">
         {!s.published ? (
           <span className="font-semibold text-xs text-red-400">{isFree ? 'Gratis (baja)' : mpInfo?.label || 'Dada de baja'}</span>
@@ -1445,6 +1452,135 @@ function SuscripcionRow({ s, onCancel }) {
         )}
       </td>
     </tr>
+  );
+}
+
+const VENTAS_PAGE_SIZE = 20;
+
+// Admin > Vendedores: páginas reclamadas vía un link compartido (rol
+// vendedor/admin, ver Dashboard > Compartir), quién la vendió y cuándo —
+// mismo patrón de paginado + filtro por período que LeadsSection, más un
+// select para filtrar por vendedor puntual.
+function VendedoresSection({ vendedores }) {
+  const [ventas, setVentas] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [period, setPeriod] = useState('all');
+  const [vendedorId, setVendedorId] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setPage(1);
+  }, [period, vendedorId]);
+
+  const fetchVentas = () =>
+    apiAdminListVentas({
+      page,
+      pageSize: VENTAS_PAGE_SIZE,
+      period: period === 'all' ? undefined : period,
+      vendedorId: vendedorId || undefined,
+    }).then((result) => {
+      setVentas(result.ventas);
+      setTotal(result.total);
+      setLoading(false);
+    });
+
+  useEffect(() => {
+    setLoading(true);
+    fetchVentas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, period, vendedorId]);
+
+  const totalPages = Math.max(1, Math.ceil(total / VENTAS_PAGE_SIZE));
+
+  return (
+    <Panel title="Vendedores">
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+        <p className="text-sm text-ink-400 max-w-2xl">
+          Páginas que se armaron y compartieron desde una cuenta vendedor, y que un prospecto ya reclamó — quién la
+          vendió y cuándo. Las páginas todavía sin reclamar no aparecen acá.
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <select
+            value={vendedorId}
+            onChange={(e) => setVendedorId(e.target.value)}
+            className="border border-white/10 bg-navy-900 px-3 py-2 text-sm text-white outline-none focus:border-gold-500 transition-colors"
+          >
+            <option value="">Todos los vendedores</option>
+            {vendedores.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+          <PeriodFilter period={period} onChange={setPeriod} />
+          <RefreshButton onRefresh={fetchVentas} />
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-ink-400">Cargando...</p>
+      ) : ventas.length === 0 ? (
+        <p className="text-sm text-ink-400">
+          {total === 0 && !vendedorId && period === 'all'
+            ? 'Todavía no se vendió ninguna página compartida.'
+            : 'No encontramos ninguna venta con esos filtros.'}
+        </p>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
+                  <th className="pb-2 pr-4 font-semibold">Página</th>
+                  <th className="pb-2 pr-4 font-semibold">Cliente</th>
+                  <th className="pb-2 pr-4 font-semibold">Vendedor</th>
+                  <th className="pb-2 pr-4 font-semibold">Fecha vendida</th>
+                  <th className="pb-2 font-semibold">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ventas.map((v) => {
+                  const mpInfo = MP_STATUS_INFO[v.mpStatus];
+                  return (
+                    <tr key={v.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                      <td className="py-2.5 pr-4 font-semibold">{v.nombre || '—'}</td>
+                      <td className="py-2.5 pr-4 text-ink-300">
+                        {v.clienteName}
+                        <span className="block text-xs text-ink-500">{v.clienteEmail}</span>
+                      </td>
+                      <td className="py-2.5 pr-4 text-ink-300">
+                        {v.vendedorName || '—'}
+                        {v.vendedorEmail && <span className="block text-xs text-ink-500">{v.vendedorEmail}</span>}
+                      </td>
+                      <td className="py-2.5 pr-4 text-ink-500 whitespace-nowrap">
+                        {new Date(v.soldAt).toLocaleDateString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-2.5">
+                        {v.published ? (
+                          <span className="text-xs font-semibold text-emerald-400">Publicada</span>
+                        ) : mpInfo ? (
+                          <span className={`text-xs font-semibold ${mpInfo.className}`}>{mpInfo.label}</span>
+                        ) : (
+                          <span className="text-xs font-semibold text-ink-400">Sin pagar</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
+        </>
+      )}
+    </Panel>
   );
 }
 
