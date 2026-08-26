@@ -1519,7 +1519,17 @@ export default function SitePreview({
             )}
             {sec.type === 'turno-express' && (
               <SeccionTurnoExpress
-                productos={productos}
+                servicios={sec.servicios ?? []}
+                onAddServicio={(s) => onSetSectionStyle?.(sec.id, { servicios: [...(sec.servicios ?? []), s] })}
+                onRemoveServicio={(id) =>
+                  onSetSectionStyle?.(sec.id, { servicios: (sec.servicios ?? []).filter((s) => s.id !== id) })
+                }
+                onUpdateServicio={(id, patch) =>
+                  onSetSectionStyle?.(sec.id, {
+                    servicios: (sec.servicios ?? []).map((s) => (s.id === id ? { ...s, ...patch } : s)),
+                  })
+                }
+                onUpdateServicios={(arr) => onSetSectionStyle?.(sec.id, { servicios: arr })}
                 slots={sec.slots ?? []}
                 onUpdateSlots={(slots) => onSetSectionStyle?.(sec.id, { slots })}
                 eyebrow={sec.eyebrow}
@@ -23849,7 +23859,11 @@ const TURNOEXPRESS_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ag
 // negocios que reservan con pocos días de anticipación y no distinguen
 // por quién atiende (lavaderos, talleres).
 function SeccionTurnoExpress({
-  productos = [],
+  servicios = [],
+  onAddServicio,
+  onRemoveServicio,
+  onUpdateServicio,
+  onUpdateServicios,
   slots = [],
   onUpdateSlots,
   eyebrow,
@@ -23874,6 +23888,7 @@ function SeccionTurnoExpress({
   const { move, remove: removeSlot, dnd } = useLocalListCrud(slots, onUpdateSlots);
   const updateSlot = (id, patch) => onUpdateSlots?.(slots.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const addSlot = () => onUpdateSlots?.([...slots, { id: `slot-${Date.now()}`, time: '10:00', disponibles: 2 }]);
+  const { move: moveServicio, dnd: servicioDnd } = useLocalListCrud(servicios, onUpdateServicios);
 
   const dias = (() => {
     const today = new Date();
@@ -23885,7 +23900,7 @@ function SeccionTurnoExpress({
     return out;
   })();
   const diaActivo = dias.find((d) => d.offset === diaOffset && d.abierto) || dias.find((d) => d.abierto) || dias[0];
-  const servicio = productos[servicioIdx];
+  const servicio = servicios[servicioIdx];
   const slot = slotIdx !== null ? slots[slotIdx] : null;
   const dim = palette.inkSoft;
 
@@ -23958,27 +23973,66 @@ function SeccionTurnoExpress({
         <div style={{ border: `1px solid ${palette.line}`, background: palette.bg, padding: 'clamp(1.25rem,3vw,2rem)', display: 'flex', flexDirection: 'column', gap: '1.9rem' }}>
           <div>
             {stepLabel(1, 'Servicio')}
-            {productos.length === 0 ? (
-              <p className="text-sm" style={{ color: palette.inkSoft }}>Todavía no cargaste servicios en el catálogo.</p>
+            {servicios.length === 0 && !editable ? (
+              <p className="text-sm" style={{ color: palette.inkSoft }}>Todavía no cargaste servicios.</p>
             ) : (
               <div className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4" style={{ gap: '0.6rem' }}>
-                {productos.map((p, i) => {
+                {servicios.map((s, i, arr) => {
                   const on = servicioIdx === i;
                   return (
-                    <button
-                      key={p.id}
-                      type="button"
+                    <div
+                      key={s.id}
+                      ref={servicioDnd.registerItemRef(s.id)}
                       onClick={() => setServicioIdx(i)}
-                      className="text-left"
+                      className={`relative text-left cursor-pointer ${servicioDnd.dragId === s.id ? 'opacity-30' : ''}`}
                       style={{ border: `1px solid ${on ? accent : palette.line}`, background: on ? `${accent}1a` : palette.bg, padding: '0.9rem 1rem', transition: 'all .2s' }}
                     >
-                      <div style={{ fontWeight: 600, fontSize: '0.94rem', color: on ? accent : palette.ink, marginBottom: '0.25rem' }}>{p.nombre}</div>
-                      <div style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', color: on ? accent : palette.inkSoft }}>
-                        ${Number(p.precio || 0).toLocaleString('es-AR')}{p.duracion ? ` · ${p.duracion}` : ''}
-                      </div>
-                    </button>
+                      <Editable
+                        editable={editable}
+                        value={s.nombre}
+                        onChange={(v) => onUpdateServicio?.(s.id, { nombre: v })}
+                        tag="div"
+                        placeholder="Nombre del servicio"
+                        style={{ fontWeight: 600, fontSize: '0.94rem', color: on ? accent : palette.ink, marginBottom: '0.25rem' }}
+                        maxLength={50}
+                      />
+                      <Editable
+                        editable={editable}
+                        value={s.precio}
+                        onChange={(v) => onUpdateServicio?.(s.id, { precio: Number(v) || 0 })}
+                        tag="div"
+                        type="number"
+                        format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
+                        style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', color: on ? accent : palette.inkSoft }}
+                      />
+                      {editable && (
+                        <div className="absolute top-1 right-1" onClick={(e) => e.stopPropagation()}>
+                          <ItemToolbar
+                            variant="inline"
+                            color={palette.ink}
+                            canMoveUp={i > 0}
+                            canMoveDown={i < arr.length - 1}
+                            onMoveUp={() => moveServicio(s.id, -1)}
+                            onMoveDown={() => moveServicio(s.id, 1)}
+                            onRemove={() => onRemoveServicio?.(s.id)}
+                            onDragStart={servicioDnd.startDrag(s)}
+                            removeLabel={`Quitar ${s.nombre}`}
+                          />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={() => onAddServicio?.({ id: `servicio-${Date.now()}`, nombre: 'Servicio nuevo', precio: 0 })}
+                    className="flex items-center justify-center gap-1.5"
+                    style={{ border: `2px dashed ${palette.line}`, color: palette.inkSoft, fontSize: '0.85rem', fontWeight: 600, padding: '0.9rem 1rem' }}
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" /> Agregar servicio
+                  </button>
+                )}
               </div>
             )}
           </div>

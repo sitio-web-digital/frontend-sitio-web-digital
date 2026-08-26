@@ -950,7 +950,7 @@ export const SECCIONES_CATALOGO = [
   {
     id: 'turno-express',
     label: 'Reserva de turno en 3 pasos',
-    desc: 'Elegís servicio del catálogo, uno de los próximos 6 días y un horario con cupo, con resumen y botón de WhatsApp — sin elegir profesional, para lavaderos, talleres y turnos de corto plazo.',
+    desc: 'Elegís uno de tus servicios (con su propia lista, independiente del catálogo de Productos), uno de los próximos 6 días y un horario con cupo, con resumen y botón de WhatsApp — sin elegir profesional, para lavaderos, talleres y turnos de corto plazo.',
   },
   {
     id: 'ambientes',
