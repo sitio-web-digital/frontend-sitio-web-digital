@@ -90,8 +90,14 @@ const TEXT_ANIM_VARIANTS = {
   lateral: { hidden: { opacity: 0, x: -18 }, visible: { opacity: 1, x: 0 } },
 };
 
+// wa.me exige solo dígitos (con o sin "+" adelante, que igual se saca acá) —
+// un número guardado con espacios/guiones/paréntesis (formato humano común,
+// ej. "3814 78-7763") hace que WhatsApp responda 404 "not_found" en vez de
+// abrir el chat (confirmado en vivo, 2026-08-26). Se limpia acá, en el único
+// lugar que arma el link, en vez de forzar un formato en cada campo donde
+// se carga el número.
 const waLink = (whatsapp, nombre, mensaje) =>
-  `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensaje || `Hola! Vi tu página de ${nombre} y quería consultarte.`)}`;
+  `https://wa.me/${(whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(mensaje || `Hola! Vi tu página de ${nombre} y quería consultarte.`)}`;
 
 const catalogLabel = (type) => SECCIONES_CATALOGO.find((c) => c.id === type)?.label || type;
 
