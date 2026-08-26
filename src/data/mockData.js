@@ -1878,6 +1878,13 @@ export const seedPosts = () => [
   },
 ];
 
+// Tope de productos por página (Productos y servicios) — más allá de esto no
+// es un problema de la plataforma en sí, sino de que el editor está pensado
+// para un catálogo chico/mediano (sin paginado, sin buscador): con muchos
+// más productos la sección se vuelve inmanejable de scrollear tanto para
+// editar como para un cliente final navegándola.
+export const MAX_PRODUCTOS = 30;
+
 export const PLAN = {
   nombre: 'Plan Emprendedor',
   precio: 15000,

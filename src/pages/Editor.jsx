@@ -26,7 +26,7 @@ import {
   UndoIcon,
   RedoIcon,
 } from '../components/icons';
-import { FONT_OPTIONS } from '../data/mockData';
+import { FONT_OPTIONS, MAX_PRODUCTOS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { validateImageFile } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
@@ -507,6 +507,7 @@ export default function Editor() {
           toggleWidget={toggleWidget}
           setWidgetOption={setWidgetOption}
           showCarrito={sections.some((s) => s.type === 'productos')}
+          cantidadProductos={productos.length}
           onClose={() => setWidgetsOpen(false)}
         />
       )}
@@ -820,7 +821,7 @@ function SaveTemplateModal({ rubros, editing, onCreateRubro, onSave, onClose }) 
   );
 }
 
-function WidgetsMenu({ widgets, toggleWidget, setWidgetOption, showCarrito, onClose }) {
+function WidgetsMenu({ widgets, toggleWidget, setWidgetOption, showCarrito, cantidadProductos = 0, onClose }) {
   const waOn = widgets.whatsappFloating !== false;
   const waSide = widgets.whatsappPosition === 'right' ? 'right' : 'left';
   const carritoOn = !!widgets.carrito;
@@ -921,6 +922,12 @@ function WidgetsMenu({ widgets, toggleWidget, setWidgetOption, showCarrito, onCl
                   }`}
                 />
               </button>
+            </div>
+            <div className="flex items-center justify-between mt-3.5 pt-3.5 border-t border-white/5">
+              <p className="text-xs text-ink-400">Productos y servicios cargados</p>
+              <p className={`text-xs font-mono font-semibold ${cantidadProductos >= MAX_PRODUCTOS ? 'text-red-400' : 'text-ink-300'}`}>
+                {cantidadProductos}/{MAX_PRODUCTOS}
+              </p>
             </div>
           </div>
         )}

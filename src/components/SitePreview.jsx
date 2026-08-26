@@ -77,6 +77,7 @@ import {
   seedPosts,
   getTemplatePalette,
   slugify,
+  MAX_PRODUCTOS,
 } from '../data/mockData';
 import { validateImageFile, validateImageFiles } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
@@ -9830,6 +9831,15 @@ function SeccionProductos({
   const productosVisibles = editable ? productos : productos.filter((p) => !p.oculto);
   const productosFiltrados =
     categoriaFiltro === 'Todos' ? productosVisibles : productosVisibles.filter((p) => p.categoria === categoriaFiltro);
+  // MAX_PRODUCTOS ya se frena solo en AppContext (addProducto/duplicateListItem)
+  // — esto es solo para que el botón de acá avise ANTES de que la persona
+  // toque "Agregar" y no pase nada, en vez de dejarla adivinar por qué.
+  const limiteProductos = productos.length >= MAX_PRODUCTOS;
+  const avisoLimite = (
+    <p className="text-xs font-semibold" style={{ color: '#e05d5d' }}>
+      Llegaste al límite de {MAX_PRODUCTOS} productos.
+    </p>
+  );
 
   return (
     <section className="px-6 @lg:px-10 py-14 @lg:py-20" style={{ background: bgColor || palette.bg }}>
@@ -9858,9 +9868,12 @@ function SeccionProductos({
             maxLength={70}
           />
         </div>
-        <span className="font-mono text-xs" style={{ color: palette.inkSoft }}>
-          {productos.length} destacado{productos.length === 1 ? '' : 's'}
-        </span>
+        <div className="text-right shrink-0">
+          <span className="font-mono text-xs" style={{ color: editable && limiteProductos ? '#e05d5d' : palette.inkSoft }}>
+            {editable ? `${productos.length}/${MAX_PRODUCTOS} productos` : `${productos.length} destacado${productos.length === 1 ? '' : 's'}`}
+          </span>
+          {editable && limiteProductos && <div className="mt-1">{avisoLimite}</div>}
+        </div>
       </div>
       {productos.length === 0 && !editable ? (
         <p className="text-center text-sm max-w-sm mx-auto" style={{ color: palette.inkSoft }}>

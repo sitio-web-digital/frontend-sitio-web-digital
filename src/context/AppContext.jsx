@@ -15,6 +15,7 @@ import {
   seedMenu,
   seedMarcas,
   seedPosts,
+  MAX_PRODUCTOS,
 } from '../data/mockData';
 import { serializeSite, hydrateSite, saveSiteToStorage, loadSiteFromStorage } from '../utils/siteSchema';
 import {
@@ -740,20 +741,26 @@ export function AppProvider({ children }) {
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   };
 
+  // Tope de MAX_PRODUCTOS por página (ver el comentario en mockData.js) — se
+  // frena acá, en el único lugar donde de verdad se agrega un producto nuevo
+  // sin importar desde qué variante de la sección se haya tocado "Agregar".
   const addProducto = ({ nombre, precio, desc, duracion, categoria }) => {
-    setProductos((prev) => [
-      ...prev,
-      {
-        id: `producto-${Date.now()}`,
-        nombre: nombre.trim(),
-        precio: Number(precio) || 0,
-        desc: desc?.trim(),
-        duracion: duracion?.trim() || '',
-        categoria: categoria?.trim() || '',
-        detalle: '',
-        imagenes: [],
-      },
-    ]);
+    setProductos((prev) => {
+      if (prev.length >= MAX_PRODUCTOS) return prev;
+      return [
+        ...prev,
+        {
+          id: `producto-${Date.now()}`,
+          nombre: nombre.trim(),
+          precio: Number(precio) || 0,
+          desc: desc?.trim(),
+          duracion: duracion?.trim() || '',
+          categoria: categoria?.trim() || '',
+          detalle: '',
+          imagenes: [],
+        },
+      ];
+    });
   };
 
   const removeProducto = (id) => {
@@ -849,6 +856,9 @@ export function AppProvider({ children }) {
 
   const duplicateListItem = (key, id) => {
     ALL_LIST_SETTERS[key]?.((prev) => {
+      // Mismo tope que addProducto — duplicar un producto agrega uno nuevo
+      // igual que "Agregar", así que tiene que respetar el mismo límite.
+      if (key === 'productos' && prev.length >= MAX_PRODUCTOS) return prev;
       const idx = prev.findIndex((it) => it.id === id);
       if (idx === -1) return prev;
       const copy = { ...prev[idx], id: `${key}-${Date.now()}` };
