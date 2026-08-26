@@ -6320,18 +6320,32 @@ function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = 
           />
         )}
         {ofertas.map((o, i) => (
-          <img
+          // Cada foto vive en su propio contenedor que cubre TODO el panel y
+          // la centra con flexbox real (items-center + justify-center) — a
+          // diferencia de la versión anterior (centrar con left/top 50% +
+          // translate -50%, calculado sobre el ancho/alto de la imagen en
+          // sí), esto no depende de que cada foto tenga las mismas
+          // proporciones: siempre queda centrada sin importar su relación de
+          // aspecto real (reportado en vivo, 2026-08-26 — se veía descentrada
+          // en la página publicada con fotos de proporciones bien distintas
+          // entre sí, ej. un celular alto y angosto al lado de una notebook
+          // ancha y baja).
+          <div
             key={o.id}
-            src={o.img || undefined}
-            alt={o.nombre || ''}
-            className="absolute left-1/2 top-1/2 h-[70%] w-auto -translate-x-1/2 -translate-y-1/2 object-contain transition-all duration-700 ease-in-out"
-            style={{
-              opacity: i === activeIndex ? 1 : 0,
-              transform: `translate(-50%, -50%) scale(${i === activeIndex ? 1 : 0.92})`,
-              display: o.img ? 'block' : 'none',
-              filter: 'drop-shadow(0 22px 30px rgba(16,20,24,0.25))',
-            }}
-          />
+            className="absolute inset-0 flex items-center justify-center transition-opacity duration-700 ease-in-out"
+            style={{ opacity: i === activeIndex ? 1 : 0 }}
+          >
+            <img
+              src={o.img || undefined}
+              alt={o.nombre || ''}
+              className="max-h-[70%] max-w-[85%] w-auto h-auto object-contain transition-transform duration-700 ease-in-out"
+              style={{
+                transform: `scale(${i === activeIndex ? 1 : 0.92})`,
+                display: o.img ? 'block' : 'none',
+                filter: 'drop-shadow(0 22px 30px rgba(16,20,24,0.25))',
+              }}
+            />
+          </div>
         ))}
         {active?.badge && (
           <span
