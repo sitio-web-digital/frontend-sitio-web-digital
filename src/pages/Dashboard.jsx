@@ -201,6 +201,8 @@ export default function Dashboard() {
               switchSite={switchSite}
               startNewSite={startNewSite}
               isFree={(user.freeSubscriptions ?? 0) > 0}
+              canShare={user.role === 'vendedor' || user.role === 'admin'}
+              shareSite={shareSite}
             />
           )}
           {section === 'suscripcion' && (
@@ -293,7 +295,7 @@ function SideNav({ section, onChange, unreadCount = 0 }) {
 // KPIs primero (arriba de todo, antes de la lista de páginas): son agregados
 // de las páginas publicadas, mismos íconos que /estadisticas para que se
 // sienta el mismo dato en los dos lugares.
-function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switchSite, startNewSite, isFree }) {
+function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switchSite, startNewSite, isFree, canShare, shareSite }) {
   const publicadas = pages.filter((p) => p.status === 'publicada');
   const visitas = publicadas.reduce((acc, p) => acc + p.kpis.visitas, 0);
   const whatsapp = publicadas.reduce((acc, p) => acc + p.kpis.whatsapp, 0);
@@ -335,7 +337,7 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switch
             updateSubdomain={updateSubdomain}
             switchSite={switchSite}
             isFree={isFree}
-            canShare={user?.role === 'vendedor' || user?.role === 'admin'}
+            canShare={canShare}
             shareSite={shareSite}
           />
         ))}
