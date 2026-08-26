@@ -23993,17 +23993,8 @@ function SeccionTurnoExpress({
                         onChange={(v) => onUpdateServicio?.(s.id, { nombre: v })}
                         tag="div"
                         placeholder="Nombre del servicio"
-                        style={{ fontWeight: 600, fontSize: '0.94rem', color: on ? accent : palette.ink, marginBottom: '0.25rem' }}
+                        style={{ fontWeight: 600, fontSize: '0.94rem', color: on ? accent : palette.ink }}
                         maxLength={50}
-                      />
-                      <Editable
-                        editable={editable}
-                        value={s.precio}
-                        onChange={(v) => onUpdateServicio?.(s.id, { precio: Number(v) || 0 })}
-                        tag="div"
-                        type="number"
-                        format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
-                        style={{ fontFamily: palette.fonts?.mono, fontSize: '0.72rem', color: on ? accent : palette.inkSoft }}
                       />
                       {editable && (
                         <div className="absolute top-1 right-1" onClick={(e) => e.stopPropagation()}>
@@ -24026,7 +24017,7 @@ function SeccionTurnoExpress({
                 {editable && (
                   <button
                     type="button"
-                    onClick={() => onAddServicio?.({ id: `servicio-${Date.now()}`, nombre: 'Servicio nuevo', precio: 0 })}
+                    onClick={() => onAddServicio?.({ id: `servicio-${Date.now()}`, nombre: 'Servicio nuevo' })}
                     className="flex items-center justify-center gap-1.5"
                     style={{ border: `2px dashed ${palette.line}`, color: palette.inkSoft, fontSize: '0.85rem', fontWeight: 600, padding: '0.9rem 1rem' }}
                   >
