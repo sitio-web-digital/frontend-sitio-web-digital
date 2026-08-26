@@ -508,6 +508,23 @@ export async function apiAdminDeleteUser(userId) {
   return request(`/admin/users/${userId}`, { method: 'DELETE', token });
 }
 
+// Deshabilita/habilita una cuenta — no la borra, solo le impide volver a
+// iniciar sesión (pensado sobre todo para un vendedor que deja de trabajar
+// con nosotros, ver POST /admin/users/:id/reassign-leads para sus leads).
+export async function apiAdminSetUserActive(userId, active) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/admin/users/${userId}/active`, { method: 'PATCH', body: { active }, token });
+}
+
+// Pasa a otra cuenta todas las páginas sin publicar de esta (sus "leads en
+// curso") — para no perderlas cuando se deshabilita a quien las armó.
+export async function apiAdminReassignLeads(userId, toUserId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/admin/users/${userId}/reassign-leads`, { method: 'POST', body: { toUserId }, token });
+}
+
 // Mail manual a todos los usuarios o a uno en particular (scope: 'all' | 'one').
 export async function apiAdminSendMail({ scope, userId, subject, message }) {
   const token = getToken();

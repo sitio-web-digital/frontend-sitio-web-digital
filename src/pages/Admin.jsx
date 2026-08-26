@@ -24,6 +24,8 @@ import {
   apiAdminCreateUser,
   apiAdminSetFreeSubscriptions,
   apiAdminDeleteUser,
+  apiAdminSetUserActive,
+  apiAdminReassignLeads,
   apiAdminAnalyticsSummary,
   apiAdminListLeads,
   apiAdminListVentas,
@@ -293,6 +295,29 @@ export default function Admin() {
     return result;
   };
 
+  const setUserActive = async (userId, active) => {
+    const result = await apiAdminSetUserActive(userId, active);
+    if (!result.ok) return result;
+    setUsers((list) => list.map((u) => (u.id === userId ? { ...u, active: result.active } : u)));
+    return result;
+  };
+
+  // Al reasignar, esas páginas dejan de contar como "pendingLeads" de quien
+  // las tenía y pasan a sumarle a la cuenta destino — se refleja local sin
+  // esperar el próximo refresh.
+  const reassignLeads = async (userId, toUserId) => {
+    const result = await apiAdminReassignLeads(userId, toUserId);
+    if (!result.ok) return result;
+    setUsers((list) =>
+      list.map((u) => {
+        if (u.id === userId) return { ...u, pendingLeads: 0 };
+        if (u.id === toUserId) return { ...u, pendingLeads: (u.pendingLeads ?? 0) + result.count };
+        return u;
+      })
+    );
+    return result;
+  };
+
   const sendMailToUsers = async ({ scope, userId, subject, message }) =>
     apiAdminSendMail({ scope, userId, subject, message });
 
@@ -395,6 +420,8 @@ export default function Admin() {
               onCreate={createUser}
               onSetFreeSubscriptions={setFreeSubscriptions}
               onDelete={deleteUser}
+              onSetActive={setUserActive}
+              onReassignLeads={reassignLeads}
               onSendMail={sendMailToUsers}
               onRefresh={refreshUsers}
             />
@@ -1589,7 +1616,7 @@ function VendedoresSection({ vendedores }) {
 // Suscripciones/Resumen mientras freeSubscriptions sea >= 1.
 const BLANK_MAIL_FORM = { scope: 'all', userId: '', subject: '', message: '' };
 
-function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, onSendMail, onRefresh }) {
+function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, onSetActive, onReassignLeads, onSendMail, onRefresh }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', freeSubscriptions: 0 });
   const [formError, setFormError] = useState('');
@@ -1832,6 +1859,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
                 <th className="pb-2 pr-4 font-semibold">Nombre</th>
                 <th className="pb-2 pr-4 font-semibold">Email</th>
                 <th className="pb-2 pr-4 font-semibold">Rol</th>
+                <th className="pb-2 pr-4 font-semibold">Estado</th>
                 <th className="pb-2 pr-4 font-semibold">Alta</th>
                 <th className="pb-2 pr-4 font-semibold text-right">Suscripciones gratuitas</th>
                 <th className="pb-2 font-semibold text-right">Acción</th>
@@ -1842,8 +1870,11 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
                 <UserRow
                   key={u.id}
                   u={u}
+                  users={users}
                   onSetFreeSubscriptions={onSetFreeSubscriptions}
                   onDelete={onDelete}
+                  onSetActive={onSetActive}
+                  onReassignLeads={onReassignLeads}
                   onOpenMail={openMail}
                 />
               ))}
@@ -1855,12 +1886,20 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
   );
 }
 
-function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
+function UserRow({ u, users, onSetFreeSubscriptions, onDelete, onSetActive, onReassignLeads, onOpenMail }) {
   const [value, setValue] = useState(u.freeSubscriptions);
   const dirty = Number(value) !== Number(u.freeSubscriptions);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  // null = nada abierto | 'confirmar' = deshabilitar sin leads que reasignar
+  // | 'reasignar' = tiene leads, hay que elegir a quién se los pasa antes.
+  const [disableStep, setDisableStep] = useState(null);
+  const [toUserId, setToUserId] = useState('');
+  const [disableBusy, setDisableBusy] = useState(false);
+  const [disableError, setDisableError] = useState('');
+  const otrasCuentas = users.filter((o) => o.id !== u.id && o.active);
 
   const confirmarEliminar = async () => {
     setDeleting(true);
@@ -1873,6 +1912,37 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
     }
     // Si salió bien, la fila desaparece de la lista (onDelete ya la sacó del
     // estado en Admin()) — no hace falta tocar nada más acá.
+  };
+
+  const abrirDeshabilitar = () => {
+    setDisableError('');
+    setToUserId('');
+    setDisableStep((u.pendingLeads ?? 0) > 0 ? 'reasignar' : 'confirmar');
+  };
+
+  const confirmarDeshabilitar = async () => {
+    setDisableBusy(true);
+    setDisableError('');
+    if (disableStep === 'reasignar') {
+      if (!toUserId) {
+        setDisableError('Elegí a quién le pasás los leads.');
+        setDisableBusy(false);
+        return;
+      }
+      const reasignado = await onReassignLeads(u.id, Number(toUserId));
+      if (!reasignado.ok) {
+        setDisableError(reasignado.error || 'No se pudieron reasignar los leads.');
+        setDisableBusy(false);
+        return;
+      }
+    }
+    const result = await onSetActive(u.id, false);
+    setDisableBusy(false);
+    if (!result.ok) {
+      setDisableError(result.error || 'No se pudo deshabilitar la cuenta.');
+      return;
+    }
+    setDisableStep(null);
   };
 
   return (
@@ -1894,6 +1964,16 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
           {u.role === 'admin' ? 'Admin' : u.role === 'analytics' ? 'Analytics' : u.role === 'vendedor' ? 'Vendedor' : 'Usuario'}
         </span>
       </td>
+      <td className="py-2.5 pr-4">
+        {u.active ? (
+          <span className="text-xs font-semibold text-emerald-400">Activo</span>
+        ) : (
+          <span className="text-xs font-semibold text-red-400">Deshabilitado</span>
+        )}
+        {!u.active && (u.pendingLeads ?? 0) > 0 && (
+          <span className="block text-[0.65rem] text-ink-500">{u.pendingLeads} leads sin reasignar</span>
+        )}
+      </td>
       <td className="py-2.5 pr-4 text-ink-500">{new Date(u.createdAt).toLocaleDateString('es-AR')}</td>
       <td className="py-2.5 pr-4 text-right">
         <div className="inline-flex items-center gap-2">
@@ -1914,41 +1994,92 @@ function UserRow({ u, onSetFreeSubscriptions, onDelete, onOpenMail }) {
         </div>
       </td>
       <td className="py-2.5 text-right">
-        {!confirming && (
-          <button
-            onClick={() => onOpenMail(u.id)}
-            className="mr-1.5 px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
-          >
-            Mandar mail
-          </button>
-        )}
-        {u.role === 'admin' ? (
-          <span className="text-xs text-ink-500 italic">No se puede eliminar</span>
-        ) : confirming ? (
-          <div className="inline-flex items-center gap-2">
-            {deleteError && <span className="text-xs text-red-400">{deleteError}</span>}
-            <button
-              onClick={confirmarEliminar}
-              disabled={deleting}
-              className="px-2 py-1 bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors text-[0.7rem] font-semibold"
-            >
-              {deleting ? 'Eliminando...' : 'Confirmar'}
-            </button>
-            <button
-              onClick={() => setConfirming(false)}
-              disabled={deleting}
-              className="px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
-            >
-              Volver
-            </button>
+        {disableStep ? (
+          <div className="inline-flex flex-col items-end gap-1.5 max-w-[220px]">
+            {disableStep === 'reasignar' && (
+              <>
+                <p className="text-[0.7rem] text-ink-400 text-right">
+                  Tiene {u.pendingLeads} lead{u.pendingLeads === 1 ? '' : 's'} sin cerrar — elegí a quién se los pasás.
+                </p>
+                <select
+                  value={toUserId}
+                  onChange={(e) => setToUserId(e.target.value)}
+                  className="w-full border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500 transition-colors"
+                >
+                  <option value="">Elegir cuenta...</option>
+                  {otrasCuentas.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name} ({o.role})
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+            {disableError && <span className="text-[0.7rem] text-red-400">{disableError}</span>}
+            <div className="inline-flex items-center gap-2">
+              <button
+                onClick={confirmarDeshabilitar}
+                disabled={disableBusy}
+                className="px-2 py-1 bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors text-[0.7rem] font-semibold whitespace-nowrap"
+              >
+                {disableBusy ? 'Un momento...' : disableStep === 'reasignar' ? 'Reasignar y deshabilitar' : 'Confirmar'}
+              </button>
+              <button
+                onClick={() => setDisableStep(null)}
+                disabled={disableBusy}
+                className="px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
+              >
+                Volver
+              </button>
+            </div>
           </div>
         ) : (
-          <button
-            onClick={() => setConfirming(true)}
-            className="px-2 py-1 border border-white/15 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 transition-colors text-[0.7rem] font-semibold text-white"
-          >
-            Eliminar
-          </button>
+          <>
+            {!confirming && (
+              <button
+                onClick={() => onOpenMail(u.id)}
+                className="mr-1.5 px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
+              >
+                Mandar mail
+              </button>
+            )}
+            {!confirming && u.role !== 'admin' && (
+              <button
+                onClick={() => (u.active ? abrirDeshabilitar() : onSetActive(u.id, true))}
+                className="mr-1.5 px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
+              >
+                {u.active ? 'Deshabilitar' : 'Habilitar'}
+              </button>
+            )}
+            {u.role === 'admin' ? (
+              <span className="text-xs text-ink-500 italic">No se puede eliminar</span>
+            ) : confirming ? (
+              <div className="inline-flex items-center gap-2">
+                {deleteError && <span className="text-xs text-red-400">{deleteError}</span>}
+                <button
+                  onClick={confirmarEliminar}
+                  disabled={deleting}
+                  className="px-2 py-1 bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors text-[0.7rem] font-semibold"
+                >
+                  {deleting ? 'Eliminando...' : 'Confirmar'}
+                </button>
+                <button
+                  onClick={() => setConfirming(false)}
+                  disabled={deleting}
+                  className="px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.7rem] font-semibold text-white"
+                >
+                  Volver
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirming(true)}
+                className="px-2 py-1 border border-white/15 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 transition-colors text-[0.7rem] font-semibold text-white"
+              >
+                Eliminar
+              </button>
+            )}
+          </>
         )}
       </td>
     </tr>

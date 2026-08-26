@@ -5,6 +5,28 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.63.0',
+    date: '2026-08-26',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Un admin puede deshabilitar la cuenta de un vendedor sin borrar nada — si tenía páginas sin publicar (leads) pendientes, se le pide antes reasignarlas a otra cuenta activa.',
+      },
+      {
+        type: 'fix',
+        text: 'La sección de Productos en formato "vitrina" ya deja agregar productos nuevos y sumarlos al carrito — antes esos botones directamente no estaban en esa variante.',
+      },
+      {
+        type: 'fix',
+        text: '"Turno express" ya tiene su propia lista de servicios editable, en vez de mostrarte tu catálogo de Productos como si fueran turnos reservables.',
+      },
+      {
+        type: 'fix',
+        text: 'Los links de WhatsApp de la página ya no fallan con "número no encontrado" cuando el teléfono cargado tiene espacios o guiones.',
+      },
+    ],
+  },
+  {
     version: '1.62.0',
     date: '2026-08-26',
     changes: [
