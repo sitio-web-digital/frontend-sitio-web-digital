@@ -10515,11 +10515,67 @@ function SeccionProductos({
                   tag="div"
                   type="number"
                   format={(v) => `$${Number(v || 0).toLocaleString('es-AR')}`}
-                  style={{ fontSize: '1rem', color: accent }}
+                  style={{ fontSize: '1rem', color: accent, marginBottom: '0.6rem' }}
                 />
+                {cartEnabled ? (
+                  <button
+                    type="button"
+                    disabled={editable}
+                    onClick={() => onAddToCart?.(p)}
+                    style={{
+                      display: 'inline-block',
+                      border: `2px solid ${palette.inkHex || palette.ink}`,
+                      background: 'transparent',
+                      color: palette.ink,
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      padding: '0.4rem 1rem',
+                    }}
+                    className="disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Agregar
+                  </button>
+                ) : (
+                  buttonSlotVisible(editable, p.boton, 'whatsapp', whatsapp) && (
+                    <ButtonObject
+                      value={p.boton}
+                      onChange={(patch) => onUpdateProducto?.(p.id, { boton: { ...(p.boton || {}), ...patch } })}
+                      editable={editable}
+                      seccionesDisponibles={seccionesDisponibles}
+                      nombreNegocio={nombreNegocio}
+                      defaultFuncion="whatsapp"
+                      defaultLabel="Consultar"
+                      defaultColor={palette.inkHex || palette.ink}
+                      defaultTarget={whatsapp}
+                      waMessage={p.nombre ? `Hola! Quiero consultar por "${p.nombre}".` : undefined}
+                      outline
+                    />
+                  )
+                )}
               </div>
             ))}
           </div>
+          {editable && (
+            <button
+              type="button"
+              onClick={() => onAddProducto?.({ nombre: 'Producto nuevo', precio: 0, categoria: categorias[0] || '' })}
+              style={{
+                marginTop: '2rem',
+                border: `2px dashed ${palette.line}`,
+                width: '100%',
+                padding: '1.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: palette.inkSoft,
+              }}
+            >
+              <PlusIcon className="w-3.5 h-3.5" /> Agregar producto
+            </button>
+          )}
         </div>
       ) : variant === 'carta' ? (
         <div className="max-w-5xl mx-auto">
