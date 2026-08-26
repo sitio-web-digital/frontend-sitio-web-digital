@@ -506,7 +506,7 @@ export default function Editor() {
           widgets={widgets}
           toggleWidget={toggleWidget}
           setWidgetOption={setWidgetOption}
-          showCarrito={!!template?.rubros?.includes('gastronomia')}
+          showCarrito={sections.some((s) => s.type === 'productos')}
           onClose={() => setWidgetsOpen(false)}
         />
       )}

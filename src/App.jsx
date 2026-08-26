@@ -11,6 +11,7 @@ import Checkout from './pages/Checkout';
 import SuscripcionConfirmar from './pages/SuscripcionConfirmar';
 import Success from './pages/Success';
 import Stats from './pages/Stats';
+import Turnos from './pages/Turnos';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="/suscripcion/confirmar" element={<SuscripcionConfirmar />} />
             <Route path="/exito" element={<Success />} />
             <Route path="/estadisticas" element={<Stats />} />
+            <Route path="/turnos" element={<Turnos />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />

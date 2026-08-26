@@ -5,6 +5,36 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.62.0',
+    date: '2026-08-26',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Los turnos que reservan tus clientes desde "Reserva online", "Turnos con resumen" y "Turno express" ahora quedan guardados de verdad: te llega un mail apenas entra uno, y podés verlos todos desde el botón "Turnos" de cada página en el Dashboard.',
+      },
+      {
+        type: 'fix',
+        text: 'El toggle "Carrito de compras" del menú de widgets ya no depende de que tu rubro sea gastronomía — aparece siempre que tengas una sección de Productos, sea cual sea tu rubro.',
+      },
+      {
+        type: 'fix',
+        text: 'El mapa de "Nuestras sucursales" ya no es un cartel simulado — muestra un mapa real de Google a partir de la dirección que cargues.',
+      },
+      {
+        type: 'fix',
+        text: 'El teléfono del cartel de anuncio (arriba del header) ya se puede editar, igual que el mensaje.',
+      },
+      {
+        type: 'fix',
+        text: 'El carrusel de ofertas del hero ya no muestra el precio/nombre nuevo con la foto vieja todavía en pantalla durante el cambio.',
+      },
+      {
+        type: 'fix',
+        text: 'Sin logo cargado, el header ya no muestra un cuadrado con iniciales en la página publicada — solo el nombre del negocio.',
+      },
+    ],
+  },
+  {
     version: '1.61.0',
     date: '2026-08-10',
     changes: [

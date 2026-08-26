@@ -291,6 +291,7 @@ export default function SitePreview({
   textStyles = {},
   onSetTextStyle,
   raised = false,
+  onCreateBooking,
 }) {
   // Los hooks van antes que el `return null` de abajo: si no, el orden de
   // hooks cambiaría entre renders según `template`/`siteData` estén cargados
@@ -1529,6 +1530,7 @@ export default function SitePreview({
                 palette={palette}
                 whatsapp={whatsapp}
                 nombreNegocio={nombreNegocio}
+                onCreateBooking={onCreateBooking}
               />
             )}
             {sec.type === 'agenda' && (
@@ -1702,6 +1704,7 @@ export default function SitePreview({
                 onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
                 whatsapp={whatsapp}
                 nombreNegocio={nombreNegocio}
+                onCreateBooking={onCreateBooking}
                 editable={editable}
                 bgColor={sec.bgColor}
                 headingColor={sec.headingColor}
@@ -2081,6 +2084,7 @@ export default function SitePreview({
                 confirmLabel={sec.confirmLabel}
                 nombreNegocio={nombreNegocio}
                 whatsapp={whatsapp}
+                onCreateBooking={onCreateBooking}
               />
             )}
             {sec.type === 'areas' && (
@@ -2274,6 +2278,7 @@ export default function SitePreview({
                 mensaje={sec.mensaje}
                 onUpdateMensaje={(v) => onSetSectionStyle?.(sec.id, { mensaje: v })}
                 telefono={telefono}
+                onUpdateTelefono={field('telefono')}
                 palette={palette}
                 accent={accent}
                 editable={editable}
@@ -6059,14 +6064,9 @@ function SeccionHeader({
     </label>
   ) : logoUrl ? (
     <img src={logoUrl} alt="Logo" className="w-9 h-9 object-cover shrink-0" />
-  ) : (
-    <div
-      className="w-9 h-9 flex items-center justify-center font-serif italic text-lg text-white shrink-0"
-      style={{ background: accent }}
-    >
-      {initials(nombreNegocio)}
-    </div>
-  );
+  ) : null; // Sin logo, en la página publicada: nada de cuadrado con iniciales
+  // (eso todavía parece "un logo") — solo el nombre del negocio, tal como
+  // lo pidió el dueño al no cargar uno en el quiz.
 
   const logoBlock = (
     <div className="flex items-center gap-3 min-w-0">
@@ -6235,8 +6235,17 @@ const HERO_BUTTON_SLOTS = [
 // como una vidriera de local. En modo edición no rota — se ve y se completa
 // una oferta por vez, eligiéndola con los puntitos de abajo, para no estar
 // completando un campo que se mueve solo.
+// Cuánto tarda el fundido de la imagen entre ofertas (ver duration-700 más
+// abajo) — el texto (nombre/precio/badge) usa el mismo número para cambiar
+// recién cuando la foto nueva terminó de aparecer, no antes. Antes el texto
+// saltaba al instante mientras la foto todavía estaba a mitad de fundido,
+// mostrando el precio/nombre de una oferta con la foto de la anterior
+// durante esos 700ms (reportado en vivo, 2026-08-18).
+const OFERTAS_TRANSICION_MS = 700;
+
 function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = {}, bgColor, etiquetaSuperior, velocidad = 2600 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [textIndex, setTextIndex] = useState(0);
   const [editIndex, setEditIndex] = useState(0);
 
   useEffect(() => {
@@ -6244,6 +6253,11 @@ function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = 
     const t = setInterval(() => setActiveIndex((i) => (i + 1) % ofertas.length), velocidad);
     return () => clearInterval(t);
   }, [editable, ofertas.length, velocidad]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setTextIndex(activeIndex), OFERTAS_TRANSICION_MS);
+    return () => clearTimeout(t);
+  }, [activeIndex]);
 
   useEffect(() => {
     setEditIndex((i) => Math.min(i, Math.max(0, ofertas.length - 1)));
@@ -6276,7 +6290,10 @@ function HeroOfertasPanel({ ofertas = [], onUpdate, editable, accent, palette = 
 
   if (!editable) {
     if (ofertas.length === 0) return null;
-    const active = ofertas[activeIndex];
+    // La foto usa activeIndex (arranca el fundido al instante); el texto usa
+    // textIndex (cambia recién cuando ese fundido termina) — ver
+    // OFERTAS_TRANSICION_MS arriba.
+    const active = ofertas[textIndex] ?? ofertas[activeIndex];
     return (
       <div className="relative aspect-[4/5] overflow-hidden" style={{ background: bgColor || palette.bg }}>
         {active?.glow && (
@@ -16291,11 +16308,27 @@ function SeccionSucursales({
               )}
             </div>
             <div className="border" style={{ borderColor: palette.line }}>
-              <div className="h-[200px] @lg:h-[240px] flex items-center justify-center" style={{ background: palette.line }}>
-                <span className="font-mono text-xs uppercase tracking-wide" style={{ color: palette.inkSoft }}>
-                  Mapa (simulado)
-                </span>
-              </div>
+              {current?.direccion ? (
+                // Embed público de Google Maps por dirección de texto — no
+                // hace falta API key ni facturación (a diferencia del SDK de
+                // Maps), alcanza con la búsqueda en modo "output=embed".
+                <iframe
+                  key={`${current.direccion}, ${current.ciudad || ''}`}
+                  title={`Mapa de ${current.nombre || 'la sucursal'}`}
+                  className="w-full h-[200px] @lg:h-[240px] border-0 grayscale-[15%]"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(
+                    `${current.direccion}, ${current.ciudad || ''}`
+                  )}&output=embed`}
+                />
+              ) : (
+                <div className="h-[200px] @lg:h-[240px] flex items-center justify-center px-6 text-center" style={{ background: palette.line }}>
+                  <span className="font-mono text-xs uppercase tracking-wide" style={{ color: palette.inkSoft }}>
+                    {editable ? 'Cargá la dirección para ver el mapa acá' : 'Dirección no disponible'}
+                  </span>
+                </div>
+              )}
               {current && (
                 <div className="p-6 grid grid-cols-1 @sm:grid-cols-3 gap-5">
                   {[
@@ -22082,6 +22115,99 @@ const RESERVAS_HORAS_TARDE = ['14:00', '14:30', '15:00', '15:30', '16:00', '16:3
 // atienden con turno (peluquerías, consultorios, estudios). No hay backend
 // de reservas real: elegir día/hora sólo resalta la selección en pantalla,
 // como el mapa "simulado" — el calendario sí usa el mes real del visitante.
+// Reemplaza el viejo botón "Confirmar turno → wa.me" en las 3 secciones de
+// reserva interactivas (reservas/turnos/turno-express) cuando la página está
+// publicada de verdad (onCreateBooking viene de PublicSite.jsx, que sabe el
+// subdominio) — en el editor (onCreateBooking ausente) cada sección sigue
+// mostrando su botón de WhatsApp de siempre sin ningún cambio, así que esto
+// no toca la vista previa de edición para nada.
+function TurnoConfirmForm({
+  disabled,
+  resumen,
+  sectionType,
+  onCreateBooking,
+  accent,
+  palette = {},
+  textColor,
+  pendingLabel = 'Elegí día y horario',
+  confirmLabel = 'Confirmar turno →',
+}) {
+  const [nombre, setNombre] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | enviando | ok | error
+  const [error, setError] = useState('');
+
+  if (status === 'ok') {
+    return (
+      <p className="text-sm font-semibold" style={{ color: accent }}>
+        ¡Listo! Tu turno quedó anotado — te van a confirmar por teléfono o WhatsApp.
+      </p>
+    );
+  }
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (disabled || status === 'enviando') return;
+    if (!nombre.trim() || !telefono.trim()) {
+      setError('Completá tu nombre y tu teléfono.');
+      return;
+    }
+    setStatus('enviando');
+    setError('');
+    const result = await onCreateBooking({ sectionType, resumen, nombreCliente: nombre, telefonoCliente: telefono });
+    if (!result.ok) {
+      setStatus('error');
+      setError(result.error || 'No pudimos guardar el turno. Probá de nuevo.');
+      return;
+    }
+    setStatus('ok');
+  };
+
+  const inputStyle = {
+    borderColor: palette.line || 'rgba(255,255,255,0.15)',
+    background: 'transparent',
+    color: textColor || palette.ink || '#fff',
+  };
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-2">
+      {!disabled && (
+        <>
+          <input
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Tu nombre"
+            maxLength={100}
+            className="text-sm px-3 py-2 border outline-none"
+            style={inputStyle}
+          />
+          <input
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            placeholder="Tu teléfono"
+            maxLength={30}
+            className="text-sm px-3 py-2 border outline-none"
+            style={inputStyle}
+          />
+        </>
+      )}
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <button
+        type="submit"
+        disabled={disabled || status === 'enviando'}
+        className="w-full py-2.5 text-sm font-semibold text-center transition-colors disabled:cursor-default"
+        style={{
+          background: !disabled ? accent : 'transparent',
+          border: !disabled ? 'none' : `1px solid ${palette.line || 'rgba(255,255,255,0.15)'}`,
+          color: !disabled ? '#171717' : textColor || palette.inkSoft,
+        }}
+      >
+        {disabled ? pendingLabel : status === 'enviando' ? 'Enviando...' : confirmLabel}
+      </button>
+    </form>
+  );
+}
+
 function SeccionReservas({
   servicios = [],
   onUpdate,
@@ -22100,6 +22226,7 @@ function SeccionReservas({
   confirmLabel = 'Confirmar turno →',
   nombreNegocio,
   whatsapp,
+  onCreateBooking,
 }) {
   const update = (id, patch) => onUpdate?.(servicios.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const remove = (id) => onUpdate?.(servicios.filter((s) => s.id !== id));
@@ -22332,21 +22459,34 @@ function SeccionReservas({
                 {pickedTime || '—'}
               </span>
             </div>
-            <a
-              href={hasTurno && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
-              target={hasTurno && whatsapp ? '_blank' : undefined}
-              rel={hasTurno && whatsapp ? 'noreferrer' : undefined}
-              onClick={(e) => !(hasTurno && whatsapp) && e.preventDefault()}
-              className="block w-full py-2.5 text-sm font-semibold text-center transition-colors"
-              style={{
-                background: hasTurno ? accent : 'transparent',
-                border: hasTurno ? 'none' : `1px solid ${lineColor}`,
-                color: hasTurno ? '#171717' : textoSuave,
-                cursor: hasTurno && whatsapp ? 'pointer' : 'default',
-              }}
-            >
-              {hasTurno ? confirmLabel : 'Elegí día y horario'}
-            </a>
+            {onCreateBooking ? (
+              <TurnoConfirmForm
+                disabled={!hasTurno}
+                resumen={mensajeWa}
+                sectionType="reservas"
+                onCreateBooking={onCreateBooking}
+                accent={accent}
+                palette={{ ...palette, line: lineColor }}
+                textColor={textColor}
+                confirmLabel={confirmLabel}
+              />
+            ) : (
+              <a
+                href={hasTurno && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+                target={hasTurno && whatsapp ? '_blank' : undefined}
+                rel={hasTurno && whatsapp ? 'noreferrer' : undefined}
+                onClick={(e) => !(hasTurno && whatsapp) && e.preventDefault()}
+                className="block w-full py-2.5 text-sm font-semibold text-center transition-colors"
+                style={{
+                  background: hasTurno ? accent : 'transparent',
+                  border: hasTurno ? 'none' : `1px solid ${lineColor}`,
+                  color: hasTurno ? '#171717' : textoSuave,
+                  cursor: hasTurno && whatsapp ? 'pointer' : 'default',
+                }}
+              >
+                {hasTurno ? confirmLabel : 'Elegí día y horario'}
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -23664,6 +23804,7 @@ function SeccionTurnoExpress({
   palette = {},
   whatsapp,
   nombreNegocio,
+  onCreateBooking,
 }) {
   const [servicioIdx, setServicioIdx] = useState(0);
   const [diaOffset, setDiaOffset] = useState(0);
@@ -23888,21 +24029,36 @@ function SeccionTurnoExpress({
                 </div>
               ))}
             </div>
-            <a
-              href={hayTurno ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
-              onClick={(e) => !hayTurno && e.preventDefault()}
-              style={{
-                background: hayTurno ? palette.ink : palette.bg,
-                color: hayTurno ? palette.bg : dim,
-                border: `1px solid ${hayTurno ? palette.ink : palette.line}`,
-                fontWeight: 700,
-                padding: '0.85rem 1.6rem',
-                fontSize: '0.93rem',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {hayTurno ? 'Confirmar turno →' : 'Elegí un horario'}
-            </a>
+            {onCreateBooking ? (
+              <div style={{ minWidth: 220 }}>
+                <TurnoConfirmForm
+                  disabled={!hayTurno}
+                  resumen={mensajeWa}
+                  sectionType="turno-express"
+                  onCreateBooking={onCreateBooking}
+                  accent={accent}
+                  palette={palette}
+                  textColor={palette.ink}
+                  pendingLabel="Elegí un horario"
+                />
+              </div>
+            ) : (
+              <a
+                href={hayTurno ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+                onClick={(e) => !hayTurno && e.preventDefault()}
+                style={{
+                  background: hayTurno ? palette.ink : palette.bg,
+                  color: hayTurno ? palette.bg : dim,
+                  border: `1px solid ${hayTurno ? palette.ink : palette.line}`,
+                  fontWeight: 700,
+                  padding: '0.85rem 1.6rem',
+                  fontSize: '0.93rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {hayTurno ? 'Confirmar turno →' : 'Elegí un horario'}
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -27969,6 +28125,7 @@ function SeccionTurnos({
   textColor,
   accent,
   palette = {},
+  onCreateBooking,
 }) {
   const [sel, setSel] = useState({ barbero: 0, servicio: 0, dia: 0, hora: null });
   const barberoIdx = Math.min(sel.barbero, Math.max(barberos.length - 1, 0));
@@ -28344,21 +28501,34 @@ function SeccionTurnos({
             </span>
           </div>
           <div className="px-5 pb-5">
-            <a
-              href={hasHora && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
-              target={hasHora ? '_blank' : undefined}
-              rel={hasHora ? 'noreferrer' : undefined}
-              onClick={(e) => !hasHora && e.preventDefault()}
-              className="block text-center font-bold py-3 text-sm transition-colors"
-              style={{
-                background: hasHora ? accent : 'transparent',
-                color: hasHora ? palette.bg : textoSuave,
-                border: `1px solid ${hasHora ? accent : palette.line}`,
-                cursor: hasHora ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {hasHora ? 'Confirmar por WhatsApp →' : 'Elegí un horario'}
-            </a>
+            {onCreateBooking ? (
+              <TurnoConfirmForm
+                disabled={!hasHora}
+                resumen={mensajeWa}
+                sectionType="turnos"
+                onCreateBooking={onCreateBooking}
+                accent={accent}
+                palette={palette}
+                textColor={palette.ink}
+                pendingLabel="Elegí un horario"
+              />
+            ) : (
+              <a
+                href={hasHora && whatsapp ? waLink(whatsapp, nombreNegocio, mensajeWa) : undefined}
+                target={hasHora ? '_blank' : undefined}
+                rel={hasHora ? 'noreferrer' : undefined}
+                onClick={(e) => !hasHora && e.preventDefault()}
+                className="block text-center font-bold py-3 text-sm transition-colors"
+                style={{
+                  background: hasHora ? accent : 'transparent',
+                  color: hasHora ? palette.bg : textoSuave,
+                  border: `1px solid ${hasHora ? accent : palette.line}`,
+                  cursor: hasHora ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {hasHora ? 'Confirmar por WhatsApp →' : 'Elegí un horario'}
+              </a>
+            )}
             <p className="font-mono text-[11px] mt-3 text-center" style={{ color: textoSuave }}>
               Se paga en el local. Si no podés venir, avisá con 2 horas.
             </p>
@@ -29683,7 +29853,7 @@ function SeccionVisitaTaller({
 // Franja angosta arriba de todo con un mensaje corto y el teléfono — para
 // negocios de urgencia (electricistas, cerrajeros, plomeros) que quieren
 // dejar bien visible cómo contactarlos ya mismo, antes incluso del header.
-function SeccionAnuncio({ mensaje, onUpdateMensaje, telefono, editable, bgColor, textColor, accent, palette = {} }) {
+function SeccionAnuncio({ mensaje, onUpdateMensaje, telefono, onUpdateTelefono, editable, bgColor, textColor, accent, palette = {} }) {
   return (
     <div className="px-6 @lg:px-10 py-2" style={{ background: bgColor || palette.ink }}>
       <div className="max-w-5xl mx-auto flex items-center justify-center gap-2.5 text-center flex-wrap">
@@ -29699,14 +29869,27 @@ function SeccionAnuncio({ mensaje, onUpdateMensaje, telefono, editable, bgColor,
           className="text-xs @lg:text-sm"
           maxLength={80}
         />
-        {telefono && (
-          <a
-            href={`tel:${telefono.replace(/\s|-/g, '')}`}
-            className="font-mono font-bold text-xs @lg:text-sm"
+        {editable ? (
+          <Editable
+            editable
+            value={telefono}
+            onChange={onUpdateTelefono}
+            tag="span"
+            placeholder="Teléfono (opcional)"
             style={{ color: accent }}
-          >
-            {telefono}
-          </a>
+            className="font-mono font-bold text-xs @lg:text-sm"
+            maxLength={30}
+          />
+        ) : (
+          telefono && (
+            <a
+              href={`tel:${telefono.replace(/\s|-/g, '')}`}
+              className="font-mono font-bold text-xs @lg:text-sm"
+              style={{ color: accent }}
+            >
+              {telefono}
+            </a>
+          )
         )}
       </div>
     </div>

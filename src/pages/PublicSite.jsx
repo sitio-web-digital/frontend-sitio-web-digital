@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import SitePreview from '../components/SitePreview';
 import { TEMPLATES, getTemplateById } from '../data/mockData';
 import { hydrateSite } from '../utils/siteSchema';
-import { apiGetPublicSite, apiListCatalogTemplates, apiTrackSiteEvent } from '../api/client';
+import { apiGetPublicSite, apiListCatalogTemplates, apiTrackSiteEvent, apiCreateBooking } from '../api/client';
 import { classifyReferrer } from '../utils/analytics';
 
 // La página en vivo de un cliente, vista por un visitante anónimo real — sin
@@ -87,6 +87,7 @@ export default function PublicSite({ subdomain }) {
       widgets={hydrated.widgets}
       textStyles={hydrated.textStyles}
       editable={false}
+      onCreateBooking={(payload) => apiCreateBooking(subdomain, payload)}
     />
   );
 }

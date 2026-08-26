@@ -247,6 +247,27 @@ export async function apiTrackSiteEvent(subdomain, eventType, referrerBucket) {
   }
 }
 
+// Pública, sin sesión — confirma un turno desde alguna de las 3 secciones de
+// reserva interactivas (reservas/turnos/turno-express, ver
+// TurnoConfirmForm en SitePreview.jsx). A diferencia de apiTrackSiteEvent,
+// acá SÍ hace falta que el visitante vea si salió bien o mal (paga o no
+// paga, básicamente), así que no se traga el error.
+export async function apiCreateBooking(subdomain, { sectionType, resumen, nombreCliente, telefonoCliente }) {
+  const result = await request(`/public/sites/${encodeURIComponent(subdomain)}/bookings`, {
+    method: 'POST',
+    body: { sectionType, resumen, nombreCliente, telefonoCliente },
+  });
+  return result.ok ? { ok: true } : { ok: false, error: result.error };
+}
+
+// Turnos recibidos por una página puntual (Dashboard > Turnos).
+export async function apiListBookings(siteId) {
+  const token = getToken();
+  if (!token || !siteId) return [];
+  const result = await request(`/sites/${siteId}/bookings`, { token });
+  return result.ok ? result.bookings : [];
+}
+
 // Suscripción real de Mercado Pago de una página puntual (ver Checkout.jsx,
 // SuscripcionConfirmar.jsx y Dashboard > Suscripción).
 export async function apiGetSubscription(siteId) {

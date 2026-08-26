@@ -478,6 +478,14 @@ function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare
               >
                 Estadísticas
               </RowButton>
+              <RowButton
+                onClick={async () => {
+                  await switchSite(page.id);
+                  navigate('/turnos');
+                }}
+              >
+                Turnos
+              </RowButton>
             </>
           ) : (
             <>

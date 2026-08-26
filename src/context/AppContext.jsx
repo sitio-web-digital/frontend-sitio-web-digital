@@ -39,6 +39,7 @@ import {
   apiAdminSetSitePublished,
   apiGetSiteStatus,
   apiGetSiteStats,
+  apiListBookings,
   apiGetSubscription,
   apiStartSubscription,
   apiPublishFree,
@@ -1083,6 +1084,7 @@ export function AppProvider({ children }) {
   const refreshSubscription = () => apiRefreshSubscription(activeSiteId);
   const cancelSubscription = (siteId) => apiCancelSubscription(siteId);
   const getSiteStats = (siteId) => apiGetSiteStats(siteId ?? activeSiteId);
+  const getSiteBookings = (siteId) => apiListBookings(siteId ?? activeSiteId);
 
   // Re-lee `user` del servidor — hace falta después de gastar una página
   // gratis (free_subscriptions bajó del lado del servidor) para que el
@@ -1517,6 +1519,7 @@ export function AppProvider({ children }) {
     refreshSubscription,
     cancelSubscription,
     getSiteStats,
+    getSiteBookings,
   };
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
