@@ -1,0 +1,76 @@
+-- Crea (o actualiza) "Casa Ámbar" (Deco Casa Ámbar) como plantilla real
+-- en custom_templates. Construida con el mismo método verificado en las
+-- plantillas anteriores: el <script type="__bundler/template"> del export
+-- "bundled" trae el componente fuente completo con los arrays de datos tal
+-- cual (ambientes con puntos calientes, paleta de colores, catálogo,
+-- reglas de medidas por uso, reseñas, contacto) — se usó ese código, no
+-- fragmentos de texto adivinados. A diferencia de las plantillas
+-- anteriores, ACÁ TODAS las fotos (hero, showroom, ambientes, cada punto
+-- caliente y cada producto del catálogo) ya tenían un ID de Pexels real en
+-- el origen — se usaron esos mismos IDs tal cual, sin ningún reemplazo.
+--
+-- Piezas NUEVAS creadas en SitePreview.jsx para esta réplica:
+--   - hero variant "solapada" — foto de ancho completo arriba (16/9) y,
+--     debajo, una caja de texto del color de fondo del sitio que se
+--     superpone hacia arriba sobre la foto (margen negativo); título en
+--     dos líneas (la segunda en cursiva y color de acento, reusa
+--     tituloAcento), SIN fila de estadísticas.
+--   - Sección nueva "ambientes" — pestañas de ambiente + foto con puntos
+--     numerados superpuestos en posiciones fijas (%); tocar un punto
+--     muestra ese producto (foto/nombre/desc/precio/meta) en el panel de
+--     al lado, con botón de WhatsApp. La posición de cada punto se edita
+--     con dos campos numéricos, no arrastre visual.
+--   - Sección nueva "paleta" — grilla de swatches de color (bloque de
+--     color + nombre + hex + uso sugerido), sin foto.
+--   - productos variant "vitrina" — foto 3/4, categoría en mono arriba
+--     del nombre, pestañas de categoría con línea inferior en vez de
+--     pastillas — a diferencia de "catalogo" (foto cuadrada, pestañas en
+--     pastilla redondeada).
+--   - Sección nueva "medidor" — calculadora de medida recomendada con
+--     sliders continuos de ancho/largo (no pestañas discretas) + un
+--     selector de "uso" que define cuánto piso libre hace falta
+--     alrededor; el resultado sale de buscar la medida de stock más
+--     grande que entra, no de una tabla fija por opción.
+--   - contacto variant "directo" ahora admite imagenUrl (ya existía la
+--     prop, se usaba en "split") — con foto seteada, el layout cambia a
+--     foto + una sola columna con eyebrow/título/desc/filas/botón, en vez
+--     del layout sin foto (título+desc+botón en una columna, filas en la
+--     otra). También se agregó eyebrow/onUpdateEyebrow a esta sección
+--     (no existía antes). Ninguno de los dos cambios afecta plantillas
+--     que ya usan "directo" sin imagenUrl.
+--
+-- Requiere que ya exista la columna palette_override. Se puede correr las
+-- veces que haga falta: si la fila ya existe, se actualiza.
+INSERT INTO custom_templates
+  (id, nombre, tagline, rubros, tags, accent, image, image_fallback, sections, demo, seeds, text_styles, published, palette_override, created_by)
+VALUES (
+  'deco-casa-ambar',
+  'Casa Ámbar',
+  'Para tiendas de decoración e interiorismo con explorador de ambientes con puntos calientes, paleta de colores, catálogo y calculadora de medida de alfombra.',
+  '["comercio"]'::jsonb,
+  '["decoracion","muebles","interiorismo","showroom","comercio"]'::jsonb,
+  '#c1663f',
+  'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop',
+  'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop',
+  $sections$[{"type":"header","variant":"clasico"},{"type":"hero","variant":"solapada","rubroLabel":"Decoración de interiores · Buenos Aires","titulo":"La casa se arma","tituloAcento":"de a una pieza","descripcion":"Muebles, textiles y objetos elegidos uno por uno. Te ayudamos a combinarlos sin que parezca catálogo.","heroImagen":"https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1400&h=790&fit=crop","botones":{"primary":{"funcion":"seccion","label":"Ver catálogo"},"secondary":{"funcion":"seccion","label":"Recorrer ambientes"}}},{"type":"ambientes","eyebrow":"Ambientes armados","titulo":"Tocá los puntos y mirá qué hay en cada rincón","ambientes":[{"id":"amb-living","label":"Living","imagen":"https://images.pexels.com/photos/2440471/pexels-photo-2440471.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","puntos":[{"top":"58%","left":"26%","nombre":"Sofá de tres cuerpos","desc":"Estructura de guatambú y tapizado de lino grueso. Se manda a hacer en el color que elijas y llega en cuatro semanas.","precio":"$980.000","meta":"2,20 m · 6 telas a elección","imagen":"https://images.pexels.com/photos/276583/pexels-photo-276583.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"},{"top":"40%","left":"72%","nombre":"Lámpara de mesa articulada","desc":"Brazo de bronce y base de hierro con peso. Se orienta hacia donde leas sin mover el mueble.","precio":"$186.000","meta":"Brazo de 60 cm · pantalla negra","imagen":"https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"},{"top":"78%","left":"54%","nombre":"Alfombra de pelo largo","desc":"Pelo alto y mullido, en tono natural. Da calidez al piso frío y se aspira sin trabas.","precio":"$210.000","meta":"2 x 3 m · también en 1,60 x 2,30","imagen":"https://images.pexels.com/photos/276534/pexels-photo-276534.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"}]},{"id":"amb-comedor","label":"Comedor","imagen":"https://images.pexels.com/photos/1668860/pexels-photo-1668860.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","puntos":[{"top":"55%","left":"46%","nombre":"Mesa redonda de roble","desc":"Tapa maciza de roble con base central, así entran seis sillas sin patas en el medio.","precio":"$740.000","meta":"1,40 m de diámetro","imagen":"https://images.pexels.com/photos/2995012/pexels-photo-2995012.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"},{"top":"30%","left":"52%","nombre":"Colgante de vidrio soplado","desc":"Seis esferas de vidrio soplado en Buenos Aires. Cada una queda con su propia forma.","precio":"$395.000","meta":"Incluye instalación","imagen":"https://images.pexels.com/photos/1123262/pexels-photo-1123262.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"},{"top":"66%","left":"76%","nombre":"Silla tapizada","desc":"Respaldo curvo y tapizado en pana. Cómoda para sobremesas largas.","precio":"$142.000","meta":"Precio por unidad","imagen":"https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"}]},{"id":"amb-cocina","label":"Cocina","imagen":"https://images.pexels.com/photos/2062426/pexels-photo-2062426.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","puntos":[{"top":"35%","left":"22%","nombre":"Estante de madera","desc":"Roble con soportes de hierro negro. Se cuelga sin taladrar toda la pared.","precio":"$68.000","meta":"1,20 m · también en 80 cm","imagen":"https://images.pexels.com/photos/5824883/pexels-photo-5824883.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"},{"top":"62%","left":"58%","nombre":"Set de cerámica esmaltada","desc":"Torneado y esmaltado a mano. Apto para horno y lavavajillas.","precio":"$124.000","meta":"Juego de 6 piezas","imagen":"https://images.pexels.com/photos/3094035/pexels-photo-3094035.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"},{"top":"28%","left":"78%","nombre":"Cortina de lino","desc":"Lino lavado que filtra la luz sin oscurecer. Se entrega con el largo hecho a medida.","precio":"$96.000","meta":"Por paño · a medida","imagen":"https://images.pexels.com/photos/6580227/pexels-photo-6580227.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&fit=crop"}]}]},{"type":"paleta","eyebrow":"Paleta de temporada","titulo":"Los colores con los que trabajamos este año","descripcion":"Si no sabés por dónde empezar, elegí dos de estos y armá todo alrededor. Combinan entre sí.","colores":[{"id":"color-terracota","nombre":"Terracota","hex":"#c1663f","uso":"Para un sillón, almohadones o una pared de acento. Levanta cualquier ambiente neutro."},{"id":"color-salvia","nombre":"Verde salvia","hex":"#8a9a84","uso":"Funciona en paredes enteras. Va bien con madera clara y con blanco roto."},{"id":"color-hueso","nombre":"Hueso","hex":"#e8e0d4","uso":"La base de todo. Si dudás del color de una pared grande, empezá por acá."},{"id":"color-bronce","nombre":"Bronce","hex":"#a67c45","uso":"Para herrajes, patas y lámparas. Reemplaza al dorado brillante sin ser tan frío como el negro."}]},{"type":"productos","variant":"vitrina","titulo":"Catálogo"},{"type":"medidor","eyebrow":"Guía de medidas","titulo":"¿Qué alfombra entra en tu ambiente?","descripcion":"El error más común es comprarla chica. Poné las medidas de tu ambiente y te decimos la medida que corresponde.","anchoMin":2.5,"anchoMax":7,"largoMin":2.5,"largoMax":8,"medidasStock":[[1.6,2.3],[2,2.5],[2,3],[2.5,3],[3,4]],"usos":[{"id":"uso-living","nombre":"Living","regla":"Que entren las patas delanteras del sofá arriba de la alfombra.","margen":0.9},{"id":"uso-comedor","nombre":"Comedor","regla":"Tiene que sobrar 60 cm por lado para correr las sillas.","margen":0.6},{"id":"uso-dormitorio","nombre":"Dormitorio","regla":"Que asome al menos 50 cm de cada lado de la cama.","margen":1.1}]},{"type":"testimonios","variant":"scroll"},{"type":"contacto","variant":"directo","contactoImagenUrl":"https://images.pexels.com/photos/6492397/pexels-photo-6492397.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","eyebrow":"El showroom","contactoTitulo":"Venite a ver las piezas en persona","contactoSubtitulo":"Tenemos todo montado en ambientes reales, no en góndolas. Traé fotos o medidas de tu casa y lo pensamos juntos, sin cargo.","botones":{"whatsapp":{"label":"Coordinar visita"}},"infoRows":[{"id":"info-direccion","label":"Dirección","value":"Gorriti 4820, Palermo"},{"id":"info-horarios","label":"Horarios","value":"Lun a Sáb, 10 a 19 hs"},{"id":"info-telefono","label":"Teléfono","value":"011 4831-7720"},{"id":"info-asesoria","label":"Asesoría","value":"Sin cargo, con turno previo"}]},{"type":"footer","variant":"minimal"}]$sections$::jsonb,
+  $demo${"nombreNegocio":"Casa Ámbar","rubroLabel":"Decoración de interiores: muebles, textiles y objetos, con showroom en Palermo","sobreNosotros":"Muebles, textiles y objetos elegidos uno por uno. Te ayudamos a combinarlos sin que parezca catálogo. Showroom en Palermo, asesoría sin cargo.","whatsapp":"5491148317720","telefono":"011 4831-7720","direccion":"Gorriti 4820, Palermo","horarios":"Lun a Sáb, 10 a 19 hs","instagram":"@casaambar","galeria":["https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1400&h=790&fit=crop","https://images.pexels.com/photos/6492397/pexels-photo-6492397.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","https://images.pexels.com/photos/2440471/pexels-photo-2440471.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","https://images.pexels.com/photos/1668860/pexels-photo-1668860.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop","https://images.pexels.com/photos/2062426/pexels-photo-2062426.jpeg?auto=compress&cs=tinysrgb&w=900&h=680&fit=crop"]}$demo$::jsonb,
+  $seeds${"productos":[{"id":"prod-sofa","nombre":"Sofá de lino","categoria":"Muebles","desc":"2,20 m · seis telas","precio":980000,"etiqueta":"A medida","imagenes":["https://images.pexels.com/photos/276583/pexels-photo-276583.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-sillon","nombre":"Sillón de pana","categoria":"Muebles","desc":"Respaldo alto","precio":420000,"imagenes":["https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-silla","nombre":"Silla de diseño","categoria":"Muebles","desc":"Patas de madera","precio":142000,"imagenes":["https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-lampara","nombre":"Lámpara de mesa articulada","categoria":"Iluminación","desc":"Brazo de 60 cm","precio":186000,"imagenes":["https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-colgante","nombre":"Colgante de vidrio","categoria":"Iluminación","desc":"Seis esferas","precio":395000,"etiqueta":"Nuevo","imagenes":["https://images.pexels.com/photos/1123262/pexels-photo-1123262.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-cortina","nombre":"Cortina de lino","categoria":"Textiles","desc":"A medida, por paño","precio":96000,"imagenes":["https://images.pexels.com/photos/6580227/pexels-photo-6580227.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-alfombra","nombre":"Alfombra de pelo largo","categoria":"Textiles","desc":"2 x 3 m","precio":210000,"imagenes":["https://images.pexels.com/photos/276534/pexels-photo-276534.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-ceramica","nombre":"Set de cerámica","categoria":"Objetos","desc":"Seis piezas","precio":124000,"imagenes":["https://images.pexels.com/photos/3094035/pexels-photo-3094035.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]},{"id":"prod-estante","nombre":"Estante de roble","categoria":"Objetos","desc":"1,20 m","precio":68000,"imagenes":["https://images.pexels.com/photos/5824883/pexels-photo-5824883.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&fit=crop"]}],"testimonios":[{"id":"testi-malena","nombre":"Malena F.","cargo":"Living completo · Villa Urquiza","texto":"Fui sin saber qué quería y salí con el living entero resuelto. No me vendieron de más.","rating":5,"avatar":"","verificado":false},{"id":"testi-ignacio","nombre":"Ignacio D.","cargo":"Sofá a medida","texto":"El sofá tardó lo que dijeron y la tela era igual a la muestra. Eso ya es mucho.","rating":5,"avatar":"","verificado":false},{"id":"testi-sol","nombre":"Sol R.","cargo":"Alfombra de pelo largo","texto":"Me pasaron la medida de alfombra por WhatsApp antes de comprarla. Entró perfecta.","rating":5,"avatar":"","verificado":false},{"id":"testi-bruno","nombre":"Bruno A.","cargo":"Cortinas y almohadones","texto":"Vale la pena ir al showroom. Las fotos no le hacen justicia a los textiles.","rating":5,"avatar":"","verificado":false}]}$seeds$::jsonb,
+  '{}'::jsonb,
+  true,
+  $palette${"accent":"#c1663f","accentSoft":"rgba(193,102,63,0.12)","ink":"#2f3b33","inkHex":"#2f3b33","inkSoft":"#5f6b5f","bg":"#f4efe8","line":"#ddd3c6","fonts":{"serif":"'Cormorant Garamond', serif","mono":"'Jost', sans-serif","editorial":"'Jost', sans-serif","googleFontsHref":"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Jost:wght@300;400;500&display=swap"}}$palette$::jsonb,
+  (SELECT id FROM users WHERE email = 'facundo@sitiowebdigital.com.ar')
+)
+ON CONFLICT (id) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  tagline = EXCLUDED.tagline,
+  rubros = EXCLUDED.rubros,
+  tags = EXCLUDED.tags,
+  accent = EXCLUDED.accent,
+  image = EXCLUDED.image,
+  image_fallback = EXCLUDED.image_fallback,
+  sections = EXCLUDED.sections,
+  demo = EXCLUDED.demo,
+  seeds = EXCLUDED.seeds,
+  text_styles = EXCLUDED.text_styles,
+  palette_override = EXCLUDED.palette_override,
+  updated_at = now();
