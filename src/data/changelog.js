@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.64.0',
+    date: '2026-09-06',
+    changes: [
+      {
+        type: 'fix',
+        text: 'El fondo animado del hero (Landing y Login) dejó de ser ~90 vitrinas de plantillas reales renderizando en simultáneo — ahora es un video en loop con el mismo aspecto visual, mucho más liviano para cargar.',
+      },
+    ],
+  },
+  {
     version: '1.63.0',
     date: '2026-08-26',
     changes: [

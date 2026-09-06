@@ -159,6 +159,16 @@ const ICON_COMPONENTS = {
 // por cada componente intermedio — solo necesita declarar su `styleKey`.
 const TextStyleCtx = createContext({ textStyles: {}, onSetTextStyle: () => {} });
 
+// Cuando SitePreview se usa como miniatura decorativa (ej. la pared de fondo
+// del hero) en vez de como sitio real: los bloques con scroll-reveal
+// (Reveal/AnimatedTag, ver más abajo) dependen de que el navegador detecte
+// que entraron en el viewport real — dentro de un contenedor con
+// perspective/rotateX/scale como el de la pared, esa detección no siempre
+// dispara, y la sección se queda para siempre en su estado inicial (oculta).
+// Este flag hace que esos wrappers rendericen directo en su estado final,
+// sin depender de scroll ni de motion.
+const StaticPreviewCtx = createContext(false);
+
 // Texto de ayuda específico de cada tipo de sección — lo que explica el botón
 // de tutorial (?) en la barra de controles de cada bloque.
 const SECTION_HELP = {
@@ -299,6 +309,7 @@ export default function SitePreview({
   onSetTextStyle,
   raised = false,
   onCreateBooking,
+  staticPreview = false,
 }) {
   // Los hooks van antes que el `return null` de abajo: si no, el orden de
   // hooks cambiaría entre renders según `template`/`siteData` estén cargados
@@ -404,6 +415,7 @@ export default function SitePreview({
   const wrapperBg = sections[0]?.bgColor || palette.bg;
 
   return (
+    <StaticPreviewCtx.Provider value={staticPreview}>
     <TextStyleCtx.Provider value={{ textStyles, onSetTextStyle }}>
     <div
       className="@container font-editorial"
@@ -2356,6 +2368,7 @@ export default function SitePreview({
       {editable && savedKey > 0 && <SavedToast key={savedKey} />}
     </div>
     </TextStyleCtx.Provider>
+    </StaticPreviewCtx.Provider>
   );
 }
 
@@ -5291,7 +5304,16 @@ function RichText({ styleKey, tag: Tag = 'span', className = '', style: baseStyl
 // Envoltorio de motion/react para cualquier tag: reproduce la animación
 // elegida una sola vez, cuando el texto entra en pantalla al scrollear.
 function AnimatedTag({ tag, anim, className, style, children, ...rest }) {
+  const isStatic = useContext(StaticPreviewCtx);
   const MotionTag = motion[tag] ?? motion.span;
+  if (isStatic) {
+    const Tag = tag || 'span';
+    return (
+      <Tag className={className} style={style} {...rest}>
+        {children}
+      </Tag>
+    );
+  }
   return (
     <MotionTag
       className={className}
@@ -5314,7 +5336,16 @@ function AnimatedTag({ tag, anim, className, style, children, ...rest }) {
 // (Series, Archivo, Proceso, Sesiones). `delay` en segundos para escalonar
 // varios elementos del mismo grupo (0, 0.08, 0.16...).
 function Reveal({ as = 'div', delay = 0, className = '', style, children }) {
+  const isStatic = useContext(StaticPreviewCtx);
   const MotionTag = motion[as] ?? motion.div;
+  if (isStatic) {
+    const Tag = as || 'div';
+    return (
+      <Tag className={className} style={style}>
+        {children}
+      </Tag>
+    );
+  }
   return (
     <MotionTag
       className={className}
