@@ -27,10 +27,15 @@ export default function HeroWall() {
         muted
         loop
         playsInline
-        poster="/hero-wall-poster.jpg"
+        poster="/hero-wall-poster.jpg?v=2"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
       >
-        <source src="/hero-wall-loop.mp4" type="video/mp4" />
+        {/* ?v= al final: Cloudflare cachea estos assets por 4hs (max-age) y
+            trata cada query string distinto como un archivo nuevo — sin esto,
+            re-grabar el video no alcanza para que los visitantes reales vean
+            la versión nueva hasta que expire el cache viejo. Subir el
+            número cada vez que se reemplaza el archivo. */}
+        <source src="/hero-wall-loop.mp4?v=2" type="video/mp4" />
       </video>
     </div>
   );
