@@ -93,12 +93,6 @@ export default function AuthGate({ login, register, title = 'Iniciá sesión par
             {submitting ? 'Un momento...' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           </button>
         </form>
-
-        {mode === 'login' && (
-          <p className="text-[11px] text-ink-500 text-center mt-4 leading-relaxed">
-            Cuenta de prueba: demo@sitiowebdigital.com.ar · 123456
-          </p>
-        )}
       </div>
     </div>
   );
