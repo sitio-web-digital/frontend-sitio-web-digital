@@ -84,7 +84,7 @@ export default function Quiz() {
 
   return (
     <div className="min-h-screen bg-navy-900 text-white flex flex-col">
-      <QuizHeader />
+      <QuizHeader whiteLabel={user?.whiteLabel} />
 
       <div className="flex flex-1">
         <StepDots step={step} total={TOTAL_STEPS} />
@@ -158,10 +158,10 @@ export default function Quiz() {
   );
 }
 
-function QuizHeader() {
+function QuizHeader({ whiteLabel }) {
   return (
     <div className="px-5 sm:px-8 py-4 flex items-center justify-between border-b border-white/8">
-      <Logo size="sm" />
+      {whiteLabel ? <span /> : <Logo size="sm" />}
       <Link to="/" className="text-xs text-ink-400 hover:text-white transition-colors">
         Salir
       </Link>

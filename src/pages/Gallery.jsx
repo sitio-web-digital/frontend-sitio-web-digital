@@ -57,7 +57,7 @@ export default function Gallery() {
   return (
     <div className="min-h-screen bg-navy-900 text-white">
       <div className="px-5 sm:px-8 py-5 flex items-center justify-between border-b border-white/5">
-        <Logo size="sm" />
+        {user?.whiteLabel ? <span /> : <Logo size="sm" />}
         <span className="text-xs text-ink-400">Paso 2 · Elegí tu plantilla</span>
       </div>
 

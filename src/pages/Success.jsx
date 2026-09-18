@@ -16,7 +16,7 @@ function celebrate() {
 }
 
 export default function Success() {
-  const { siteData, template, subdomain, published, authReady, theme } = useApp();
+  const { user, siteData, template, subdomain, published, authReady, theme } = useApp();
   const navigate = useNavigate();
   const celebrated = useRef(false);
 
@@ -40,7 +40,7 @@ export default function Success() {
   return (
     <div className="min-h-screen bg-navy-900 text-white">
       <div className="px-5 sm:px-8 py-5 border-b border-white/5">
-        <Logo size="sm" />
+        {!user?.whiteLabel && <Logo size="sm" />}
       </div>
 
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-16 text-center animate-fade-in-up">

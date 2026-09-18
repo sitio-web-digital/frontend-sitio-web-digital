@@ -5,6 +5,36 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.70.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Bug grave del flujo developer: "Crear página para esta orden" no arrancaba un sitio nuevo de verdad — si ya había armado una página antes, la orden siguiente podía terminar guardando sobre ESA MISMA página en vez de crear una propia. Ahora arranca en blanco como corresponde, igual que "Crear nueva página" del Dashboard.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Admin > Vendedores suma el registro de cuotas del desarrollo (monto, cuota actual y próxima, vencidas marcadas en rojo) junto al estado de la suscripción de cada página.',
+      },
+      {
+        type: 'fix',
+        text: 'Admin > Suscripciones contaba páginas publicadas gratis como si pagaran — el total mensual y la lista quedan bien ahora (se agrega un flag por página que no se pierde cuando la cuenta gasta su crédito gratis). Se suma también un conteo de suscripciones que llegaron por un vendedor vs. directo.',
+      },
+      {
+        type: 'mejora',
+        text: 'Mis órdenes (vendedor): la carga de la venta (monto, cuotas, próxima cuota) ahora está colapsada detrás de "Cargar venta" / "Editar venta" en vez de siempre desplegada — pensado para cargarlo desde el celular con varias órdenes en la lista.',
+      },
+      {
+        type: 'fix',
+        text: 'El cartel "Pagar mantenimiento" del link compartido tenía un link roto (con HashRouter, un href="#algo" navega como si fuera una ruta en vez de hacer scroll) — ahora es texto sin link.',
+      },
+      {
+        type: 'fix',
+        text: 'Se completó el borrado de la marca "SitioWeb Digital" para cuentas de marca blanca: faltaba en Checkout, la confirmación de pago, Estadísticas, Turnos, y el propio cartel de "pagar mantenimiento" del link compartido.',
+      },
+    ],
+  },
+  {
     version: '1.69.0',
     date: '2026-09-18',
     changes: [

@@ -275,7 +275,11 @@ function DashboardHeader({ user, logout, navigate }) {
       {/* Cuenta de marca blanca (ver users.white_label): reclamó una página
           armada vía el flujo developer-vendedor, así que su panel no debe
           mostrar el nombre "SitioWeb Digital" en ningún lado. */}
-      {!user.whiteLabel && <Logo size="sm" />}
+      {/* <span/> en vez de nada: este header es justify-between con el bloque
+          de cuenta/cerrar-sesión como único otro hijo — sin un segundo nodo
+          acá, ese bloque se corre a la izquierda en vez de quedarse a la
+          derecha (probado en vivo, 2026-09-18). */}
+      {user.whiteLabel ? <span /> : <Logo size="sm" />}
       <div className="flex items-center gap-4 text-sm text-ink-400">
         <span className="hidden sm:inline">{user.email}</span>
         <button
@@ -1085,6 +1089,15 @@ function OrdenRow({ order, onChanged }) {
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // El formulario de venta arranca CERRADO — un vendedor a pie de calle abre
+  // esto en el celular con varias órdenes en la lista, y tener las 4 cajas
+  // de cuotas siempre desplegadas en cada una (probado en vivo, 2026-09-18:
+  // en una pantalla angosta los inputs de ancho fijo se amontonaban y las
+  // etiquetas quedaban lejos de su campo) hacía difícil encontrar el botón
+  // "Compartir" entre tanto campo. Cerrado muestra solo un resumen de una
+  // línea; "Cargar venta"/"Editar venta" abre el formulario recién cuando
+  // hace falta tocarlo.
+  const [ventaOpen, setVentaOpen] = useState(false);
   const [vendida, setVendida] = useState(order.vendida);
   const [montoTotal, setMontoTotal] = useState(order.montoTotal ?? '');
   const [cantidadCuotas, setCantidadCuotas] = useState(order.cantidadCuotas ?? '');
@@ -1116,6 +1129,10 @@ function OrdenRow({ order, onChanged }) {
     if (result.ok) onChanged();
   };
 
+  const inputClass =
+    'w-full border border-white/10 bg-navy-900 px-3 py-2.5 text-sm text-white outline-none focus:border-gold-500';
+  const labelClass = 'block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1';
+
   return (
     <div className="border border-white/10 bg-navy-850 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1138,7 +1155,15 @@ function OrdenRow({ order, onChanged }) {
               El link de "Compartir" de acá abajo ya arma la vista previa
               real (mismo /#/compartida que ve el cliente), así que "Abrir"
               apunta ahí en vez de a un subdominio que todavía no existe. */}
-          <RowButton onClick={handleShare}>{sharing ? 'Generando...' : 'Compartir'}</RowButton>
+          <div className="flex flex-wrap items-center gap-2">
+            <RowButton onClick={handleShare} primary>
+              {sharing ? 'Generando...' : 'Compartir'}
+            </RowButton>
+            <RowButton onClick={() => setVentaOpen((v) => !v)}>
+              {ventaOpen ? 'Cerrar venta' : vendida ? 'Editar venta' : 'Cargar venta'}
+            </RowButton>
+          </div>
+
           {shareLink && (
             <div className="border border-gold-500/30 bg-gold-500/5 p-3 flex flex-wrap items-center gap-2">
               <input
@@ -1167,61 +1192,89 @@ function OrdenRow({ order, onChanged }) {
             </div>
           )}
 
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex items-center gap-2 text-xs text-ink-300">
-              <input type="checkbox" checked={vendida} onChange={(e) => setVendida(e.target.checked)} />
-              Vendida
-            </label>
-            <div>
-              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
-                Monto total
-              </label>
-              <input
-                type="number"
-                value={montoTotal}
-                onChange={(e) => setMontoTotal(e.target.value)}
-                className="w-28 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
-              />
-            </div>
-            <div>
-              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
-                Cant. cuotas
-              </label>
-              <input
-                type="number"
-                value={cantidadCuotas}
-                onChange={(e) => setCantidadCuotas(e.target.value)}
-                className="w-20 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
-              />
-            </div>
-            <div>
-              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
-                Cuota actual
-              </label>
-              <input
-                type="number"
-                value={cuotaActual}
-                onChange={(e) => setCuotaActual(e.target.value)}
-                className="w-20 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
-              />
-            </div>
-            <div>
-              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
-                Próxima cuota
-              </label>
-              <input
-                type="date"
-                value={proximaCuota}
-                onChange={(e) => setProximaCuota(e.target.value)}
-                className="border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
-              />
-            </div>
-            <RowButton onClick={saveVenta}>{ventaBusy ? 'Guardando...' : 'Guardar venta'}</RowButton>
-          </div>
-          {ventaStatus && (
-            <p className={`text-xs ${ventaStatus.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
-              {ventaStatus.msg}
+          {/* Resumen de una línea, siempre visible aunque el formulario esté
+              cerrado — para chequear de un vistazo sin tener que abrir nada. */}
+          {!ventaOpen && (
+            <p className="text-xs text-ink-400">
+              {vendida ? (
+                <>
+                  <span className="text-emerald-400 font-semibold">Vendida</span> · $
+                  {Number(montoTotal || 0).toLocaleString('es-AR')} · cuota {cuotaActual || 0}
+                  {cantidadCuotas ? `/${cantidadCuotas}` : ''}
+                  {proximaCuota &&
+                    ` · próxima ${new Date(proximaCuota).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`}
+                </>
+              ) : (
+                'Todavía no se cargó la venta.'
+              )}
             </p>
+          )}
+
+          {ventaOpen && (
+            <div className="space-y-3 max-w-sm">
+              <label className="flex items-center gap-2 text-sm text-ink-200">
+                <input
+                  type="checkbox"
+                  checked={vendida}
+                  onChange={(e) => setVendida(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                Vendida
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelClass}>Monto total</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={montoTotal}
+                    onChange={(e) => setMontoTotal(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Cant. cuotas</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={cantidadCuotas}
+                    onChange={(e) => setCantidadCuotas(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Cuota actual</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={cuotaActual}
+                    onChange={(e) => setCuotaActual(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Próxima cuota</label>
+                  <input
+                    type="date"
+                    value={proximaCuota}
+                    onChange={(e) => setProximaCuota(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <button
+                onClick={saveVenta}
+                disabled={ventaBusy}
+                className="w-full px-4 py-2.5 bg-gold-500 hover:bg-gold-400 disabled:opacity-50 transition-colors text-navy-950 font-bold text-sm"
+              >
+                {ventaBusy ? 'Guardando...' : 'Guardar venta'}
+              </button>
+              {ventaStatus && (
+                <p className={`text-xs ${ventaStatus.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {ventaStatus.msg}
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}

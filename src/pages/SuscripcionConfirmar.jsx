@@ -66,9 +66,11 @@ export default function SuscripcionConfirmar() {
   return (
     <div className="min-h-screen bg-navy-900 text-white flex items-center justify-center px-5">
       <div className="max-w-md text-center animate-fade-in-up">
-        <div className="flex justify-center mb-8">
-          <Logo size="md" />
-        </div>
+        {!user?.whiteLabel && (
+          <div className="flex justify-center mb-8">
+            <Logo size="md" />
+          </div>
+        )}
         <div className="w-14 h-14 mx-auto rounded-full border-4 border-white/10 border-t-gold-500 animate-spin mb-6" />
         <h1 className="font-display text-2xl font-bold tracking-tight mb-2 text-balance">
           Confirmando tu suscripción...

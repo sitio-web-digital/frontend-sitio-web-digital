@@ -108,7 +108,11 @@ export default function Checkout() {
   return (
     <div className="min-h-screen bg-navy-900 text-white">
       <div className="px-5 sm:px-8 py-5 flex items-center justify-between border-b border-white/5">
-        <Logo size="sm" />
+        {/* Marca blanca (ver users.white_label) — un cliente que llegó acá
+            reclamando una página del flujo developer-vendedor no tiene que
+            ver la marca "SitioWeb Digital" en ningún paso, ni siquiera en el
+            de pago. */}
+        {user?.whiteLabel ? <span /> : <Logo size="sm" />}
         <span className="text-xs text-ink-400">Paso 4 · Publicar tu página</span>
       </div>
 

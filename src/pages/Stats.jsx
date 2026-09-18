@@ -20,7 +20,7 @@ const FUENTE_LABELS = { instagram: 'Instagram', google: 'Google', whatsapp: 'Wha
 const FUENTE_COLORS = { instagram: '#9085e9', google: '#3987e5', whatsapp: '#199e70', directo: '#c98500', otro: '#6b7590' };
 
 export default function Stats() {
-  const { siteData, template, subdomain, published, authReady, activeSiteId, getSiteStats } = useApp();
+  const { user, siteData, template, subdomain, published, authReady, activeSiteId, getSiteStats } = useApp();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 
@@ -55,7 +55,7 @@ export default function Stats() {
   return (
     <div className="min-h-screen bg-navy-900 text-white">
       <div className="px-5 sm:px-8 py-4 flex items-center justify-between border-b border-white/8">
-        <Logo size="sm" />
+        {user?.whiteLabel ? <span /> : <Logo size="sm" />}
         <button
           onClick={() => navigate('/dashboard')}
           className="px-4 py-2 border border-white/15 hover:bg-white/5 transition-colors text-sm font-semibold"

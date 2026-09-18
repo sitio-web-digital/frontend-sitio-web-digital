@@ -15,7 +15,7 @@ const SECTION_LABELS = {
 // SitePreview.jsx y POST /api/public/sites/:subdomain/bookings) — mismo
 // patrón de página que Stats.jsx (activeSiteId + fetch al entrar).
 export default function Turnos() {
-  const { siteData, template, subdomain, authReady, activeSiteId, getSiteBookings } = useApp();
+  const { user, siteData, template, subdomain, authReady, activeSiteId, getSiteBookings } = useApp();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState(null);
 
@@ -35,7 +35,7 @@ export default function Turnos() {
   return (
     <div className="min-h-screen bg-navy-900 text-white">
       <div className="px-5 sm:px-8 py-4 flex items-center justify-between border-b border-white/8">
-        <Logo size="sm" />
+        {user?.whiteLabel ? <span /> : <Logo size="sm" />}
         <button
           onClick={() => navigate('/dashboard')}
           className="px-4 py-2 border border-white/15 hover:bg-white/5 transition-colors text-sm font-semibold"

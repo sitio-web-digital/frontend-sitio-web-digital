@@ -1352,10 +1352,19 @@ const MP_STATUS_INFO = {
 function SuscripcionesSection({ subscriptions, onCancel, onRefresh }) {
   // Incluye tanto activas como dadas de baja (ver GET /admin/subscriptions) —
   // el ingreso mensual solo cuenta las que siguen publicadas y no son
-  // cuentas de prueba gratis.
+  // cuentas de prueba gratis. `freePublish` es un flag por SITIO (se prende
+  // una sola vez al publicar gratis, ver subscription.js publish-free) — a
+  // propósito no se usa freeSubscriptions de la cuenta acá: ese es un
+  // contador de créditos DISPONIBLES ahora mismo, no "esta página puntual
+  // se publicó gratis", así que una vez gastado el crédito (o si la cuenta
+  // después paga otra página) el total quedaba mal calculado.
   const activas = subscriptions.filter((s) => s.published);
   const bajas = subscriptions.filter((s) => !s.published);
-  const total = activas.filter((s) => (s.freeSubscriptions ?? 0) <= 0).length * PLAN.precio;
+  const total = activas.filter((s) => !s.freePublish).length * PLAN.precio;
+  // Por vendedor = llegó por el link de un vendedor (ver Vendedores) o por el
+  // flujo developer/marca blanca (ambos casos completan sold_by) — el resto
+  // se armó y pagó directo, sin pasar por ningún vendedor.
+  const porVendedor = subscriptions.filter((s) => s.vendedor).length;
 
   return (
     <Panel title="Suscripciones" action={<RefreshButton onRefresh={onRefresh} />}>
@@ -1371,8 +1380,10 @@ function SuscripcionesSection({ subscriptions, onCancel, onRefresh }) {
         items={[
           { label: 'Activas', value: activas.length },
           { label: 'Dadas de baja', value: bajas.length },
+          { label: 'Por vendedor', value: porVendedor },
+          { label: 'Directo (SitioWeb Digital)', value: subscriptions.length - porVendedor },
         ]}
-        cols={2}
+        cols={4}
       />
 
       {subscriptions.length === 0 ? (
@@ -1407,7 +1418,7 @@ function SuscripcionRow({ s, onCancel }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const isFree = (s.freeSubscriptions ?? 0) > 0;
+  const isFree = s.freePublish;
   const mpInfo = MP_STATUS_INFO[s.mpStatus];
 
   const confirm = async () => {
@@ -1566,12 +1577,16 @@ function VendedoresSection({ vendedores }) {
                   <th className="pb-2 pr-4 font-semibold">Cliente</th>
                   <th className="pb-2 pr-4 font-semibold">Vendedor</th>
                   <th className="pb-2 pr-4 font-semibold">Fecha vendida</th>
-                  <th className="pb-2 font-semibold">Estado</th>
+                  <th className="pb-2 pr-4 font-semibold">Desarrollo (cuotas)</th>
+                  <th className="pb-2 font-semibold">Suscripción</th>
                 </tr>
               </thead>
               <tbody>
                 {ventas.map((v) => {
                   const mpInfo = MP_STATUS_INFO[v.mpStatus];
+                  const proxima = v.devProximaCuota ? v.devProximaCuota.slice(0, 10) : null;
+                  const hoy = new Date().toISOString().slice(0, 10);
+                  const vencida = v.devVendida && proxima && proxima < hoy;
                   return (
                     <tr key={v.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                       <td className="py-2.5 pr-4 font-semibold">{v.nombre || '—'}</td>
@@ -1592,9 +1607,29 @@ function VendedoresSection({ vendedores }) {
                           minute: '2-digit',
                         })}
                       </td>
+                      <td className="py-2.5 pr-4">
+                        {!v.devVendida ? (
+                          <span className="text-xs text-ink-500">
+                            {v.devCantidadCuotas != null ? 'Sin vender' : '—'}
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-xs font-semibold text-ink-200">
+                              ${Number(v.devMontoTotal ?? 0).toLocaleString('es-AR')} · cuota {v.devCuotaActual ?? 0}
+                              {v.devCantidadCuotas ? `/${v.devCantidadCuotas}` : ''}
+                            </span>
+                            {proxima && (
+                              <span className={`block text-xs ${vencida ? 'text-red-400 font-semibold' : 'text-ink-500'}`}>
+                                Próxima: {new Date(proxima).toLocaleDateString('es-AR')}
+                                {vencida && ' · vencida'}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </td>
                       <td className="py-2.5">
                         {v.published ? (
-                          <span className="text-xs font-semibold text-emerald-400">Publicada</span>
+                          <span className="text-xs font-semibold text-emerald-400">Pagada</span>
                         ) : mpInfo ? (
                           <span className={`text-xs font-semibold ${mpInfo.className}`}>{mpInfo.label}</span>
                         ) : (

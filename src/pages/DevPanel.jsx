@@ -16,7 +16,7 @@ const ESTADO_INFO = {
 // manual). Una vez agarrada, arma la página con el Gallery/Editor de
 // siempre (no hay editor aparte) y la vincula desde ahí.
 export default function DevPanel() {
-  const { user, authReady, logout, quiz, setQuiz, setPendingDevOrderId, switchSite } = useApp();
+  const { user, authReady, logout, setQuiz, setPendingDevOrderId, switchSite, resetAll } = useApp();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +56,21 @@ export default function DevPanel() {
     reload();
   };
 
+  // resetAll() ANTES de sembrar el quiz es la parte que importa acá: sin
+  // esto, el activeSiteId de lo último que el developer haya armado quedaba
+  // pegado (mismo mecanismo que usa Dashboard.jsx > "Crear nueva página" vía
+  // startNewSite), y la orden siguiente terminaba guardando sobre ESE mismo
+  // sitio en vez de crear uno nuevo — probado en vivo, 2026-09-18: dos
+  // órdenes distintas quedaron apuntando al mismo site_id.
   const crearPagina = (order) => {
-    setQuiz({ ...quiz, nombreNegocio: order.nombreNegocio, whatsapp: order.telefonoCliente });
+    resetAll();
+    setQuiz({
+      nombreNegocio: order.nombreNegocio,
+      tipoNegocio: null,
+      frase: '',
+      whatsapp: order.telefonoCliente,
+      logoAccent: null,
+    });
     setPendingDevOrderId(order.id);
     navigate('/plantillas');
   };

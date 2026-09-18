@@ -108,15 +108,18 @@ export default function SharedSiteClaim() {
           cuenta o continuar sesión → claim → /checkout) es exactamente el
           mismo en los dos casos. */}
       {whiteLabel && (
-        <div className="px-5 sm:px-8 py-2.5 bg-gold-500 text-navy-950 text-sm font-semibold flex flex-wrap items-center justify-center gap-2 text-center">
-          <span>Para seguir usando esta página hay que pagar el mantenimiento.</span>
-          <a href="#claim-cta" className="underline underline-offset-2">
-            Pagar mantenimiento
-          </a>
+        <div className="px-5 sm:px-8 py-2.5 bg-gold-500 text-navy-950 text-sm font-semibold text-center">
+          {/* Texto plano, sin link: un href="#claim-cta" con HashRouter no
+              hace scroll a ese id — el "#" es el router entero, así que
+              termina navegando a una ruta rota (probado en vivo,
+              2026-09-18). El CTA real ya está más abajo en la página. */}
+          Para seguir usando esta página hay que pagar el mantenimiento.
         </div>
       )}
       <div className="px-5 sm:px-8 py-5 flex items-center justify-between border-b border-white/5">
-        <Logo size="sm" />
+        {/* Marca blanca: quien abre este link no tiene por qué enterarse de
+            que la página se armó con SitioWeb Digital. */}
+        {whiteLabel ? <span /> : <Logo size="sm" />}
         <span className="text-xs text-ink-400">Tu página ya está armada</span>
       </div>
 
@@ -149,6 +152,7 @@ export default function SharedSiteClaim() {
                 widgets={hydrated.widgets}
                 textStyles={hydrated.textStyles}
                 editable={false}
+                whiteLabel={whiteLabel}
               />
             </div>
           </div>
