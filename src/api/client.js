@@ -745,12 +745,20 @@ export async function apiAdminDeleteRubro(id) {
 // Órdenes de desarrollo (rol developer + vendedor, marca blanca): un
 // vendedor carga lo que necesita un cliente, un developer la agarra y arma
 // la página, el vendedor la comparte — ver server/src/routes/devOrders.js.
-export async function apiCreateDevOrder({ nombreNegocio, instagram, redesSociales, telefonoCliente, info }) {
+export async function apiCreateDevOrder({
+  nombreNegocio,
+  instagram,
+  redesSociales,
+  telefonoCliente,
+  info,
+  paletaColores,
+  logoUrl,
+}) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión.' };
   return request('/dev-orders', {
     method: 'POST',
-    body: { nombreNegocio, instagram, redesSociales, telefonoCliente, info },
+    body: { nombreNegocio, instagram, redesSociales, telefonoCliente, info, paletaColores, logoUrl },
     token,
   });
 }

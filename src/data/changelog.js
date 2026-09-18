@@ -5,6 +5,24 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.72.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Nueva orden de desarrollo: se suman paleta de colores y logo del cliente (opcionales) — antes solo se podían mencionar sueltos en el texto libre. También se puede cargar de una una venta/seña ya acordada, sin esperar a que la página esté lista.',
+      },
+      {
+        type: 'mejora',
+        text: 'Editor (developer armando una orden): "Ver mi página →" (llevaba al flujo de pago del cliente final) se reemplaza por "Ver información de la orden" (teléfono, redes, paleta y logo del cliente, con un botón para aplicar el logo directo a la página) y "Vincular a la orden" — las dos viven en la cabecera en vez de en un cartel aparte.',
+      },
+      {
+        type: 'mejora',
+        text: 'DevPanel pasa a tener pestañas — "Mis órdenes" es la vista por default (antes era el pool de "Disponibles"), y se suma una pestaña "Todas" para ver el estado de cada orden sin importar qué developer la agarró.',
+      },
+    ],
+  },
+  {
     version: '1.71.0',
     date: '2026-09-18',
     changes: [

@@ -113,7 +113,7 @@ export default function Editor() {
     editingTemplate,
     isBuildingTemplate,
     resetAll,
-    pendingDevOrderId,
+    pendingDevOrder,
     linkActiveSiteToDevOrder,
   } = useApp();
   const navigate = useNavigate();
@@ -131,6 +131,7 @@ export default function Editor() {
   const [linkingOrder, setLinkingOrder] = useState(false);
   const [orderLinked, setOrderLinked] = useState(false);
   const [orderLinkError, setOrderLinkError] = useState(null);
+  const [orderInfoOpen, setOrderInfoOpen] = useState(false);
   // Un admin editando (adminEditingSite) siempre puede seguir, sea cual sea
   // el bloqueo — el bloqueo es específicamente para frenar al dueño.
   const editingBlocked = siteLocked && !adminEditingSite;
@@ -292,10 +293,16 @@ export default function Editor() {
     }
   };
 
+  // needsLinking cubre solo el caso "recién construida, todavía no
+  // vinculada" — al reeditar una orden ya "lista" (DevPanel > Editar),
+  // pendingDevOrder sigue seteado (para "Ver información de la orden") pero
+  // no hace falta ofrecer vincular de nuevo.
+  const needsLinking = pendingDevOrder && pendingDevOrder.estado !== 'lista' && !orderLinked;
+
   const vincularOrden = async () => {
     setLinkingOrder(true);
     setOrderLinkError(null);
-    const result = await linkActiveSiteToDevOrder(pendingDevOrderId);
+    const result = await linkActiveSiteToDevOrder(pendingDevOrder.id);
     setLinkingOrder(false);
     if (!result.ok) {
       setOrderLinkError(result.error);
@@ -310,22 +317,6 @@ export default function Editor() {
         <div className="px-5 sm:px-8 py-2 bg-gold-500/10 border-b border-gold-500/25 text-sm shrink-0 text-ink-200">
           Editando como admin la página de{' '}
           <strong className="text-gold-400">{adminEditingSite.ownerEmail}</strong> — "← Atrás" te devuelve al panel.
-        </div>
-      )}
-      {pendingDevOrderId && !orderLinked && (
-        <div className="px-5 sm:px-8 py-2 bg-gold-500/10 border-b border-gold-500/25 text-sm shrink-0 text-ink-200 flex flex-wrap items-center justify-between gap-2">
-          <span>Esta página va a quedar vinculada a la orden de desarrollo — el vendedor la va a poder compartir apenas la vincules.</span>
-          <div className="flex items-center gap-2 shrink-0">
-            {orderLinkError && <span className="text-xs text-red-300">{orderLinkError}</span>}
-            <button
-              type="button"
-              onClick={vincularOrden}
-              disabled={linkingOrder || !activeSiteId}
-              className="px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs disabled:opacity-40"
-            >
-              {linkingOrder ? 'Vinculando...' : 'Vincular a la orden'}
-            </button>
-          </div>
         </div>
       )}
       {orderLinked && (
@@ -480,15 +471,58 @@ export default function Editor() {
               <LayoutIcon className="w-4 h-4" /> {editingTemplate ? 'Guardar cambios' : 'Guardar como plantilla'}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => navigate('/preview')}
-            className="px-4 py-2 bg-gold-500 text-navy-950 font-bold text-sm hover:bg-gold-400 transition-colors shrink-0"
-          >
-            Ver mi página →
-          </button>
+          {/* Un developer arma la página de una orden, no la suya propia —
+              "Ver mi página" lleva al flujo de publicar/pagar del cliente
+              final, que acá no aplica. En su lugar: ver los datos que cargó
+              el vendedor (teléfono, redes, paleta, logo) y, mientras la
+              orden no esté vinculada todavía, el botón para vincularla —
+              las dos viven acá en la cabecera en vez de en un cartel
+              aparte, pedido explícito, 2026-09-18. */}
+          {user?.role === 'developer' ? (
+            <div className="flex items-center gap-2 shrink-0">
+              {pendingDevOrder && (
+                <button
+                  type="button"
+                  onClick={() => setOrderInfoOpen(true)}
+                  className="px-3 py-2 border border-white/15 hover:bg-white/5 transition-colors text-sm font-semibold"
+                >
+                  Ver información de la orden
+                </button>
+              )}
+              {needsLinking && (
+                <button
+                  type="button"
+                  onClick={vincularOrden}
+                  disabled={linkingOrder || !activeSiteId}
+                  className="px-3 py-2 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm disabled:opacity-40"
+                >
+                  {linkingOrder ? 'Vinculando...' : 'Vincular a la orden'}
+                </button>
+              )}
+              {orderLinkError && <span className="text-xs text-red-300">{orderLinkError}</span>}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/preview')}
+              className="px-4 py-2 bg-gold-500 text-navy-950 font-bold text-sm hover:bg-gold-400 transition-colors shrink-0"
+            >
+              Ver mi página →
+            </button>
+          )}
         </div>
       </div>
+
+      {orderInfoOpen && pendingDevOrder && (
+        <OrderInfoModal
+          order={pendingDevOrder}
+          onClose={() => setOrderInfoOpen(false)}
+          onUseLogo={(url) => {
+            setLogoUrl(url);
+            setOrderInfoOpen(false);
+          }}
+        />
+      )}
 
       {/* Canvas editable */}
       <div className="flex-1 overflow-y-auto bg-navy-950/50 p-4 sm:p-8 relative">
@@ -620,6 +654,89 @@ export default function Editor() {
           onClose={() => setSaveTemplateOpen(false)}
         />
       )}
+    </div>
+  );
+}
+
+// Lo que cargó el vendedor al crear la orden (teléfono, redes, paleta de
+// colores, logo del cliente) — para que el developer tenga todo a mano sin
+// tener que volver a pedírselo por WhatsApp. "Usar este logo" lo aplica
+// directo al sitio que se está editando (mismo setLogoUrl que ya usa el
+// botón de subir logo del editor).
+function OrderInfoModal({ order, onClose, onUseLogo }) {
+  const rows = [
+    ['Negocio', order.nombreNegocio],
+    ['Teléfono del cliente', order.telefonoCliente],
+    ['Redes sociales', order.instagram],
+    ['Paleta de colores', order.paletaColores],
+  ].filter(([, value]) => value);
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md border border-white/10 bg-navy-850 shadow-2xl max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2 sticky top-0">
+          <span className="text-white font-semibold text-sm">Información de la orden</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="text-ink-400 hover:text-white transition-colors text-lg leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {rows.length === 0 && !order.logoUrl && !order.info && (
+            <p className="text-sm text-ink-400">El vendedor no cargó ningún dato extra en esta orden.</p>
+          )}
+
+          {rows.length > 0 && (
+            <dl className="space-y-2.5">
+              {rows.map(([label, value]) => (
+                <div key={label}>
+                  <dt className="font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500">{label}</dt>
+                  <dd className="text-sm text-white mt-0.5">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {order.info && (
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
+                Info importante
+              </p>
+              <p className="text-sm text-ink-200 whitespace-pre-wrap">{order.info}</p>
+            </div>
+          )}
+
+          {order.logoUrl && (
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-2">
+                Logo del cliente
+              </p>
+              <div className="flex items-center gap-3">
+                <img
+                  src={order.logoUrl}
+                  alt="Logo del cliente"
+                  className="w-16 h-16 object-contain bg-white border border-white/10"
+                />
+                <button
+                  type="button"
+                  onClick={() => onUseLogo(order.logoUrl)}
+                  className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+                >
+                  Usar este logo
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

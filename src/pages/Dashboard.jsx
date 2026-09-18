@@ -20,6 +20,8 @@ import {
   apiUpdateDevOrderVenta,
 } from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
+import { uploadImage } from '../utils/uploadImage';
+import { validateImageFile } from '../utils/imageValidation';
 
 const PREVIEW_SECTIONS = [
   { id: 'header', type: 'header' },
@@ -1050,8 +1052,33 @@ function NewOrdenModal({ onClose, onCreated }) {
   const [telefonoCliente, setTelefonoCliente] = useState('');
   const [redes, setRedes] = useState('');
   const [info, setInfo] = useState('');
+  const [paletaColores, setPaletaColores] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  const onLogoFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!(await validateImageFile(file, 'logo'))) return;
+    setUploadingLogo(true);
+    setLogoUrl(await uploadImage(file));
+    setUploadingLogo(false);
+  };
+
+  // La venta (o una seña ya cobrada) a veces se cierra ANTES de mandarle la
+  // orden al developer, no después — sin esto había que crear la orden y
+  // después ir a buscarla en la lista para cargar algo que el vendedor ya
+  // sabía al momento de cargarla. Colapsado por default porque la mayoría
+  // de las veces no aplica.
+  const [senaOpen, setSenaOpen] = useState(false);
+  const [vendida, setVendida] = useState(false);
+  const [montoTotal, setMontoTotal] = useState('');
+  const [cantidadCuotas, setCantidadCuotas] = useState('');
+  const [cuotaActual, setCuotaActual] = useState('');
+  const [proximaCuota, setProximaCuota] = useState('');
 
   const submit = async (e) => {
     e.preventDefault();
@@ -1063,12 +1090,26 @@ function NewOrdenModal({ onClose, onCreated }) {
       telefonoCliente: telefonoCliente.trim(),
       instagram: redes.trim(),
       info: info.trim(),
+      paletaColores: paletaColores.trim(),
+      logoUrl,
     });
-    setBusy(false);
     if (!result.ok) {
+      setBusy(false);
       setError(result.error);
       return;
     }
+    // Solo pega el PATCH si de verdad cargó algo de la seña/venta — no tiene
+    // sentido un segundo request vacío para el caso común (sin seña).
+    if (senaOpen && (vendida || montoTotal || cantidadCuotas || proximaCuota)) {
+      await apiUpdateDevOrderVenta(result.id, {
+        vendida,
+        montoTotal,
+        cantidadCuotas,
+        cuotaActual: cuotaActual || 0,
+        proximaCuota,
+      });
+    }
+    setBusy(false);
     onCreated();
   };
 
@@ -1131,16 +1172,112 @@ function NewOrdenModal({ onClose, onCreated }) {
           </div>
           <div>
             <label className={labelClass}>
+              Paleta de colores <span className="text-ink-500 normal-case">(opcional)</span>
+            </label>
+            <input
+              value={paletaColores}
+              onChange={(e) => setPaletaColores(e.target.value)}
+              placeholder="Ej: verde y blanco, o algún código de color"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Logo del cliente <span className="text-ink-500 normal-case">(opcional)</span>
+            </label>
+            {logoUrl ? (
+              <div className="flex items-center gap-3">
+                <img src={logoUrl} alt="Logo" className="w-12 h-12 object-contain bg-white border border-white/10" />
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl('')}
+                  className="text-xs font-semibold text-ink-400 hover:text-red-300 transition-colors"
+                >
+                  Sacar
+                </button>
+              </div>
+            ) : (
+              <label className="inline-flex items-center gap-2 px-3.5 py-2.5 border border-dashed border-white/20 hover:border-gold-500/60 transition-colors cursor-pointer text-sm text-ink-400">
+                {uploadingLogo ? 'Subiendo...' : 'Subir archivo'}
+                <input type="file" accept="image/*" className="hidden" onChange={onLogoFile} disabled={uploadingLogo} />
+              </label>
+            )}
+          </div>
+          <div>
+            <label className={labelClass}>
               Info importante para el developer <span className="text-ink-500 normal-case">(opcional)</span>
             </label>
             <textarea
               value={info}
               onChange={(e) => setInfo(e.target.value)}
               rows={3}
-              placeholder="Colores, referentes, algo que no tenga que preguntar..."
+              placeholder="Referentes, algo que no tenga que preguntar..."
               className={`${inputClass} resize-none`}
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setSenaOpen((v) => !v)}
+            className="text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors"
+          >
+            {senaOpen ? '− Ocultar venta / seña' : '+ ¿Ya tenés una seña o algo acordado?'}
+          </button>
+
+          {senaOpen && (
+            <div className="space-y-3 border-t border-white/10 pt-3">
+              <label className="flex items-center gap-2 text-sm text-ink-200">
+                <input
+                  type="checkbox"
+                  checked={vendida}
+                  onChange={(e) => setVendida(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                Vendida
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelClass}>Monto total</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={montoTotal}
+                    onChange={(e) => setMontoTotal(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Cant. cuotas</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={cantidadCuotas}
+                    onChange={(e) => setCantidadCuotas(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Cuota actual</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={cuotaActual}
+                    onChange={(e) => setCuotaActual(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Próxima cuota</label>
+                  <input
+                    type="date"
+                    value={proximaCuota}
+                    onChange={(e) => setProximaCuota(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
@@ -1221,22 +1358,27 @@ function OrdenRow({ order, onChanged }) {
         </span>
       </div>
 
-      {order.estado === 'lista' && (
-        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
-          {/* No hay un link "en vivo" para mostrar acá todavía — este sitio
-              recién tiene subdominio y queda publicado cuando el CLIENTE lo
-              reclama y paga (ver publicSites.js claim + subscription.js).
-              El link de "Compartir" de acá abajo ya arma la vista previa
-              real (mismo /#/compartida que ve el cliente), así que "Abrir"
-              apunta ahí en vez de a un subdominio que todavía no existe. */}
-          <div className="flex flex-wrap items-center gap-2">
+      {/* La venta (o una seña ya cobrada) puede negociarse ANTES de que el
+          developer termine la página — este bloque ya no depende de
+          estado === 'lista', solo "Compartir" (que sí necesita el sitio
+          armado) queda condicionado a eso. */}
+      <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+        {/* No hay un link "en vivo" para mostrar acá todavía — este sitio
+            recién tiene subdominio y queda publicado cuando el CLIENTE lo
+            reclama y paga (ver publicSites.js claim + subscription.js).
+            El link de "Compartir" de acá abajo ya arma la vista previa
+            real (mismo /#/compartida que ve el cliente), así que "Abrir"
+            apunta ahí en vez de a un subdominio que todavía no existe. */}
+        <div className="flex flex-wrap items-center gap-2">
+          {order.estado === 'lista' && (
             <RowButton onClick={handleShare} primary>
               {sharing ? 'Generando...' : 'Compartir'}
             </RowButton>
-            <RowButton onClick={() => setVentaOpen((v) => !v)}>
-              {ventaOpen ? 'Cerrar venta' : vendida ? 'Editar venta' : 'Cargar venta'}
-            </RowButton>
-          </div>
+          )}
+          <RowButton onClick={() => setVentaOpen((v) => !v)}>
+            {ventaOpen ? 'Cerrar venta' : vendida ? 'Editar venta' : 'Cargar venta / seña'}
+          </RowButton>
+        </div>
 
           {shareLink && (
             <div className="border border-gold-500/30 bg-gold-500/5 p-3 flex flex-wrap items-center gap-2">
@@ -1350,8 +1492,7 @@ function OrdenRow({ order, onChanged }) {
               )}
             </div>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
