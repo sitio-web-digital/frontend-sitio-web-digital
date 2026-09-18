@@ -5,6 +5,26 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.82.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'mejora',
+        text: 'Resumen del vendedor deja de mostrar "Páginas activas/Visitas/Clics en WhatsApp" (tráfico de una página que ni arma ni publica, igual que ve un cliente común) — ahora muestra su propia actividad de ventas: órdenes cargadas, páginas vendidas, monto total vendido y cuántas siguen en cobro.',
+      },
+    ],
+  },
+  {
+    version: '1.81.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'El vendedor podía cambiarle el dominio a una página de la que fuera dueño (herencia de antes de la regla de que no arma páginas propias) — se saca de la interfaz y el servidor lo rechaza aunque llegue el request igual.',
+      },
+    ],
+  },
+  {
     version: '1.80.0',
     date: '2026-09-18',
     changes: [

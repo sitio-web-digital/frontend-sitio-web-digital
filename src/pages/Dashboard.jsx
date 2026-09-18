@@ -298,6 +298,7 @@ export default function Dashboard() {
               canShare={user.role === 'vendedor' || user.role === 'admin'}
               canCreate={canCreateSites}
               shareSite={shareSite}
+              onGoToOrdenes={() => setSection('ordenes')}
             />
           )}
           {section === 'suscripcion' && (
@@ -516,7 +517,15 @@ function ResumenSection({
   canShare,
   canCreate,
   shareSite,
+  onGoToOrdenes,
 }) {
+  // Un vendedor no tiene páginas propias que mirar — mostrarle "Páginas
+  // activas"/"Visitas totales"/"Clics en WhatsApp" (métricas de tráfico de
+  // una página que ni arma ni publica) es el mismo Resumen que ve un
+  // cliente común, sin que le sirva de nada. Lo que sí le interesa es su
+  // propia actividad de ventas — ver ResumenVendedor más abajo.
+  if (!canCreate) return <ResumenVendedor primerNombre={primerNombre} onGoToOrdenes={onGoToOrdenes} />;
+
   const publicadas = pages.filter((p) => p.status === 'publicada');
   const visitas = publicadas.reduce((acc, p) => acc + p.kpis.visitas, 0);
   const whatsapp = publicadas.reduce((acc, p) => acc + p.kpis.whatsapp, 0);
@@ -593,6 +602,59 @@ function ResumenSection({
   );
 }
 
+// Resumen del vendedor: actividad de ventas (órdenes/páginas vendidas,
+// monto, cuotas en cobro) en vez de tráfico de páginas — ver el porqué en
+// ResumenSection. Trae sus propios datos (mismo criterio que OrdenesSection
+// y el sondeo de notificaciones: GET /api/dev-orders ya devuelve solo las
+// del vendedor logueado, sin filtro server-side aparte que armar).
+function ResumenVendedor({ primerNombre, onGoToOrdenes }) {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiListDevOrders().then((o) => {
+      setOrders(o);
+      setLoading(false);
+    });
+  }, []);
+
+  const vendidas = orders.filter((o) => o.vendida);
+  const montoTotal = vendidas.reduce((acc, o) => acc + Number(o.montoTotal || 0), 0);
+  const enCobro = vendidas.filter((o) => (o.cuotaActual ?? 0) < (o.cantidadCuotas ?? 0)).length;
+
+  const kpis = [
+    { label: 'Órdenes cargadas', value: loading ? '—' : String(orders.length) },
+    { label: 'Páginas vendidas', value: loading ? '—' : String(vendidas.length) },
+    { label: 'Monto total vendido', value: loading ? '—' : `$${montoTotal.toLocaleString('es-AR')}` },
+    { label: 'En cobro', value: loading ? '—' : String(enCobro) },
+  ];
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-balance">Hola, {primerNombre}</h1>
+        <p className="text-ink-400 text-sm mt-1">Así viene tu actividad de ventas.</p>
+      </div>
+
+      <StatStrip items={kpis} cols={4} />
+
+      <div className="border border-dashed border-white/15 bg-navy-850 p-6 text-center">
+        <p className="text-ink-400 text-sm mb-4">
+          {orders.length === 0
+            ? 'Todavía no cargaste ninguna orden de desarrollo.'
+            : 'Cargá una orden nueva o seguí el estado de las que ya tenés.'}
+        </p>
+        <button
+          onClick={onGoToOrdenes}
+          className="px-5 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
+        >
+          Ir a Mis órdenes
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Franja única de KPIs con divisores internos, en vez de N cajas iguales
 // repetidas — mismo dato, se lee de un vistazo en vez de escanear tarjetas
 // sueltas. En mobile se cae a un grid de celdas separadas por líneas finas
@@ -661,7 +723,10 @@ function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare
             <p className="text-xs text-gold-500 truncate">
               {page.subdomain ? `${page.subdomain}.${ROOT_DOMAIN}` : 'Todavía no elegiste un subdominio'}
             </p>
-            <DomainEditor page={page} updateSubdomain={updateSubdomain} />
+            {/* Un vendedor no arma ni publica páginas (ver readOnly más
+                abajo) — tampoco tiene por qué poder cambiarle el dominio a
+                una que sea dueño por herencia de antes de esa regla. */}
+            {!readOnly && <DomainEditor page={page} updateSubdomain={updateSubdomain} />}
           </div>
           <div className="flex items-center gap-2 flex-wrap mt-1.5">
             <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${status.textClass}`}>
