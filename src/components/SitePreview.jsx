@@ -310,6 +310,7 @@ export default function SitePreview({
   raised = false,
   onCreateBooking,
   staticPreview = false,
+  whiteLabel = false,
 }) {
   // Los hooks van antes que el `return null` de abajo: si no, el orden de
   // hooks cambiaría entre renders según `template`/`siteData` estén cargados
@@ -645,6 +646,7 @@ export default function SitePreview({
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+                whiteLabel={whiteLabel}
               />
             )}
             {sec.type === 'footer-barberia' && (
@@ -661,6 +663,7 @@ export default function SitePreview({
                 seccionesDisponibles={sections
                   .filter((s) => s.id !== sec.id)
                   .map((s) => ({ id: s.id, label: seccionLabelConNumero(sections, s) }))}
+                whiteLabel={whiteLabel}
               />
             )}
             {sec.type === 'productos' && (
@@ -8995,6 +8998,7 @@ function SeccionFooter({
   onUpdateTitulo,
   hashtag,
   onUpdateHashtag,
+  whiteLabel,
 }) {
   const footerTargetDefaults = {
     primary: whatsapp,
@@ -9036,7 +9040,9 @@ function SeccionFooter({
     </span>
   );
 
-  const credito = (
+  // Marca blanca (ver users.white_label / sites.white_label): páginas del
+  // flujo developer-vendedor no llevan esta marca en ningún footer.
+  const credito = whiteLabel ? null : (
     <span className="font-mono text-xs" style={{ color: textColor || palette.inkSoft }}>
       Sitio creado con SitioWeb Digital
     </span>
@@ -9280,9 +9286,11 @@ function SeccionFooter({
             );
           })}
         </div>
-        <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          Sitio creado con SitioWeb Digital
-        </p>
+        {!whiteLabel && (
+          <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Sitio creado con SitioWeb Digital
+          </p>
+        )}
       </footer>
     );
   }
@@ -9295,7 +9303,7 @@ function SeccionFooter({
       >
         <div className="flex items-center justify-center gap-5 mb-4 flex-wrap">{links}</div>
         <p className="font-mono text-xs" style={{ color: textColor || palette.inkSoft }}>
-          {nombreNegocio} — Sitio creado con SitioWeb Digital
+          {whiteLabel ? nombreNegocio : `${nombreNegocio} — Sitio creado con SitioWeb Digital`}
         </p>
       </footer>
     );
@@ -9331,9 +9339,11 @@ function SeccionFooter({
       <p className="font-serif italic text-lg mb-1" style={{ color: textColor || palette.ink }}>
         {nombreNegocio}
       </p>
-      <p className="font-mono text-xs" style={{ color: textColor || palette.inkSoft }}>
-        Sitio creado con SitioWeb Digital
-      </p>
+      {!whiteLabel && (
+        <p className="font-mono text-xs" style={{ color: textColor || palette.inkSoft }}>
+          Sitio creado con SitioWeb Digital
+        </p>
+      )}
     </footer>
   );
 }
@@ -29152,6 +29162,7 @@ function SeccionFooterBarberia({
   botones: botonesData = {},
   onUpdateBotones,
   seccionesDisponibles = [],
+  whiteLabel,
 }) {
   const footerTargetDefaults = {
     primary: instagram ? `https://instagram.com/${instagram.replace('@', '')}` : undefined,
@@ -29192,9 +29203,11 @@ function SeccionFooterBarberia({
             );
           })}
         </div>
-        <span className="text-xs" style={{ color: palette.inkSoft }}>
-          Sitio creado con SitioWeb Digital
-        </span>
+        {!whiteLabel && (
+          <span className="text-xs" style={{ color: palette.inkSoft }}>
+            Sitio creado con SitioWeb Digital
+          </span>
+        )}
       </div>
     </footer>
   );

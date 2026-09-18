@@ -12,7 +12,7 @@ import { classifyReferrer } from '../utils/analytics';
 // contenido sale de un fetch público por subdominio en vez del estado en
 // memoria de una sesión logueada.
 export default function PublicSite({ subdomain }) {
-  const [state, setState] = useState({ status: 'loading', hydrated: null, template: null });
+  const [state, setState] = useState({ status: 'loading', hydrated: null, template: null, whiteLabel: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -23,16 +23,16 @@ export default function PublicSite({ subdomain }) {
       ]);
       if (cancelled) return;
       if (!siteResult.ok) {
-        setState({ status: 'not-found', hydrated: null, template: null });
+        setState({ status: 'not-found', hydrated: null, template: null, whiteLabel: false });
         return;
       }
       const hydrated = hydrateSite(siteResult.site);
       const template = hydrated ? getTemplateById(hydrated.templateId, [...TEMPLATES, ...customTemplates]) : null;
       if (!hydrated || !template) {
-        setState({ status: 'not-found', hydrated: null, template: null });
+        setState({ status: 'not-found', hydrated: null, template: null, whiteLabel: false });
         return;
       }
-      setState({ status: 'ready', hydrated, template });
+      setState({ status: 'ready', hydrated, template, whiteLabel: Boolean(siteResult.whiteLabel) });
     })();
     return () => {
       cancelled = true;
@@ -68,10 +68,11 @@ export default function PublicSite({ subdomain }) {
     );
   }
 
-  const { hydrated, template } = state;
+  const { hydrated, template, whiteLabel } = state;
   return (
     <SitePreview
       template={template}
+      whiteLabel={whiteLabel}
       siteData={hydrated.siteData}
       logoUrl={hydrated.logoUrl}
       theme={hydrated.theme}

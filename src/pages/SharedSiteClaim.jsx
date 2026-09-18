@@ -20,7 +20,13 @@ export default function SharedSiteClaim() {
   const { token } = useParams();
   const { user, claimSharedSite } = useApp();
   const navigate = useNavigate();
-  const [state, setState] = useState({ status: 'loading', hydrated: null, template: null, nombreNegocio: '' });
+  const [state, setState] = useState({
+    status: 'loading',
+    hydrated: null,
+    template: null,
+    nombreNegocio: '',
+    whiteLabel: false,
+  });
   const [claiming, setClaiming] = useState(false);
   const [sessionError, setSessionError] = useState('');
 
@@ -30,16 +36,22 @@ export default function SharedSiteClaim() {
       const [siteResult, customTemplates] = await Promise.all([apiGetSharedSite(token), apiListCatalogTemplates()]);
       if (cancelled) return;
       if (!siteResult.ok) {
-        setState({ status: 'not-found', hydrated: null, template: null, nombreNegocio: '' });
+        setState({ status: 'not-found', hydrated: null, template: null, nombreNegocio: '', whiteLabel: false });
         return;
       }
       const hydrated = hydrateSite(siteResult.site);
       const template = hydrated ? getTemplateById(hydrated.templateId, [...TEMPLATES, ...customTemplates]) : null;
       if (!hydrated || !template) {
-        setState({ status: 'not-found', hydrated: null, template: null, nombreNegocio: '' });
+        setState({ status: 'not-found', hydrated: null, template: null, nombreNegocio: '', whiteLabel: false });
         return;
       }
-      setState({ status: 'ready', hydrated, template, nombreNegocio: siteResult.nombreNegocio || 'Tu página' });
+      setState({
+        status: 'ready',
+        hydrated,
+        template,
+        nombreNegocio: siteResult.nombreNegocio || 'Tu página',
+        whiteLabel: Boolean(siteResult.whiteLabel),
+      });
     })();
     return () => {
       cancelled = true;
@@ -86,10 +98,23 @@ export default function SharedSiteClaim() {
     );
   }
 
-  const { hydrated, template, nombreNegocio } = state;
+  const { hydrated, template, nombreNegocio, whiteLabel } = state;
 
   return (
     <div className="min-h-screen bg-navy-900 text-white">
+      {/* Página armada vía el flujo developer-vendedor (marca blanca, ver
+          sites.white_label): el cartel de "pagar mantenimiento" reemplaza el
+          copy genérico de "confirmá el pago" — el mecanismo de abajo (crear
+          cuenta o continuar sesión → claim → /checkout) es exactamente el
+          mismo en los dos casos. */}
+      {whiteLabel && (
+        <div className="px-5 sm:px-8 py-2.5 bg-gold-500 text-navy-950 text-sm font-semibold flex flex-wrap items-center justify-center gap-2 text-center">
+          <span>Para seguir usando esta página hay que pagar el mantenimiento.</span>
+          <a href="#claim-cta" className="underline underline-offset-2">
+            Pagar mantenimiento
+          </a>
+        </div>
+      )}
       <div className="px-5 sm:px-8 py-5 flex items-center justify-between border-b border-white/5">
         <Logo size="sm" />
         <span className="text-xs text-ink-400">Tu página ya está armada</span>
@@ -101,8 +126,9 @@ export default function SharedSiteClaim() {
             {nombreNegocio} ya está lista
           </h1>
           <p className="text-ink-300 mb-6 text-balance">
-            La armamos para vos — mirala tal cual va a quedar. Cuando quieras publicarla, solo falta confirmar el
-            pago.
+            {whiteLabel
+              ? 'La armamos para vos — mirala tal cual va a quedar. Para seguir usándola, solo falta pagar el mantenimiento.'
+              : 'La armamos para vos — mirala tal cual va a quedar. Cuando quieras publicarla, solo falta confirmar el pago.'}
           </p>
           <div className="border border-white/10 bg-navy-850 overflow-hidden">
             <div className="max-h-[70vh] overflow-y-auto">
@@ -128,7 +154,7 @@ export default function SharedSiteClaim() {
           </div>
         </div>
 
-        <div className="order-1 lg:order-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <div id="claim-cta" className="order-1 lg:order-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <div className="sticky top-8">
             {user ? (
               <div className="border border-white/10 bg-navy-850 p-6">
@@ -141,11 +167,15 @@ export default function SharedSiteClaim() {
                   disabled={claiming}
                   className="w-full bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold py-3.5 disabled:opacity-50"
                 >
-                  {claiming ? 'Un momento...' : 'Continuar con esta cuenta'}
+                  {claiming ? 'Un momento...' : whiteLabel ? 'Pagar mantenimiento' : 'Continuar con esta cuenta'}
                 </button>
               </div>
             ) : (
-              <AuthGate login={claimViaLogin} register={claimViaRegister} title="Creá tu cuenta para publicarla" />
+              <AuthGate
+                login={claimViaLogin}
+                register={claimViaRegister}
+                title={whiteLabel ? 'Creá tu cuenta para pagar el mantenimiento' : 'Creá tu cuenta para publicarla'}
+              />
             )}
           </div>
         </div>

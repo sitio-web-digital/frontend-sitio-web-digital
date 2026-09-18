@@ -31,6 +31,7 @@ import {
   apiShareSite,
   apiUnshareSite,
   apiClaimSharedSite,
+  apiLinkDevOrderSite,
   apiUpdateMe,
   apiListSupportTickets,
   apiCreateSupportTicket,
@@ -162,6 +163,12 @@ export function AppProvider({ children }) {
   // que el dueño elija entre las suyas propias.
   const [mySites, setMySites] = useState([]);
   const [activeSiteId, setActiveSiteId] = useState(null);
+  // Rol developer (DevPanel > "Crear página para esta orden") — qué orden
+  // está armando ahora mismo, para que el Editor pueda ofrecer "Vincular a
+  // la orden" una vez que la página ya tiene id. Vive en el contexto (no en
+  // el estado local del Editor) porque sobrevive a la navegación
+  // /dev -> /plantillas -> /editor.
+  const [pendingDevOrderId, setPendingDevOrderId] = useState(null);
   // Espejo síncrono de activeSiteId — un `useState` recién se refleja en el
   // próximo render, así que un código que llama setActiveSiteId(id) y al
   // toque (mismo tick, antes de que React vuelva a renderizar) le pasa ESE
@@ -1299,6 +1306,17 @@ export function AppProvider({ children }) {
   const shareSite = (siteId) => apiShareSite(siteId);
   const unshareSite = (siteId) => apiUnshareSite(siteId);
 
+  // Vincula la página que el developer tiene abierta ahora mismo (activeSiteId)
+  // a la orden que agarró — recién ahí el vendedor dueño de la orden la puede
+  // compartir (ver devOrders.js POST /:id/link-site). Limpia pendingDevOrderId
+  // al confirmar, así el aviso "Vincular a la orden" del Editor desaparece.
+  const linkActiveSiteToDevOrder = async (orderId) => {
+    if (!activeSiteId) return { ok: false, error: 'Todavía no se guardó la página — esperá un momento y probá de nuevo.' };
+    const result = await apiLinkDevOrderSite(orderId, activeSiteId);
+    if (result.ok) setPendingDevOrderId(null);
+    return result;
+  };
+
   // Reclamar una página compartida (SharedSiteClaim.jsx, vía <AuthGate> —
   // mode 'login' o 'register' según qué pestaña haya usado el prospecto).
   // Mismo criterio que login()/register(): limpia cualquier borrador anónimo
@@ -1506,6 +1524,9 @@ export function AppProvider({ children }) {
     shareSite,
     unshareSite,
     claimSharedSite,
+    pendingDevOrderId,
+    setPendingDevOrderId,
+    linkActiveSiteToDevOrder,
     supportTickets,
     addSupportTicket,
     adminEditingSite,

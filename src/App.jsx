@@ -14,6 +14,7 @@ import Stats from './pages/Stats';
 import Turnos from './pages/Turnos';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import DevPanel from './pages/DevPanel';
 import Admin from './pages/Admin';
 import AnalyticsHome from './pages/AnalyticsHome';
 import PublicSite from './pages/PublicSite';
@@ -93,6 +94,7 @@ export default function App() {
             <Route path="/turnos" element={<Turnos />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dev" element={<DevPanel />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/analytics" element={<AnalyticsHome />} />
           </Routes>

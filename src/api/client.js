@@ -177,7 +177,9 @@ export async function apiUnshareSite(siteId) {
 // en producción).
 export async function apiGetPublicSite(subdomain) {
   const result = await request(`/public/sites/${encodeURIComponent(subdomain)}`);
-  return result.ok ? { ok: true, site: result.site } : { ok: false, error: result.error };
+  return result.ok
+    ? { ok: true, site: result.site, whiteLabel: result.whiteLabel }
+    : { ok: false, error: result.error };
 }
 
 // Pública, sin sesión — la usa SharedSiteClaim.jsx para mostrar el preview de
@@ -185,7 +187,7 @@ export async function apiGetPublicSite(subdomain) {
 export async function apiGetSharedSite(shareToken) {
   const result = await request(`/public/shared/${encodeURIComponent(shareToken)}`);
   return result.ok
-    ? { ok: true, site: result.site, nombreNegocio: result.nombreNegocio }
+    ? { ok: true, site: result.site, nombreNegocio: result.nombreNegocio, whiteLabel: result.whiteLabel }
     : { ok: false, error: result.error };
 }
 
@@ -738,4 +740,62 @@ export async function apiAdminDeleteRubro(id) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
   return request(`/admin/catalog/rubros/${id}`, { method: 'DELETE', token });
+}
+
+// Órdenes de desarrollo (rol developer + vendedor, marca blanca): un
+// vendedor carga lo que necesita un cliente, un developer la agarra y arma
+// la página, el vendedor la comparte — ver server/src/routes/devOrders.js.
+export async function apiCreateDevOrder({ nombreNegocio, instagram, redesSociales, telefonoCliente, info }) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request('/dev-orders', {
+    method: 'POST',
+    body: { nombreNegocio, instagram, redesSociales, telefonoCliente, info },
+    token,
+  });
+}
+
+// Sin `estado`: developer/admin ven todas, vendedor ve solo las suyas (lo
+// decide el backend según el rol del token) — con `estado: 'pendiente'` es
+// "la pila para agarrar" que usa DevPanel.
+export async function apiListDevOrders({ estado } = {}) {
+  const token = getToken();
+  if (!token) return [];
+  const qs = estado ? `?estado=${encodeURIComponent(estado)}` : '';
+  const result = await request(`/dev-orders${qs}`, { token });
+  return result.ok ? result.orders : [];
+}
+
+export async function apiClaimDevOrder(orderId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/dev-orders/${orderId}/claim`, { method: 'POST', token });
+}
+
+export async function apiLinkDevOrderSite(orderId, siteId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/dev-orders/${orderId}/link-site`, { method: 'POST', body: { siteId }, token });
+}
+
+// El vendedor comparte el sitio vinculado a SU orden (no necesita ser
+// dueño del sitio en sí, ver comentario en devOrders.js) — mismo formato
+// de respuesta que apiShareSite.
+export async function apiShareDevOrder(orderId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/dev-orders/${orderId}/share`, { method: 'POST', token });
+}
+
+// Registro manual de la venta del desarrollo (cobro en cuotas, por fuera
+// de Mercado Pago) — separado del "mantenimiento" real que se cobra vía
+// apiStartSubscription una vez que el cliente reclama la página.
+export async function apiUpdateDevOrderVenta(orderId, { vendida, montoTotal, cantidadCuotas, cuotaActual }) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/dev-orders/${orderId}/venta`, {
+    method: 'PATCH',
+    body: { vendida, montoTotal, cantidadCuotas, cuotaActual },
+    token,
+  });
 }

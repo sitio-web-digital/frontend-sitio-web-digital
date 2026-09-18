@@ -8,7 +8,16 @@ import SupportToast from '../components/support/SupportToast';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify, getTemplateById } from '../data/mockData';
 import { hydrateSite } from '../utils/siteSchema';
-import { apiGetSupportUnread, apiMarkSupportSeen, apiRefreshSubscription, apiUnpublishSite } from '../api/client';
+import {
+  apiGetSupportUnread,
+  apiMarkSupportSeen,
+  apiRefreshSubscription,
+  apiUnpublishSite,
+  apiListDevOrders,
+  apiCreateDevOrder,
+  apiShareDevOrder,
+  apiUpdateDevOrderVenta,
+} from '../api/client';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const PREVIEW_SECTIONS = [
@@ -175,6 +184,8 @@ export default function Dashboard() {
   if (!user) return null;
 
   const primerNombre = user.name?.split(' ')[0] || user.email;
+  const isVendedor = user.role === 'vendedor' || user.role === 'admin';
+  const navItems = isVendedor ? [...NAV_ITEMS, { id: 'ordenes', label: 'Mis órdenes' }] : NAV_ITEMS;
 
   return (
     <div className="min-h-screen bg-navy-900 text-white">
@@ -189,7 +200,7 @@ export default function Dashboard() {
       )}
 
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 grid lg:grid-cols-[200px_1fr] gap-8 items-start">
-        <SideNav section={section} onChange={setSection} unreadCount={unreadSupport.count} />
+        <SideNav items={navItems} section={section} onChange={setSection} unreadCount={unreadSupport.count} />
 
         <div className="min-w-0 animate-fade-in-up">
           {section === 'resumen' && (
@@ -230,6 +241,7 @@ export default function Dashboard() {
               <SettingsSection user={user} updateProfile={updateProfile} />
             </div>
           )}
+          {section === 'ordenes' && isVendedor && <OrdenesSection />}
         </div>
       </div>
 
@@ -250,7 +262,10 @@ export default function Dashboard() {
 function DashboardHeader({ user, logout, navigate }) {
   return (
     <div className="px-5 sm:px-8 py-4 flex items-center justify-between border-b border-white/8">
-      <Logo size="sm" />
+      {/* Cuenta de marca blanca (ver users.white_label): reclamó una página
+          armada vía el flujo developer-vendedor, así que su panel no debe
+          mostrar el nombre "SitioWeb Digital" en ningún lado. */}
+      {!user.whiteLabel && <Logo size="sm" />}
       <div className="flex items-center gap-4 text-sm text-ink-400">
         <span className="hidden sm:inline">{user.email}</span>
         <button
@@ -267,10 +282,10 @@ function DashboardHeader({ user, logout, navigate }) {
   );
 }
 
-function SideNav({ section, onChange, unreadCount = 0 }) {
+function SideNav({ items = NAV_ITEMS, section, onChange, unreadCount = 0 }) {
   return (
     <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:p-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl">
-      {NAV_ITEMS.map((item) => (
+      {items.map((item) => (
         <button
           key={item.id}
           onClick={() => onChange(item.id)}
@@ -900,6 +915,260 @@ function DomainEditor({ page, updateSubdomain }) {
       </button>
       {status && <p className="w-full text-xs text-red-400">{status.msg}</p>}
     </form>
+  );
+}
+
+const ORDEN_ESTADO_INFO = {
+  pendiente: { label: 'Pendiente', textClass: 'text-ink-400', dotClass: 'bg-ink-500' },
+  en_progreso: { label: 'En progreso', textClass: 'text-gold-400', dotClass: 'bg-gold-500' },
+  lista: { label: 'Lista', textClass: 'text-emerald-400', dotClass: 'bg-emerald-400' },
+};
+
+// Vista del vendedor sobre el flujo developer: cargar una orden de
+// desarrollo (el developer la agarra y arma la página aparte, ver
+// DevPanel.jsx) y, una vez "lista", compartirla y llevar el registro manual
+// de la venta (cuotas) — no reemplaza el "Compartir" de páginas propias en
+// ResumenSection, es un circuito paralelo para páginas que arma otra
+// persona.
+function OrdenesSection() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const reload = async () => {
+    setOrders(await apiListDevOrders());
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="space-y-5">
+      <OrdenForm onCreated={reload} />
+      <Panel title="Mis órdenes">
+        {loading ? (
+          <p className="text-xs text-ink-500">Cargando...</p>
+        ) : orders.length === 0 ? (
+          <p className="text-xs text-ink-500">Todavía no cargaste ninguna orden.</p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map((o) => (
+              <OrdenRow key={o.id} order={o} onChanged={reload} />
+            ))}
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+function OrdenForm({ onCreated }) {
+  const [nombreNegocio, setNombreNegocio] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [redesSociales, setRedesSociales] = useState('');
+  const [telefonoCliente, setTelefonoCliente] = useState('');
+  const [info, setInfo] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setStatus(null);
+    const result = await apiCreateDevOrder({ nombreNegocio, instagram, redesSociales, telefonoCliente, info });
+    setBusy(false);
+    if (!result.ok) {
+      setStatus({ type: 'error', msg: result.error });
+      return;
+    }
+    setNombreNegocio('');
+    setInstagram('');
+    setRedesSociales('');
+    setTelefonoCliente('');
+    setInfo('');
+    setStatus({ type: 'ok', msg: 'Orden cargada — ahora aparece disponible para que un developer la agarre.' });
+    onCreated();
+  };
+
+  const inputClass =
+    'w-full border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white outline-none focus:border-gold-500 transition-colors';
+  const labelClass = 'block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5';
+
+  return (
+    <Panel title="Nueva orden de desarrollo">
+      <form onSubmit={submit} className="space-y-3 max-w-sm">
+        <div>
+          <label className={labelClass}>Nombre del negocio</label>
+          <input value={nombreNegocio} onChange={(e) => setNombreNegocio(e.target.value)} required className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Teléfono del cliente</label>
+          <input
+            value={telefonoCliente}
+            onChange={(e) => setTelefonoCliente(e.target.value)}
+            required
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Instagram</label>
+          <input value={instagram} onChange={(e) => setInstagram(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Otras redes sociales</label>
+          <input value={redesSociales} onChange={(e) => setRedesSociales(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Info importante para el developer</label>
+          <textarea
+            value={info}
+            onChange={(e) => setInfo(e.target.value)}
+            rows={3}
+            className={`${inputClass} resize-none`}
+          />
+        </div>
+        {status && (
+          <p className={`text-xs ${status.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{status.msg}</p>
+        )}
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full px-4 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none"
+        >
+          {busy ? 'Cargando...' : 'Cargar orden'}
+        </button>
+      </form>
+    </Panel>
+  );
+}
+
+function OrdenRow({ order, onChanged }) {
+  const estado = ORDEN_ESTADO_INFO[order.estado];
+  const [shareLink, setShareLink] = useState('');
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const [vendida, setVendida] = useState(order.vendida);
+  const [montoTotal, setMontoTotal] = useState(order.montoTotal ?? '');
+  const [cantidadCuotas, setCantidadCuotas] = useState(order.cantidadCuotas ?? '');
+  const [cuotaActual, setCuotaActual] = useState(order.cuotaActual ?? 0);
+  const [ventaBusy, setVentaBusy] = useState(false);
+  const [ventaStatus, setVentaStatus] = useState(null);
+
+  const handleShare = async () => {
+    setSharing(true);
+    const result = await apiShareDevOrder(order.id);
+    setSharing(false);
+    if (!result.ok) return;
+    setShareLink(`${window.location.origin}/#/compartida/${result.shareToken}`);
+  };
+
+  const saveVenta = async () => {
+    setVentaBusy(true);
+    setVentaStatus(null);
+    const result = await apiUpdateDevOrderVenta(order.id, { vendida, montoTotal, cantidadCuotas, cuotaActual });
+    setVentaBusy(false);
+    setVentaStatus(result.ok ? { type: 'ok', msg: 'Guardado.' } : { type: 'error', msg: result.error });
+    if (result.ok) onChanged();
+  };
+
+  return (
+    <div className="border border-white/10 bg-navy-850 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-display font-semibold truncate">{order.nombreNegocio}</p>
+          <p className="text-xs text-ink-500 mt-0.5">{order.telefonoCliente}</p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 ${estado.textClass}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+          {estado.label}
+          {order.developerNombre && ` · ${order.developerNombre}`}
+        </span>
+      </div>
+
+      {order.estado === 'lista' && (
+        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <RowButton onClick={handleShare}>{sharing ? 'Generando...' : 'Compartir'}</RowButton>
+            {order.subdomain && (
+              <RowButton
+                onClick={() => window.open(`https://${order.subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}
+              >
+                Ver página
+              </RowButton>
+            )}
+          </div>
+          {shareLink && (
+            <div className="border border-gold-500/30 bg-gold-500/5 p-3 flex flex-wrap items-center gap-2">
+              <input
+                readOnly
+                value={shareLink}
+                onFocus={(e) => e.target.select()}
+                className="flex-1 min-w-[200px] bg-navy-900 border border-white/10 px-2 py-1.5 text-xs text-gold-400 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(shareLink);
+                  setCopied(true);
+                }}
+                className="px-3 py-1.5 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+              >
+                {copied ? 'Copiado' : 'Copiar'}
+              </button>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex items-center gap-2 text-xs text-ink-300">
+              <input type="checkbox" checked={vendida} onChange={(e) => setVendida(e.target.checked)} />
+              Vendida
+            </label>
+            <div>
+              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
+                Monto total
+              </label>
+              <input
+                type="number"
+                value={montoTotal}
+                onChange={(e) => setMontoTotal(e.target.value)}
+                className="w-28 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
+                Cant. cuotas
+              </label>
+              <input
+                type="number"
+                value={cantidadCuotas}
+                onChange={(e) => setCantidadCuotas(e.target.value)}
+                className="w-20 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
+                Cuota actual
+              </label>
+              <input
+                type="number"
+                value={cuotaActual}
+                onChange={(e) => setCuotaActual(e.target.value)}
+                className="w-20 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
+              />
+            </div>
+            <RowButton onClick={saveVenta}>{ventaBusy ? 'Guardando...' : 'Guardar venta'}</RowButton>
+          </div>
+          {ventaStatus && (
+            <p className={`text-xs ${ventaStatus.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
+              {ventaStatus.msg}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

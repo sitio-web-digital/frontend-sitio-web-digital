@@ -8,7 +8,8 @@ import { useApp } from '../context/AppContext';
 // A dónde va cada rol después de loguearse — mismo criterio en los dos
 // lugares de acá abajo que lo necesitan (ya logueado, y justo después de
 // loguearse).
-const homeForRole = (role) => (role === 'admin' ? '/admin' : role === 'analytics' ? '/analytics' : '/dashboard');
+const homeForRole = (role) =>
+  role === 'admin' ? '/admin' : role === 'analytics' ? '/analytics' : role === 'developer' ? '/dev' : '/dashboard';
 
 export default function Login() {
   const { user, login, register } = useApp();

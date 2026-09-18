@@ -113,6 +113,8 @@ export default function Editor() {
     editingTemplate,
     isBuildingTemplate,
     resetAll,
+    pendingDevOrderId,
+    linkActiveSiteToDevOrder,
   } = useApp();
   const navigate = useNavigate();
   const [device, setDevice] = useState('desktop');
@@ -126,6 +128,9 @@ export default function Editor() {
   const [leaving, setLeaving] = useState(false);
   const [unreadSupport, setUnreadSupport] = useState({ count: 0, tickets: [] });
   const [supportToast, setSupportToast] = useState(null);
+  const [linkingOrder, setLinkingOrder] = useState(false);
+  const [orderLinked, setOrderLinked] = useState(false);
+  const [orderLinkError, setOrderLinkError] = useState(null);
   // Un admin editando (adminEditingSite) siempre puede seguir, sea cual sea
   // el bloqueo — el bloqueo es específicamente para frenar al dueño.
   const editingBlocked = siteLocked && !adminEditingSite;
@@ -283,12 +288,45 @@ export default function Editor() {
     }
   };
 
+  const vincularOrden = async () => {
+    setLinkingOrder(true);
+    setOrderLinkError(null);
+    const result = await linkActiveSiteToDevOrder(pendingDevOrderId);
+    setLinkingOrder(false);
+    if (!result.ok) {
+      setOrderLinkError(result.error);
+      return;
+    }
+    setOrderLinked(true);
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-navy-900 text-white flex flex-col">
       {adminEditingSite && (
         <div className="px-5 sm:px-8 py-2 bg-gold-500/10 border-b border-gold-500/25 text-sm shrink-0 text-ink-200">
           Editando como admin la página de{' '}
           <strong className="text-gold-400">{adminEditingSite.ownerEmail}</strong> — "← Atrás" te devuelve al panel.
+        </div>
+      )}
+      {pendingDevOrderId && !orderLinked && (
+        <div className="px-5 sm:px-8 py-2 bg-gold-500/10 border-b border-gold-500/25 text-sm shrink-0 text-ink-200 flex flex-wrap items-center justify-between gap-2">
+          <span>Esta página va a quedar vinculada a la orden de desarrollo — el vendedor la va a poder compartir apenas la vincules.</span>
+          <div className="flex items-center gap-2 shrink-0">
+            {orderLinkError && <span className="text-xs text-red-300">{orderLinkError}</span>}
+            <button
+              type="button"
+              onClick={vincularOrden}
+              disabled={linkingOrder || !activeSiteId}
+              className="px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs disabled:opacity-40"
+            >
+              {linkingOrder ? 'Vinculando...' : 'Vincular a la orden'}
+            </button>
+          </div>
+        </div>
+      )}
+      {orderLinked && (
+        <div className="px-5 sm:px-8 py-2 bg-emerald-500/10 border-b border-emerald-500/25 text-sm shrink-0 text-emerald-200">
+          Página vinculada a la orden — ya la puede compartir quien la cargó.
         </div>
       )}
       {editingBlocked && (
@@ -307,9 +345,13 @@ export default function Editor() {
           >
             ← Atrás
           </button>
-          <div className="hidden sm:flex">
-            <Logo size="sm" />
-          </div>
+          {/* Cuenta de marca blanca (ver users.white_label) — mismo criterio
+              que DashboardHeader en Dashboard.jsx. */}
+          {!user?.whiteLabel && (
+            <div className="hidden sm:flex">
+              <Logo size="sm" />
+            </div>
+          )}
         </div>
         <div data-tour="device-toggle" className="flex items-center gap-1 border border-white/10 p-1">
           {DEVICES.map((d) => {
@@ -497,6 +539,7 @@ export default function Editor() {
             widgets={widgets}
             textStyles={textStyles}
             onSetTextStyle={setTextStyle}
+            whiteLabel={Boolean(user?.whiteLabel)}
           />
         </div>
       </div>
