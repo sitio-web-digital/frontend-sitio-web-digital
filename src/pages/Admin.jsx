@@ -1821,6 +1821,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
               <option value="admin">Admin</option>
               <option value="analytics">Analytics (Leads y Analytics nada más)</option>
               <option value="vendedor">Vendedor (crea y comparte páginas)</option>
+              <option value="developer">Developer (arma páginas de órdenes de desarrollo)</option>
             </select>
           </div>
           <div className="sm:col-span-2">
@@ -1958,10 +1959,20 @@ function UserRow({ u, users, onSetFreeSubscriptions, onDelete, onSetActive, onRe
                 ? 'text-sky-400'
                 : u.role === 'vendedor'
                   ? 'text-emerald-400'
-                  : 'text-ink-400'
+                  : u.role === 'developer'
+                    ? 'text-violet-400'
+                    : 'text-ink-400'
           }`}
         >
-          {u.role === 'admin' ? 'Admin' : u.role === 'analytics' ? 'Analytics' : u.role === 'vendedor' ? 'Vendedor' : 'Usuario'}
+          {u.role === 'admin'
+            ? 'Admin'
+            : u.role === 'analytics'
+              ? 'Analytics'
+              : u.role === 'vendedor'
+                ? 'Vendedor'
+                : u.role === 'developer'
+                  ? 'Developer'
+                  : 'Usuario'}
         </span>
       </td>
       <td className="py-2.5 pr-4">
