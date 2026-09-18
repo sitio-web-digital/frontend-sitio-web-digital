@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.83.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Mis órdenes: buscador en tiempo real (por negocio o teléfono) y filtros por estado (Pendiente/En progreso/Lista).',
+      },
+      {
+        type: 'fix',
+        text: 'Al compartir una orden, el cartel de "Compartida"/estado del mantenimiento podía superponerse con "Lista · [nombre del developer]" y romper el layout de la fila — ahora cada uno tiene su propia línea.',
+      },
+    ],
+  },
+  {
     version: '1.82.0',
     date: '2026-09-18',
     changes: [

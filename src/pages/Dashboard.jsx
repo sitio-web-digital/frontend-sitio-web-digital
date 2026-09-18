@@ -1228,10 +1228,19 @@ const ORDEN_ESTADO_INFO = {
 // de la venta (cuotas) — no reemplaza el "Compartir" de páginas propias en
 // ResumenSection, es un circuito paralelo para páginas que arma otra
 // persona.
+const ORDENES_FILTROS = [
+  { id: 'todas', label: 'Todas' },
+  { id: 'pendiente', label: 'Pendiente' },
+  { id: 'en_progreso', label: 'En progreso' },
+  { id: 'lista', label: 'Lista' },
+];
+
 function OrdenesSection() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('todas');
 
   const reload = async () => {
     setOrders(await apiListDevOrders());
@@ -1242,6 +1251,18 @@ function OrdenesSection() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Filtro en el cliente, no un fetch nuevo por letra — GET /api/dev-orders
+  // ya trae todas las del vendedor de una, y la cantidad típica (decenas,
+  // no miles) no justifica ida y vuelta al servidor por cada tecla.
+  const ordersFiltradas = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    return orders.filter((o) => {
+      if (filtroEstado !== 'todas' && o.estado !== filtroEstado) return false;
+      if (!q) return true;
+      return o.nombreNegocio?.toLowerCase().includes(q) || o.telefonoCliente?.toLowerCase().includes(q);
+    });
+  }, [orders, busqueda, filtroEstado]);
 
   const nuevaOrdenBtn = (
     <button
@@ -1255,6 +1276,32 @@ function OrdenesSection() {
   return (
     <div className="space-y-5">
       <Panel title="Mis órdenes" action={nuevaOrdenBtn}>
+        {orders.length > 0 && (
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por negocio o teléfono..."
+              className="flex-1 min-w-0 border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors"
+            />
+            <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {ORDENES_FILTROS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFiltroEstado(f.id)}
+                  className={`shrink-0 px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                    filtroEstado === f.id
+                      ? 'bg-gold-500 text-navy-950'
+                      : 'bg-white/5 text-ink-400 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <p className="text-xs text-ink-500">Cargando...</p>
         ) : orders.length === 0 ? (
@@ -1267,9 +1314,11 @@ function OrdenesSection() {
               Cargar la primera
             </button>
           </div>
+        ) : ordersFiltradas.length === 0 ? (
+          <p className="text-xs text-ink-500">Ninguna orden coincide con la búsqueda/filtro.</p>
         ) : (
           <div className="space-y-2">
-            {orders.map((o) => (
+            {ordersFiltradas.map((o) => (
               <OrdenRow key={o.id} order={o} onChanged={reload} />
             ))}
           </div>
@@ -1612,45 +1661,50 @@ function OrdenRow({ order, onChanged }) {
           <p className="font-display font-semibold truncate">{order.nombreNegocio}</p>
           <p className="text-xs text-ink-500 mt-0.5">{order.telefonoCliente}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* share_token ya indica de por sí si se compartió alguna vez —
-              no hace falta un flag nuevo para distinguir "nueva" (lista,
-              nunca compartida) de "ya la mandé". */}
-          {order.estado === 'lista' &&
-            (order.shareToken ? (
-              <>
-                <span className="text-[0.65rem] font-semibold text-ink-500 uppercase tracking-wide">Compartida</span>
-                {/* Una vez compartida, lo que falta es que el cliente pague
-                    el mantenimiento (reclama + arranca la suscripción real
-                    de Mercado Pago, ver publicSites.js claim + subscription.js
-                    start) — order.published/mpStatus vienen del sitio
-                    vinculado, no hace falta nada nuevo para saberlo. */}
-                {order.published ? (
-                  <span className="text-[0.65rem] font-semibold text-emerald-400 uppercase tracking-wide">
-                    Mantenimiento pagado
-                  </span>
-                ) : order.mpStatus === 'pending' || order.mpStatus === 'pending_redirect' ? (
-                  <span className="text-[0.65rem] font-semibold text-amber-400 uppercase tracking-wide">
-                    Pago en proceso
-                  </span>
-                ) : (
-                  <span className="text-[0.65rem] font-semibold text-ink-400 uppercase tracking-wide">
-                    Falta que paguen el mantenimiento
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide bg-red-500 text-white rounded">
-                Nuevo
-              </span>
-            ))}
-          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${estado.textClass}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
-            {estado.label}
-            {order.developerNombre && ` · ${order.developerNombre}`}
-          </span>
-        </div>
+        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 ${estado.textClass}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+          {estado.label}
+          {order.developerNombre && ` · ${order.developerNombre}`}
+        </span>
       </div>
+
+      {/* Fila propia para Compartida/Nuevo + el estado del mantenimiento —
+          antes compartía renglón con "Lista · [developer]" en un
+          contenedor shrink-0 sin wrap, y con "Falta que paguen el
+          mantenimiento" (texto largo) se superponían/rompían el layout.
+          Probado en vivo, 2026-09-18. share_token ya indica de por sí si
+          se compartió alguna vez, no hace falta un flag nuevo. */}
+      {order.estado === 'lista' && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+          {order.shareToken ? (
+            <>
+              <span className="text-[0.65rem] font-semibold text-ink-500 uppercase tracking-wide">Compartida</span>
+              {/* Una vez compartida, lo que falta es que el cliente pague el
+                  mantenimiento (reclama + arranca la suscripción real de
+                  Mercado Pago, ver publicSites.js claim + subscription.js
+                  start) — order.published/mpStatus vienen del sitio
+                  vinculado, no hace falta nada nuevo para saberlo. */}
+              {order.published ? (
+                <span className="text-[0.65rem] font-semibold text-emerald-400 uppercase tracking-wide">
+                  Mantenimiento pagado
+                </span>
+              ) : order.mpStatus === 'pending' || order.mpStatus === 'pending_redirect' ? (
+                <span className="text-[0.65rem] font-semibold text-amber-400 uppercase tracking-wide">
+                  Pago en proceso
+                </span>
+              ) : (
+                <span className="text-[0.65rem] font-semibold text-ink-400 uppercase tracking-wide">
+                  Falta que paguen el mantenimiento
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide bg-red-500 text-white rounded">
+              Nuevo
+            </span>
+          )}
+        </div>
+      )}
 
       {/* La venta (o una seña ya cobrada) puede negociarse ANTES de que el
           developer termine la página — este bloque ya no depende de
