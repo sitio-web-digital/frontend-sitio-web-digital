@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.74.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Cada cambio al registro de venta de una orden de desarrollo (monto, cuotas, próxima cuota) queda anotado con quién y cuándo — Admin > Órdenes de desarrollo suma "Ver historial" por fila para auditarlo. El developer nunca pudo tocar estos campos (el rol no tiene acceso a esa acción).',
+      },
+    ],
+  },
+  {
     version: '1.73.0',
     date: '2026-09-18',
     changes: [

@@ -807,3 +807,13 @@ export async function apiUpdateDevOrderVenta(orderId, { vendida, montoTotal, can
     token,
   });
 }
+
+// Admin > Órdenes de desarrollo — historial de cambios a la venta de una
+// orden puntual (quién cambió qué y cuándo), para poder notar si alguien
+// ajustó los números después de cargados.
+export async function apiAdminGetDevOrderVentaHistorial(orderId) {
+  const token = getToken();
+  if (!token) return [];
+  const result = await request(`/dev-orders/${orderId}/venta-historial`, { token });
+  return result.ok ? result.historial : [];
+}

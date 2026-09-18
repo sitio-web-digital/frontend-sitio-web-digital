@@ -43,6 +43,7 @@ import {
   apiAdminCancelSubscription,
   apiAdminSendMail,
   apiListDevOrders,
+  apiAdminGetDevOrderVentaHistorial,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
@@ -1705,64 +1706,147 @@ function OrdenesDevSection() {
                 <th className="pb-2 pr-4 font-semibold">Estado</th>
                 <th className="pb-2 pr-4 font-semibold">Venta</th>
                 <th className="pb-2 pr-4 font-semibold">Cuota</th>
-                <th className="pb-2 font-semibold">Próxima cuota</th>
+                <th className="pb-2 pr-4 font-semibold">Próxima cuota</th>
+                <th className="pb-2 font-semibold"></th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => {
-                const estado = ORDEN_DEV_ESTADO_INFO[o.estado];
-                const proxima = o.proximaCuota ? o.proximaCuota.slice(0, 10) : null;
-                const vencida = o.vendida && proxima && proxima < hoy;
-                return (
-                  <tr key={o.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                    <td className="py-2.5 pr-4 font-semibold">{o.nombreNegocio}</td>
-                    <td className="py-2.5 pr-4 text-ink-300">
-                      {o.vendedorNombre || '—'}
-                      {o.vendedorEmail && <span className="block text-xs text-ink-500">{o.vendedorEmail}</span>}
-                    </td>
-                    <td className="py-2.5 pr-4 text-ink-300">{o.developerNombre || '—'}</td>
-                    <td className="py-2.5 pr-4">
-                      <span className={`text-xs font-semibold ${estado?.className ?? 'text-ink-400'}`}>
-                        {estado?.label ?? o.estado}
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-4 text-ink-300">
-                      {o.vendida ? (
-                        <>
-                          ${Number(o.montoTotal ?? 0).toLocaleString('es-AR')}
-                          <span className="block text-xs text-ink-500">
-                            {o.cantidadCuotas ? `en ${o.cantidadCuotas} cuotas` : 'sin cuotas cargadas'}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-ink-500">Sin vender</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-4 text-ink-300">
-                      {o.vendida ? `${o.cuotaActual ?? 0}${o.cantidadCuotas ? ` / ${o.cantidadCuotas}` : ''}` : '—'}
-                    </td>
-                    <td className="py-2.5">
-                      {proxima ? (
-                        <span className={`text-xs font-semibold ${vencida ? 'text-red-400' : 'text-ink-300'}`}>
-                          {new Date(proxima).toLocaleDateString('es-AR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
-                          {vencida && ' · vencida'}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-ink-500">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {orders.map((o) => (
+                <OrdenDevRow key={o.id} order={o} hoy={hoy} />
+              ))}
             </tbody>
           </table>
         </div>
       )}
     </Panel>
+  );
+}
+
+const fechaCorta = (d) =>
+  d ? new Date(d.slice ? d.slice(0, 10) : d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+const montoCorto = (n) => (n == null ? '—' : `$${Number(n).toLocaleString('es-AR')}`);
+
+function OrdenDevRow({ order: o, hoy }) {
+  const estado = ORDEN_DEV_ESTADO_INFO[o.estado];
+  const proxima = o.proximaCuota ? o.proximaCuota.slice(0, 10) : null;
+  const vencida = o.vendida && proxima && proxima < hoy;
+
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historial, setHistorial] = useState(null);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+
+  const toggleHistorial = async () => {
+    if (historialOpen) {
+      setHistorialOpen(false);
+      return;
+    }
+    setHistorialOpen(true);
+    if (historial) return;
+    setLoadingHistorial(true);
+    setHistorial(await apiAdminGetDevOrderVentaHistorial(o.id));
+    setLoadingHistorial(false);
+  };
+
+  return (
+    <>
+      <tr className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+        <td className="py-2.5 pr-4 font-semibold">{o.nombreNegocio}</td>
+        <td className="py-2.5 pr-4 text-ink-300">
+          {o.vendedorNombre || '—'}
+          {o.vendedorEmail && <span className="block text-xs text-ink-500">{o.vendedorEmail}</span>}
+        </td>
+        <td className="py-2.5 pr-4 text-ink-300">{o.developerNombre || '—'}</td>
+        <td className="py-2.5 pr-4">
+          <span className={`text-xs font-semibold ${estado?.className ?? 'text-ink-400'}`}>
+            {estado?.label ?? o.estado}
+          </span>
+        </td>
+        <td className="py-2.5 pr-4 text-ink-300">
+          {o.vendida ? (
+            <>
+              {montoCorto(o.montoTotal)}
+              <span className="block text-xs text-ink-500">
+                {o.cantidadCuotas ? `en ${o.cantidadCuotas} cuotas` : 'sin cuotas cargadas'}
+              </span>
+            </>
+          ) : (
+            <span className="text-ink-500">Sin vender</span>
+          )}
+        </td>
+        <td className="py-2.5 pr-4 text-ink-300">
+          {o.vendida ? `${o.cuotaActual ?? 0}${o.cantidadCuotas ? ` / ${o.cantidadCuotas}` : ''}` : '—'}
+        </td>
+        <td className="py-2.5 pr-4">
+          {proxima ? (
+            <span className={`text-xs font-semibold ${vencida ? 'text-red-400' : 'text-ink-300'}`}>
+              {fechaCorta(proxima)}
+              {vencida && ' · vencida'}
+            </span>
+          ) : (
+            <span className="text-xs text-ink-500">—</span>
+          )}
+        </td>
+        <td className="py-2.5 text-right">
+          <button
+            onClick={toggleHistorial}
+            className="text-xs font-semibold text-ink-400 hover:text-white transition-colors whitespace-nowrap"
+          >
+            {historialOpen ? 'Ocultar historial' : 'Ver historial'}
+          </button>
+        </td>
+      </tr>
+      {historialOpen && (
+        <tr className="border-b border-white/5">
+          <td colSpan={7} className="py-3 pr-4 bg-black/20">
+            {/* Quién cargó/tocó los números de la venta y cuándo — no lo ve
+                el vendedor, es específicamente para que un admin pueda
+                notar un ajuste sospechoso después de cargado (ver comentario
+                en db/init.sql > dev_order_venta_historial). */}
+            {loadingHistorial ? (
+              <p className="text-xs text-ink-500">Cargando historial...</p>
+            ) : !historial || historial.length === 0 ? (
+              <p className="text-xs text-ink-500">Sin cambios registrados todavía.</p>
+            ) : (
+              <ul className="space-y-2">
+                {historial.map((h) => {
+                  const cambios = [];
+                  if (h.vendidaAntes !== h.vendidaDespues) {
+                    cambios.push(`Vendida: ${h.vendidaAntes ? 'sí' : 'no'} → ${h.vendidaDespues ? 'sí' : 'no'}`);
+                  }
+                  if (Number(h.montoTotalAntes ?? 0) !== Number(h.montoTotalDespues ?? 0)) {
+                    cambios.push(`Monto: ${montoCorto(h.montoTotalAntes)} → ${montoCorto(h.montoTotalDespues)}`);
+                  }
+                  if (Number(h.cantidadCuotasAntes ?? 0) !== Number(h.cantidadCuotasDespues ?? 0)) {
+                    cambios.push(`Cuotas: ${h.cantidadCuotasAntes ?? '—'} → ${h.cantidadCuotasDespues ?? '—'}`);
+                  }
+                  if (Number(h.cuotaActualAntes ?? 0) !== Number(h.cuotaActualDespues ?? 0)) {
+                    cambios.push(`Cuota actual: ${h.cuotaActualAntes ?? 0} → ${h.cuotaActualDespues ?? 0}`);
+                  }
+                  if ((h.proximaCuotaAntes || '') !== (h.proximaCuotaDespues || '')) {
+                    cambios.push(`Próxima cuota: ${fechaCorta(h.proximaCuotaAntes)} → ${fechaCorta(h.proximaCuotaDespues)}`);
+                  }
+                  return (
+                    <li key={h.id} className="text-xs text-ink-300">
+                      <span className="text-ink-500">
+                        {new Date(h.createdAt).toLocaleString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        · {h.changedByName || h.changedByEmail || 'cuenta eliminada'}:
+                      </span>{' '}
+                      {cambios.join(' · ') || 'sin diferencias'}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 
