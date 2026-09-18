@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.76.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Bug grave de mobile: el Dashboard entero renderizaba más ancho que la pantalla del celular (confirmado con pruebas reales: la ventana efectiva pasaba de 390 a 617px al cargar) — el menú de navegación, al tener scroll propio, agrandaba la grilla de toda la página en vez de scrollear solo. Se corrige con min-w-0 en el contenedor del menú (el clásico problema de CSS grid/flex que no se achica por debajo del contenido). Esto es lo que hacía sentir "incómoda" toda la interfaz del vendedor en el celular, no un problema puntual de una sola pantalla.',
+      },
+      {
+        type: 'fix',
+        text: 'Editor (developer): "Ver información de la orden" quedaba cortado fuera de la pantalla en celular — la fila de la cabecera con deshacer/rehacer, diseño y ese botón no tenía permitido pasar a una segunda línea.',
+      },
+    ],
+  },
+  {
     version: '1.75.0',
     date: '2026-09-18',
     changes: [

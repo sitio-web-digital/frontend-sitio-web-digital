@@ -369,7 +369,11 @@ export default function Editor() {
             );
           })}
         </div>
-        <div className="flex items-center gap-2.5">
+        {/* flex-wrap acá: en celular esta fila (deshacer/rehacer + diseño +
+            ayuda + el botón de la derecha) no entra en una sola línea —
+            confirmado en vivo, 2026-09-18: "Ver información de la orden"
+            (developer) quedaba cortado fuera de la pantalla sin esto. */}
+        <div className="flex flex-wrap items-center gap-2.5 gap-y-2">
           <div className="flex items-center border border-white/10 divide-x divide-white/10 shrink-0">
             <button
               type="button"

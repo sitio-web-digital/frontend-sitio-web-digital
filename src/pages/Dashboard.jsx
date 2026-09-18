@@ -351,7 +351,14 @@ function DashboardHeader({ user, logout, navigate }) {
 // dedo, y un degradé a los costados avisa que hay más para scrollear.
 function SideNav({ items = NAV_ITEMS, section, onChange, badges = {} }) {
   return (
-    <div className="relative lg:static">
+    // min-w-0: sin esto, este div (ítem de un grid de una sola columna en
+    // celular) no se achica por debajo del ancho que pide su contenido —
+    // el nav interno (con scroll propio) terminaba agrandando la GRILLA
+    // ENTERA de la página en vez de scrollear solo, y toda la pantalla
+    // quedaba más ancha que el celular. Bug real, confirmado en vivo
+    // 2026-09-18 (window.innerWidth pasaba de 390 a 617 apenas cargaba el
+    // Dashboard) — clásico de CSS grid/flex, min-width:auto por default.
+    <div className="relative lg:static min-w-0">
       <nav className="flex lg:flex-col gap-1.5 lg:gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-5 sm:-mx-8 lg:mx-0 px-5 sm:px-8 lg:px-1.5 py-1 lg:py-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => {
           const badge = badges[item.id] ?? 0;
