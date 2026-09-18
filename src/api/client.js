@@ -790,12 +790,12 @@ export async function apiShareDevOrder(orderId) {
 // Registro manual de la venta del desarrollo (cobro en cuotas, por fuera
 // de Mercado Pago) — separado del "mantenimiento" real que se cobra vía
 // apiStartSubscription una vez que el cliente reclama la página.
-export async function apiUpdateDevOrderVenta(orderId, { vendida, montoTotal, cantidadCuotas, cuotaActual }) {
+export async function apiUpdateDevOrderVenta(orderId, { vendida, montoTotal, cantidadCuotas, cuotaActual, proximaCuota }) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión.' };
   return request(`/dev-orders/${orderId}/venta`, {
     method: 'PATCH',
-    body: { vendida, montoTotal, cantidadCuotas, cuotaActual },
+    body: { vendida, montoTotal, cantidadCuotas, cuotaActual, proximaCuota },
     token,
   });
 }

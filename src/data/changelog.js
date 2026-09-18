@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.69.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Nueva sección "Órdenes de desarrollo" en Admin: todas las órdenes con su estado, vendedor, developer y el registro de venta en cuotas — muestra la próxima cuota cargada y marca en rojo las vencidas.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Mis órdenes (vendedor): se suma "Próxima cuota" a los datos de la venta, junto a monto total y cantidad de cuotas.',
+      },
+    ],
+  },
+  {
     version: '1.68.0',
     date: '2026-09-18',
     changes: [

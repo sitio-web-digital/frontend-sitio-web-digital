@@ -1089,6 +1089,7 @@ function OrdenRow({ order, onChanged }) {
   const [montoTotal, setMontoTotal] = useState(order.montoTotal ?? '');
   const [cantidadCuotas, setCantidadCuotas] = useState(order.cantidadCuotas ?? '');
   const [cuotaActual, setCuotaActual] = useState(order.cuotaActual ?? 0);
+  const [proximaCuota, setProximaCuota] = useState(order.proximaCuota ? order.proximaCuota.slice(0, 10) : '');
   const [ventaBusy, setVentaBusy] = useState(false);
   const [ventaStatus, setVentaStatus] = useState(null);
 
@@ -1103,7 +1104,13 @@ function OrdenRow({ order, onChanged }) {
   const saveVenta = async () => {
     setVentaBusy(true);
     setVentaStatus(null);
-    const result = await apiUpdateDevOrderVenta(order.id, { vendida, montoTotal, cantidadCuotas, cuotaActual });
+    const result = await apiUpdateDevOrderVenta(order.id, {
+      vendida,
+      montoTotal,
+      cantidadCuotas,
+      cuotaActual,
+      proximaCuota,
+    });
     setVentaBusy(false);
     setVentaStatus(result.ok ? { type: 'ok', msg: 'Guardado.' } : { type: 'error', msg: result.error });
     if (result.ok) onChanged();
@@ -1196,6 +1203,17 @@ function OrdenRow({ order, onChanged }) {
                 value={cuotaActual}
                 onChange={(e) => setCuotaActual(e.target.value)}
                 className="w-20 border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-[0.6rem] uppercase tracking-[0.06em] text-ink-500 mb-1">
+                Próxima cuota
+              </label>
+              <input
+                type="date"
+                value={proximaCuota}
+                onChange={(e) => setProximaCuota(e.target.value)}
+                className="border border-white/10 bg-navy-900 px-2 py-1.5 text-xs text-white outline-none focus:border-gold-500"
               />
             </div>
             <RowButton onClick={saveVenta}>{ventaBusy ? 'Guardando...' : 'Guardar venta'}</RowButton>

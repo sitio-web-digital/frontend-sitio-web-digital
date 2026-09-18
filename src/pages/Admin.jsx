@@ -42,6 +42,7 @@ import {
   apiAdminUpdateTerms,
   apiAdminCancelSubscription,
   apiAdminSendMail,
+  apiListDevOrders,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
@@ -55,6 +56,7 @@ const NAV_ITEMS = [
   { id: 'plantillas', label: 'Plantillas' },
   { id: 'suscripciones', label: 'Suscripciones' },
   { id: 'vendedores', label: 'Vendedores' },
+  { id: 'ordenesdev', label: 'Órdenes de desarrollo' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'soporte', label: 'Soporte' },
   { id: 'terminos', label: 'Términos y Condiciones' },
@@ -414,6 +416,7 @@ export default function Admin() {
             />
           )}
           {section === 'vendedores' && <VendedoresSection vendedores={users.filter((u) => u.role === 'vendedor')} />}
+          {section === 'ordenesdev' && <OrdenesDevSection />}
           {section === 'usuarios' && (
             <UsuariosSection
               users={users}
@@ -1606,6 +1609,123 @@ function VendedoresSection({ vendedores }) {
           </div>
           <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
         </>
+      )}
+    </Panel>
+  );
+}
+
+const ORDEN_DEV_ESTADO_INFO = {
+  pendiente: { label: 'Pendiente', className: 'text-ink-400' },
+  en_progreso: { label: 'En progreso', className: 'text-gold-400' },
+  lista: { label: 'Lista', className: 'text-emerald-400' },
+};
+
+// Admin > Órdenes de desarrollo: a diferencia de Vendedores (que lee
+// sold_by/sold_at de `sites` — la suscripción de mantenimiento que YA cobra
+// Mercado Pago), esto es el otro lado del flujo developer/marca blanca: el
+// registro manual en cuotas de lo que se cobró por ARMAR la página (ver
+// comentario en db/init.sql > dev_orders). Se muestran separados a
+// propósito — son dos ventas distintas de la misma orden. GET
+// /api/dev-orders ya devuelve TODAS las órdenes sin filtrar cuando quien
+// pregunta es admin (ver devOrders.js), así que no hace falta un endpoint
+// aparte.
+function OrdenesDevSection() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchOrders = () => apiListDevOrders().then((result) => {
+    setOrders(result);
+    setLoading(false);
+  });
+
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const hoy = new Date().toISOString().slice(0, 10);
+
+  return (
+    <Panel
+      title="Órdenes de desarrollo"
+      action={<RefreshButton onRefresh={fetchOrders} />}
+    >
+      <p className="text-sm text-ink-400 max-w-2xl mb-4">
+        Registro manual de la venta del desarrollo (armado en cuotas, a cargo del vendedor) — separado del
+        mantenimiento mensual real que cobra Mercado Pago una vez que el cliente reclama la página (ver Vendedores).
+      </p>
+
+      {loading ? (
+        <p className="text-sm text-ink-400">Cargando...</p>
+      ) : orders.length === 0 ? (
+        <p className="text-sm text-ink-400">Todavía no se cargó ninguna orden.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
+                <th className="pb-2 pr-4 font-semibold">Negocio</th>
+                <th className="pb-2 pr-4 font-semibold">Vendedor</th>
+                <th className="pb-2 pr-4 font-semibold">Developer</th>
+                <th className="pb-2 pr-4 font-semibold">Estado</th>
+                <th className="pb-2 pr-4 font-semibold">Venta</th>
+                <th className="pb-2 pr-4 font-semibold">Cuota</th>
+                <th className="pb-2 font-semibold">Próxima cuota</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((o) => {
+                const estado = ORDEN_DEV_ESTADO_INFO[o.estado];
+                const proxima = o.proximaCuota ? o.proximaCuota.slice(0, 10) : null;
+                const vencida = o.vendida && proxima && proxima < hoy;
+                return (
+                  <tr key={o.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                    <td className="py-2.5 pr-4 font-semibold">{o.nombreNegocio}</td>
+                    <td className="py-2.5 pr-4 text-ink-300">
+                      {o.vendedorNombre || '—'}
+                      {o.vendedorEmail && <span className="block text-xs text-ink-500">{o.vendedorEmail}</span>}
+                    </td>
+                    <td className="py-2.5 pr-4 text-ink-300">{o.developerNombre || '—'}</td>
+                    <td className="py-2.5 pr-4">
+                      <span className={`text-xs font-semibold ${estado?.className ?? 'text-ink-400'}`}>
+                        {estado?.label ?? o.estado}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-4 text-ink-300">
+                      {o.vendida ? (
+                        <>
+                          ${Number(o.montoTotal ?? 0).toLocaleString('es-AR')}
+                          <span className="block text-xs text-ink-500">
+                            {o.cantidadCuotas ? `en ${o.cantidadCuotas} cuotas` : 'sin cuotas cargadas'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-ink-500">Sin vender</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 text-ink-300">
+                      {o.vendida ? `${o.cuotaActual ?? 0}${o.cantidadCuotas ? ` / ${o.cantidadCuotas}` : ''}` : '—'}
+                    </td>
+                    <td className="py-2.5">
+                      {proxima ? (
+                        <span className={`text-xs font-semibold ${vencida ? 'text-red-400' : 'text-ink-300'}`}>
+                          {new Date(proxima).toLocaleDateString('es-AR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })}
+                          {vencida && ' · vencida'}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-ink-500">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </Panel>
   );
