@@ -1553,7 +1553,27 @@ function OrdenRow({ order, onChanged }) {
               nunca compartida) de "ya la mandé". */}
           {order.estado === 'lista' &&
             (order.shareToken ? (
-              <span className="text-[0.65rem] font-semibold text-ink-500 uppercase tracking-wide">Compartida</span>
+              <>
+                <span className="text-[0.65rem] font-semibold text-ink-500 uppercase tracking-wide">Compartida</span>
+                {/* Una vez compartida, lo que falta es que el cliente pague
+                    el mantenimiento (reclama + arranca la suscripción real
+                    de Mercado Pago, ver publicSites.js claim + subscription.js
+                    start) — order.published/mpStatus vienen del sitio
+                    vinculado, no hace falta nada nuevo para saberlo. */}
+                {order.published ? (
+                  <span className="text-[0.65rem] font-semibold text-emerald-400 uppercase tracking-wide">
+                    Mantenimiento pagado
+                  </span>
+                ) : order.mpStatus === 'pending' || order.mpStatus === 'pending_redirect' ? (
+                  <span className="text-[0.65rem] font-semibold text-amber-400 uppercase tracking-wide">
+                    Pago en proceso
+                  </span>
+                ) : (
+                  <span className="text-[0.65rem] font-semibold text-ink-400 uppercase tracking-wide">
+                    Falta que paguen el mantenimiento
+                  </span>
+                )}
+              </>
             ) : (
               <span className="px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide bg-red-500 text-white rounded">
                 Nuevo

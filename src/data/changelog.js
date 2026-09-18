@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.80.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Mis órdenes: una vez compartida, se muestra si el cliente ya pagó el mantenimiento, si el pago está en proceso, o si todavía falta — antes, después de "Compartida" no había forma de saber en qué quedó sin ir a buscarlo a otro lado.',
+      },
+    ],
+  },
+  {
     version: '1.79.0',
     date: '2026-09-18',
     changes: [
