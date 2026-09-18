@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.84.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Admin > Resumen contaba páginas publicadas gratis como si pagaran en "Ingreso mensual estimado" — mismo bug que ya se había arreglado en Admin > Suscripciones, acá seguía sin tocar.',
+      },
+    ],
+  },
+  {
     version: '1.83.0',
     date: '2026-09-18',
     changes: [
