@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
@@ -6,6 +6,7 @@ import Logo from '../components/Logo';
 import SupportTicketList from '../components/support/SupportTicketList';
 import NewTicketModal from '../components/support/NewTicketModal';
 import SupportToast from '../components/support/SupportToast';
+import { MenuIcon, ChevronDownIcon } from '../components/icons';
 import { useApp } from '../context/AppContext';
 import { PLAN, slugify, getTemplateById } from '../data/mockData';
 import { hydrateSite } from '../utils/siteSchema';
@@ -86,6 +87,15 @@ export default function Dashboard() {
   const [supportToast, setSupportToast] = useState(null);
   const [ordenesNuevas, setOrdenesNuevas] = useState(0);
   const [ordenToast, setOrdenToast] = useState(null);
+  // Qué órdenes "lista sin compartir" ya vio el vendedor — sin esto, la
+  // insignia/aviso seguían mostrando el mismo conteo aunque ya hubiera
+  // entrado a "Mis órdenes" y las tuviera a la vista (probado en vivo,
+  // 2026-09-18). No hay campo en el backend para esto (a diferencia de
+  // soporte, que sí tiene support_last_seen_at) — alcanza con recordarlo acá
+  // nomás: una orden recién SIGUE contando como pendiente de compartir hasta
+  // que de verdad se comparte, esto solo apaga el AVISO una vez que ya se
+  // vio la lista.
+  const dismissedOrderIdsRef = useRef(new Set());
 
   // Sondea cada 10s si soporte respondió algo nuevo — corre siempre que el
   // Dashboard esté abierto, sin importar en qué sección esté parado, para
@@ -122,7 +132,9 @@ export default function Dashboard() {
     const check = async () => {
       const orders = await apiListDevOrders();
       if (cancelado) return;
-      const sinCompartir = orders.filter((o) => o.estado === 'lista' && !o.shareToken);
+      const sinCompartir = orders
+        .filter((o) => o.estado === 'lista' && !o.shareToken)
+        .filter((o) => !dismissedOrderIdsRef.current.has(o.id));
       setOrdenesNuevas((prev) => {
         if (sinCompartir.length > prev) setOrdenToast(sinCompartir);
         return sinCompartir.length;
@@ -143,6 +155,22 @@ export default function Dashboard() {
     if (section !== 'soporte' || !user) return;
     setSupportToast(null);
     apiMarkSupportSeen();
+  }, [section, user]);
+
+  // Al entrar a "Mis órdenes" se apaga la insignia/aviso — trae la lista
+  // fresca (no confía en lo último que haya traído el sondeo, que puede
+  // tener hasta 10s de desfasaje) y marca esas órdenes como ya vistas, así
+  // el próximo sondeo no las vuelve a contar. Una orden nueva de verdad
+  // (una distinta, no vista todavía) sigue avisando igual.
+  useEffect(() => {
+    if (section !== 'ordenes' || !user || (user.role !== 'vendedor' && user.role !== 'admin')) return;
+    setOrdenToast(null);
+    apiListDevOrders().then((orders) => {
+      orders
+        .filter((o) => o.estado === 'lista' && !o.shareToken)
+        .forEach((o) => dismissedOrderIdsRef.current.add(o.id));
+      setOrdenesNuevas(0);
+    });
   }, [section, user]);
 
   useEffect(() => {
@@ -220,11 +248,15 @@ export default function Dashboard() {
 
   const primerNombre = user.name?.split(' ')[0] || user.email;
   const isVendedor = user.role === 'vendedor' || user.role === 'admin';
-  const navItems = isVendedor ? [...NAV_ITEMS, { id: 'ordenes', label: 'Mis órdenes' }] : NAV_ITEMS;
   // Un vendedor ya no arma páginas propias — solo carga órdenes de
   // desarrollo para que un developer las arme (ver OrdenesSection). Un
   // admin sigue pudiendo crear páginas directo, igual que un usuario común.
   const canCreateSites = user.role !== 'vendedor';
+  // Suscripción es sobre PAGAR una página propia — sin poder armar ni
+  // publicar páginas, un vendedor no tiene nada que hacer ahí (a diferencia
+  // de admin, que sigue pudiendo tener sus propias páginas).
+  const baseNavItems = user.role === 'vendedor' ? NAV_ITEMS.filter((i) => i.id !== 'suscripcion') : NAV_ITEMS;
+  const navItems = isVendedor ? [...baseNavItems, { id: 'ordenes', label: 'Mis órdenes' }] : baseNavItems;
 
   return (
     <div className="min-h-screen bg-navy-900 text-white">
@@ -344,32 +376,92 @@ function DashboardHeader({ user, logout, navigate }) {
 // listas sin compartir) sin pisar la de soporte, y así cualquier pestaña
 // nueva puede sumar la suya sin tocar este componente de nuevo.
 //
-// En celular es una tira horizontal con scroll (`overflow-x-auto`) en vez
-// de una lista vertical — probado en vivo, 2026-09-18: con 5-6 pestañas no
-// entraban todas en una fila y no había ninguna pista visual de que
-// quedaban más a la derecha. Ahora cada botón tiene un ancho mínimo para el
-// dedo, y un degradé a los costados avisa que hay más para scrollear.
+// En celular es un desplegable tipo hamburguesa (botón con la pestaña
+// actual + ícono, se abre una lista) en vez de la tira horizontal con
+// scroll que había antes — probado en vivo, 2026-09-18: con 5-6 pestañas no
+// se veían todas de entrada y había que scrollear para encontrar la que
+// hacía falta, poco claro en un panel que se usa parado en la calle. El
+// sidebar vertical de escritorio no cambia.
 function SideNav({ items = NAV_ITEMS, section, onChange, badges = {} }) {
+  const [open, setOpen] = useState(false);
+  const current = items.find((i) => i.id === section) ?? items[0];
+  const totalBadge = items.reduce((acc, i) => acc + (badges[i.id] ?? 0), 0);
+
+  const select = (id) => {
+    onChange(id);
+    setOpen(false);
+  };
+
   return (
     // min-w-0: sin esto, este div (ítem de un grid de una sola columna en
     // celular) no se achica por debajo del ancho que pide su contenido —
-    // el nav interno (con scroll propio) terminaba agrandando la GRILLA
-    // ENTERA de la página en vez de scrollear solo, y toda la pantalla
-    // quedaba más ancha que el celular. Bug real, confirmado en vivo
-    // 2026-09-18 (window.innerWidth pasaba de 390 a 617 apenas cargaba el
-    // Dashboard) — clásico de CSS grid/flex, min-width:auto por default.
+    // un hijo con posición absoluta/contenido ancho podía agrandar la
+    // GRILLA ENTERA de la página en vez de quedar contenido. Bug real,
+    // confirmado en vivo 2026-09-18 (window.innerWidth pasaba de 390 a 617
+    // apenas cargaba el Dashboard) — clásico de CSS grid/flex, min-
+    // width:auto por default.
     <div className="relative lg:static min-w-0">
-      <nav className="flex lg:flex-col gap-1.5 lg:gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-5 sm:-mx-8 lg:mx-0 px-5 sm:px-8 lg:px-1.5 py-1 lg:py-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Celular: botón hamburguesa con la sección actual */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="lg:hidden w-full flex items-center justify-between gap-2 px-4 py-3 bg-navy-850 border border-white/10 rounded-lg text-sm font-semibold text-white"
+        aria-expanded={open}
+        aria-label="Abrir menú"
+      >
+        <span className="flex items-center gap-2.5 min-w-0">
+          <MenuIcon className="w-4 h-4 shrink-0 text-gold-500" />
+          <span className="truncate">{current.label}</span>
+        </span>
+        <span className="flex items-center gap-1.5 shrink-0">
+          {totalBadge > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-red-500 text-white text-[0.68rem] font-bold leading-none">
+              {totalBadge > 9 ? '9+' : totalBadge}
+            </span>
+          )}
+          <ChevronDownIcon className={`w-4 h-4 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+      {open && (
+        <>
+          {/* Fondo para cerrar tocando afuera — no bloquea el resto de la
+              pantalla (sin overlay oscuro), solo captura el primer toque. */}
+          <div className="lg:hidden fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="lg:hidden absolute z-20 top-full left-0 right-0 mt-1.5 bg-navy-850 border border-white/10 rounded-lg shadow-2xl overflow-hidden">
+            {items.map((item) => {
+              const badge = badges[item.id] ?? 0;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => select(item.id)}
+                  className={`w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-left border-b border-white/5 last:border-b-0 transition-colors ${
+                    section === item.id ? 'bg-gold-500 text-navy-950' : 'text-ink-300 hover:bg-white/5'
+                  }`}
+                >
+                  {item.label}
+                  {badge > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-red-500 text-white text-[0.68rem] font-bold leading-none">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Escritorio: sidebar vertical de siempre */}
+      <nav className="hidden lg:flex lg:flex-col gap-1 lg:sticky lg:top-10 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl lg:p-1.5">
         {items.map((item) => {
           const badge = badges[item.id] ?? 0;
           return (
             <button
               key={item.id}
               onClick={() => onChange(item.id)}
-              className={`shrink-0 min-w-[6.5rem] lg:min-w-0 flex items-center justify-center lg:justify-start gap-2 text-center lg:text-left px-4 py-3 lg:px-3.5 lg:py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 section === item.id
                   ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
-                  : 'bg-white/5 lg:bg-transparent text-ink-400 hover:text-white hover:bg-white/5'
+                  : 'text-ink-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {item.label}
@@ -382,10 +474,6 @@ function SideNav({ items = NAV_ITEMS, section, onChange, badges = {} }) {
           );
         })}
       </nav>
-      {/* Degradé a los costados, solo visible en celular (donde scrollea) —
-          avisa que hay más pestañas sin agregar flechas ni JS de scroll. */}
-      <span className="lg:hidden pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-navy-900 to-transparent" />
-      <span className="lg:hidden pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-navy-900 to-transparent" />
     </div>
   );
 }

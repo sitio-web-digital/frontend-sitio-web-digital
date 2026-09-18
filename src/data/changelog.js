@@ -5,6 +5,30 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.79.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'mejora',
+        text: 'El menú de navegación del Dashboard pasa a ser un desplegable tipo hamburguesa en celular (antes era una tira horizontal con scroll) — se ve entero de una, sin tener que scrollear para encontrar la pestaña que hace falta.',
+      },
+      {
+        type: 'fix',
+        text: 'Se saca "Suscripción" del menú del vendedor — sin poder armar ni publicar páginas propias, no tiene nada que hacer ahí.',
+      },
+    ],
+  },
+  {
+    version: '1.78.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'La insignia y el aviso de "órdenes listas sin compartir" no se apagaban al entrar a "Mis órdenes" — seguían mostrando el mismo conteo aunque el vendedor ya las tuviera a la vista. Ahora entrar a la pestaña las marca como vistas; una orden nueva de verdad sigue avisando igual.',
+      },
+    ],
+  },
+  {
     version: '1.77.0',
     date: '2026-09-18',
     changes: [
