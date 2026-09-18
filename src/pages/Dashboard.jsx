@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
 import Logo from '../components/Logo';
@@ -972,6 +973,7 @@ const ORDEN_ESTADO_INFO = {
 function OrdenesSection() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
 
   const reload = async () => {
     setOrders(await apiListDevOrders());
@@ -983,14 +985,30 @@ function OrdenesSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const nuevaOrdenBtn = (
+    <button
+      onClick={() => setFormOpen(true)}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
+    >
+      + Nueva orden
+    </button>
+  );
+
   return (
     <div className="space-y-5">
-      <OrdenForm onCreated={reload} />
-      <Panel title="Mis órdenes">
+      <Panel title="Mis órdenes" action={nuevaOrdenBtn}>
         {loading ? (
           <p className="text-xs text-ink-500">Cargando...</p>
         ) : orders.length === 0 ? (
-          <p className="text-xs text-ink-500">Todavía no cargaste ninguna orden.</p>
+          <div className="border border-dashed border-white/15 bg-navy-900 p-6 text-center">
+            <p className="text-ink-400 text-sm mb-4">Todavía no cargaste ninguna orden.</p>
+            <button
+              onClick={() => setFormOpen(true)}
+              className="px-5 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
+            >
+              Cargar la primera
+            </button>
+          </div>
         ) : (
           <div className="space-y-2">
             {orders.map((o) => (
@@ -999,87 +1017,143 @@ function OrdenesSection() {
           </div>
         )}
       </Panel>
+
+      {/* Portal a document.body: esta sección vive adentro del contenedor
+          con animate-fade-in-up del Dashboard, y un transform en un
+          ancestro (aunque la animación ya haya terminado) arma un nuevo
+          containing block para todo lo `fixed` adentro — el modal quedaba
+          centrado contra ESE div en vez de contra la ventana entera (mismo
+          bug que ya se había arreglado una vez para NewTicketModal,
+          sacándolo del árbol en vez de anidarlo acá). El portal evita tener
+          que repetir esa solución (sacar el estado a Dashboard) de nuevo. */}
+      {formOpen &&
+        createPortal(
+          <NewOrdenModal
+            onClose={() => setFormOpen(false)}
+            onCreated={() => {
+              setFormOpen(false);
+              reload();
+            }}
+          />,
+          document.body
+        )}
     </div>
   );
 }
 
-function OrdenForm({ onCreated }) {
+// Antes eran 5 campos (Instagram y "otras redes sociales" por separado) —
+// probado en vivo, 2026-09-18: ese segundo campo nunca se mostraba en
+// ningún lado (ni DevPanel ni Admin lo leen), así que era carga sin
+// ningún uso después. Se unifican en un solo campo de texto libre.
+function NewOrdenModal({ onClose, onCreated }) {
   const [nombreNegocio, setNombreNegocio] = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [redesSociales, setRedesSociales] = useState('');
   const [telefonoCliente, setTelefonoCliente] = useState('');
+  const [redes, setRedes] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [error, setError] = useState('');
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!nombreNegocio.trim() || !telefonoCliente.trim()) return;
     setBusy(true);
-    setStatus(null);
-    const result = await apiCreateDevOrder({ nombreNegocio, instagram, redesSociales, telefonoCliente, info });
+    setError('');
+    const result = await apiCreateDevOrder({
+      nombreNegocio: nombreNegocio.trim(),
+      telefonoCliente: telefonoCliente.trim(),
+      instagram: redes.trim(),
+      info: info.trim(),
+    });
     setBusy(false);
     if (!result.ok) {
-      setStatus({ type: 'error', msg: result.error });
+      setError(result.error);
       return;
     }
-    setNombreNegocio('');
-    setInstagram('');
-    setRedesSociales('');
-    setTelefonoCliente('');
-    setInfo('');
-    setStatus({ type: 'ok', msg: 'Orden cargada — ahora aparece disponible para que un developer la agarre.' });
     onCreated();
   };
 
   const inputClass =
-    'w-full border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white outline-none focus:border-gold-500 transition-colors';
+    'w-full border border-white/10 bg-navy-900 px-3.5 py-2.5 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors';
   const labelClass = 'block font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink-500 mb-1.5';
 
   return (
-    <Panel title="Nueva orden de desarrollo">
-      <form onSubmit={submit} className="space-y-3 max-w-sm">
-        <div>
-          <label className={labelClass}>Nombre del negocio</label>
-          <input value={nombreNegocio} onChange={(e) => setNombreNegocio(e.target.value)} required className={inputClass} />
+    <div
+      className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md border border-white/10 bg-navy-850 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-navy-950 border-b border-white/8 px-6 py-4 flex items-center justify-between gap-2">
+          <span className="text-white font-semibold text-sm">Nueva orden de desarrollo</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="text-ink-400 hover:text-white transition-colors text-lg leading-none"
+          >
+            ✕
+          </button>
         </div>
-        <div>
-          <label className={labelClass}>Teléfono del cliente</label>
-          <input
-            value={telefonoCliente}
-            onChange={(e) => setTelefonoCliente(e.target.value)}
-            required
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass}>Instagram</label>
-          <input value={instagram} onChange={(e) => setInstagram(e.target.value)} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>Otras redes sociales</label>
-          <input value={redesSociales} onChange={(e) => setRedesSociales(e.target.value)} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>Info importante para el developer</label>
-          <textarea
-            value={info}
-            onChange={(e) => setInfo(e.target.value)}
-            rows={3}
-            className={`${inputClass} resize-none`}
-          />
-        </div>
-        {status && (
-          <p className={`text-xs ${status.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{status.msg}</p>
-        )}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full px-4 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm disabled:opacity-40 disabled:pointer-events-none"
-        >
-          {busy ? 'Cargando...' : 'Cargar orden'}
-        </button>
-      </form>
-    </Panel>
+
+        <form onSubmit={submit} className="p-6 space-y-3">
+          <div>
+            <label className={labelClass}>Nombre del negocio</label>
+            <input
+              required
+              autoFocus
+              value={nombreNegocio}
+              onChange={(e) => setNombreNegocio(e.target.value)}
+              maxLength={80}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Teléfono del cliente</label>
+            <input
+              required
+              value={telefonoCliente}
+              onChange={(e) => setTelefonoCliente(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Redes sociales <span className="text-ink-500 normal-case">(opcional)</span>
+            </label>
+            <input
+              value={redes}
+              onChange={(e) => setRedes(e.target.value)}
+              placeholder="Instagram, Facebook..."
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Info importante para el developer <span className="text-ink-500 normal-case">(opcional)</span>
+            </label>
+            <textarea
+              value={info}
+              onChange={(e) => setInfo(e.target.value)}
+              rows={3}
+              placeholder="Colores, referentes, algo que no tenga que preguntar..."
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={!nombreNegocio.trim() || !telefonoCliente.trim() || busy}
+            className="w-full inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold py-3 disabled:opacity-40 disabled:pointer-events-none"
+          >
+            {busy ? 'Cargando...' : 'Cargar orden'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 

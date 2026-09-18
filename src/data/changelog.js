@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.71.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'mejora',
+        text: '"Nueva orden de desarrollo" pasa a ser una ventana modal en vez de un formulario siempre desplegado arriba de la lista — Mis órdenes queda más despejado, sobre todo en el celular. De paso se sacó el campo "Otras redes sociales" (nunca se mostraba en ningún lado) y se unificó con Instagram en un solo campo "Redes sociales".',
+      },
+    ],
+  },
+  {
     version: '1.70.0',
     date: '2026-09-18',
     changes: [
