@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.77.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'El monto total y la cantidad de cuotas de una venta quedan fijos una vez cargados — es un registro histórico, no algo que se pueda ir ajustando con el tiempo (lo hace cumplir el servidor, no solo la interfaz). Lo único que se sigue actualizando normalmente es en qué cuota va y cuándo es la próxima.',
+      },
+    ],
+  },
+  {
     version: '1.76.0',
     date: '2026-09-18',
     changes: [

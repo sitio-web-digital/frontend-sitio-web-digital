@@ -1419,6 +1419,11 @@ function OrdenRow({ order, onChanged }) {
   const [proximaCuota, setProximaCuota] = useState(order.proximaCuota ? order.proximaCuota.slice(0, 10) : '');
   const [ventaBusy, setVentaBusy] = useState(false);
   const [ventaStatus, setVentaStatus] = useState(null);
+  // Monto y cuotas quedan fijos una vez cargados — pedido explícito: es un
+  // registro histórico, no algo que se pueda ir ajustando con el tiempo. El
+  // servidor ya lo hace cumplir (ver devOrders.js PATCH /:id/venta); esto
+  // solo evita mostrar campos editables que el guardado va a ignorar.
+  const locked = order.vendida && order.montoTotal != null;
 
   const handleShare = async () => {
     setSharing(true);
@@ -1492,7 +1497,7 @@ function OrdenRow({ order, onChanged }) {
             </RowButton>
           )}
           <RowButton onClick={() => setVentaOpen((v) => !v)}>
-            {ventaOpen ? 'Cerrar venta' : vendida ? 'Editar venta' : 'Cargar venta / seña'}
+            {ventaOpen ? 'Cerrar' : locked ? 'Actualizar cuota' : vendida ? 'Editar venta' : 'Cargar venta / seña'}
           </RowButton>
         </div>
 
@@ -1544,35 +1549,50 @@ function OrdenRow({ order, onChanged }) {
 
           {ventaOpen && (
             <div className="space-y-3 max-w-sm">
-              <label className="flex items-center gap-2 text-sm text-ink-200">
-                <input
-                  type="checkbox"
-                  checked={vendida}
-                  onChange={(e) => setVendida(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                Vendida
-              </label>
+              {locked ? (
+                <p className="text-xs text-ink-500">
+                  <span className="text-emerald-400 font-semibold">Vendida</span> · monto y cuotas ya quedaron
+                  registrados — de acá en más solo se actualiza en qué cuota va.
+                </p>
+              ) : (
+                <label className="flex items-center gap-2 text-sm text-ink-200">
+                  <input
+                    type="checkbox"
+                    checked={vendida}
+                    onChange={(e) => setVendida(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  Vendida
+                </label>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={labelClass}>Monto total</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={montoTotal}
-                    onChange={(e) => setMontoTotal(e.target.value)}
-                    className={inputClass}
-                  />
+                  {locked ? (
+                    <p className="px-3 py-2.5 text-sm text-ink-300">${Number(montoTotal || 0).toLocaleString('es-AR')}</p>
+                  ) : (
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={montoTotal}
+                      onChange={(e) => setMontoTotal(e.target.value)}
+                      className={inputClass}
+                    />
+                  )}
                 </div>
                 <div>
                   <label className={labelClass}>Cant. cuotas</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={cantidadCuotas}
-                    onChange={(e) => setCantidadCuotas(e.target.value)}
-                    className={inputClass}
-                  />
+                  {locked ? (
+                    <p className="px-3 py-2.5 text-sm text-ink-300">{cantidadCuotas || '—'}</p>
+                  ) : (
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={cantidadCuotas}
+                      onChange={(e) => setCantidadCuotas(e.target.value)}
+                      className={inputClass}
+                    />
+                  )}
                 </div>
                 <div>
                   <label className={labelClass}>Cuota actual</label>
