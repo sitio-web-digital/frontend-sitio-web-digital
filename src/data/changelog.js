@@ -5,6 +5,24 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.73.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Al vendedor le llega un mail apenas un developer agarra su orden (antes solo avisaba cuando la terminaba) — mismo criterio que el aviso de "orden lista".',
+      },
+      {
+        type: 'nuevo',
+        text: 'Mis órdenes: las que están listas y todavía no compartiste tienen una etiqueta "Nuevo", con una insignia en la pestaña del menú (y un aviso la primera vez) para no perderlas de vista — las que ya compartiste dicen "Compartida".',
+      },
+      {
+        type: 'mejora',
+        text: 'El menú de navegación del Dashboard (Resumen/Suscripción/Mis órdenes/etc) se rehizo para celular: botones más grandes al tacto y un degradé a los costados que avisa que hay más pestañas para scrollear.',
+      },
+    ],
+  },
+  {
     version: '1.72.0',
     date: '2026-09-18',
     changes: [

@@ -84,6 +84,8 @@ export default function Dashboard() {
   const [newTicketOpen, setNewTicketOpen] = useState(false);
   const [unreadSupport, setUnreadSupport] = useState({ count: 0, tickets: [] });
   const [supportToast, setSupportToast] = useState(null);
+  const [ordenesNuevas, setOrdenesNuevas] = useState(0);
+  const [ordenToast, setOrdenToast] = useState(null);
 
   // Sondea cada 10s si soporte respondió algo nuevo — corre siempre que el
   // Dashboard esté abierto, sin importar en qué sección esté parado, para
@@ -98,6 +100,32 @@ export default function Dashboard() {
       setUnreadSupport((prev) => {
         if (result.count > prev.count) setSupportToast(result);
         return result;
+      });
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
+  }, [user]);
+
+  // Mismo mecanismo que el sondeo de soporte de arriba, para "órdenes
+  // listas que todavía no compartiste" (estado === 'lista' sin share_token
+  // — el token ya indica de por sí si se compartió alguna vez, no hace
+  // falta un flag nuevo). Corre siempre que el Dashboard esté abierto, no
+  // solo parado en "Mis órdenes", para que la insignia y el aviso avisen
+  // igual desde Resumen.
+  useEffect(() => {
+    if (!user || (user.role !== 'vendedor' && user.role !== 'admin')) return undefined;
+    let cancelado = false;
+    const check = async () => {
+      const orders = await apiListDevOrders();
+      if (cancelado) return;
+      const sinCompartir = orders.filter((o) => o.estado === 'lista' && !o.shareToken);
+      setOrdenesNuevas((prev) => {
+        if (sinCompartir.length > prev) setOrdenToast(sinCompartir);
+        return sinCompartir.length;
       });
     };
     check();
@@ -209,9 +237,21 @@ export default function Dashboard() {
           onClose={() => setSupportToast(null)}
         />
       )}
+      {ordenToast && (
+        <OrdenToast
+          orders={ordenToast}
+          onVer={() => setSection('ordenes')}
+          onClose={() => setOrdenToast(null)}
+        />
+      )}
 
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 grid lg:grid-cols-[200px_1fr] gap-8 items-start">
-        <SideNav items={navItems} section={section} onChange={setSection} unreadCount={unreadSupport.count} />
+        <SideNav
+          items={navItems}
+          section={section}
+          onChange={setSection}
+          badges={{ soporte: unreadSupport.count, ordenes: ordenesNuevas }}
+        />
 
         <div className="min-w-0 animate-fade-in-up">
           {section === 'resumen' && (
@@ -299,28 +339,71 @@ function DashboardHeader({ user, logout, navigate }) {
   );
 }
 
-function SideNav({ items = NAV_ITEMS, section, onChange, unreadCount = 0 }) {
+// `badges` es un mapa {itemId: número} en vez de un solo `unreadCount` fijo
+// a "soporte" — Mis órdenes (vendedor) necesita su propia insignia (órdenes
+// listas sin compartir) sin pisar la de soporte, y así cualquier pestaña
+// nueva puede sumar la suya sin tocar este componente de nuevo.
+//
+// En celular es una tira horizontal con scroll (`overflow-x-auto`) en vez
+// de una lista vertical — probado en vivo, 2026-09-18: con 5-6 pestañas no
+// entraban todas en una fila y no había ninguna pista visual de que
+// quedaban más a la derecha. Ahora cada botón tiene un ancho mínimo para el
+// dedo, y un degradé a los costados avisa que hay más para scrollear.
+function SideNav({ items = NAV_ITEMS, section, onChange, badges = {} }) {
   return (
-    <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:p-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onChange(item.id)}
-          className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            section === item.id
-              ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
-              : 'text-ink-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          {item.label}
-          {item.id === 'soporte' && unreadCount > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-red-500 text-white text-[0.68rem] font-bold leading-none">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
+    <div className="relative lg:static">
+      <nav className="flex lg:flex-col gap-1.5 lg:gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-5 sm:-mx-8 lg:mx-0 px-5 sm:px-8 lg:px-1.5 py-1 lg:py-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {items.map((item) => {
+          const badge = badges[item.id] ?? 0;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onChange(item.id)}
+              className={`shrink-0 min-w-[6.5rem] lg:min-w-0 flex items-center justify-center lg:justify-start gap-2 text-center lg:text-left px-4 py-3 lg:px-3.5 lg:py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                section === item.id
+                  ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
+                  : 'bg-white/5 lg:bg-transparent text-ink-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {item.label}
+              {badge > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-red-500 text-white text-[0.68rem] font-bold leading-none">
+                  {badge > 9 ? '9+' : badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+      {/* Degradé a los costados, solo visible en celular (donde scrollea) —
+          avisa que hay más pestañas sin agregar flechas ni JS de scroll. */}
+      <span className="lg:hidden pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-navy-900 to-transparent" />
+      <span className="lg:hidden pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-navy-900 to-transparent" />
+    </div>
+  );
+}
+
+function OrdenToast({ orders, onVer, onClose }) {
+  return (
+    <div className="fixed bottom-6 right-6 z-50 w-80 border border-gold-500/40 bg-navy-850 shadow-2xl p-4 animate-fade-in-up">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold text-white">
+          {orders.length === 1
+            ? `${orders[0].nombreNegocio} ya está lista`
+            : `${orders.length} órdenes están listas para compartir`}
+        </p>
+        <button onClick={onClose} className="text-ink-500 hover:text-white transition-colors shrink-0" aria-label="Cerrar">
+          ✕
         </button>
-      ))}
-    </nav>
+      </div>
+      <p className="text-xs text-ink-400 mt-1.5">Todavía no le mandaste el link al cliente.</p>
+      <button
+        onClick={onVer}
+        className="mt-3 w-full bg-gold-500 hover:bg-gold-400 text-navy-950 font-bold text-sm py-2 transition-colors"
+      >
+        Ver en Mis órdenes →
+      </button>
+    </div>
   );
 }
 
@@ -1351,11 +1434,24 @@ function OrdenRow({ order, onChanged }) {
           <p className="font-display font-semibold truncate">{order.nombreNegocio}</p>
           <p className="text-xs text-ink-500 mt-0.5">{order.telefonoCliente}</p>
         </div>
-        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 ${estado.textClass}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
-          {estado.label}
-          {order.developerNombre && ` · ${order.developerNombre}`}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* share_token ya indica de por sí si se compartió alguna vez —
+              no hace falta un flag nuevo para distinguir "nueva" (lista,
+              nunca compartida) de "ya la mandé". */}
+          {order.estado === 'lista' &&
+            (order.shareToken ? (
+              <span className="text-[0.65rem] font-semibold text-ink-500 uppercase tracking-wide">Compartida</span>
+            ) : (
+              <span className="px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide bg-red-500 text-white rounded">
+                Nuevo
+              </span>
+            ))}
+          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${estado.textClass}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+            {estado.label}
+            {order.developerNombre && ` · ${order.developerNombre}`}
+          </span>
+        </div>
       </div>
 
       {/* La venta (o una seña ya cobrada) puede negociarse ANTES de que el
