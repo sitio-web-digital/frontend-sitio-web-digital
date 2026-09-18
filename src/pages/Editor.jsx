@@ -281,6 +281,10 @@ export default function Editor() {
       // como si fuera su página (ver isBuildingTemplate en AppContext).
       navigate('/admin');
       resetAll();
+    } else if (user?.role === 'developer') {
+      // Un developer arma páginas para órdenes, no para sí mismo — no tiene
+      // Dashboard propio, vuelve al pool de órdenes (ver DevPanel.jsx).
+      navigate('/dev');
     } else if (user) {
       navigate('/dashboard');
     } else {
@@ -476,13 +480,20 @@ export default function Editor() {
               <LayoutIcon className="w-4 h-4" /> {editingTemplate ? 'Guardar cambios' : 'Guardar como plantilla'}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => navigate('/preview')}
-            className="px-4 py-2 bg-gold-500 text-navy-950 font-bold text-sm hover:bg-gold-400 transition-colors shrink-0"
-          >
-            Ver mi página →
-          </button>
+          {/* Un developer arma la página de una orden, no la suya propia —
+              este botón lleva a la vista de "publicar/pagar" del cliente
+              final, que acá no tiene sentido (esa decisión es del cliente,
+              después de reclamarla). La acción del developer es "Vincular a
+              la orden", en el cartel de arriba. */}
+          {user?.role !== 'developer' && (
+            <button
+              type="button"
+              onClick={() => navigate('/preview')}
+              className="px-4 py-2 bg-gold-500 text-navy-950 font-bold text-sm hover:bg-gold-400 transition-colors shrink-0"
+            >
+              Ver mi página →
+            </button>
+          )}
         </div>
       </div>
 

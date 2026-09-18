@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
@@ -8,8 +8,16 @@ import { useApp } from '../context/AppContext';
 import { recomendarPlantillaPorTexto, recomendarPlantillaPorTags } from '../data/mockData';
 
 export default function Gallery() {
-  const { quiz, selectableTemplates, rubros, chooseTemplate, logoUrl } = useApp();
+  const { user, quiz, selectableTemplates, rubros, chooseTemplate, logoUrl } = useApp();
   const navigate = useNavigate();
+
+  // Un vendedor ya no arma páginas propias (ni las suyas ni por esta vía) —
+  // a diferencia de un developer, que SÍ llega acá para armar la página de
+  // una orden (ver DevPanel.jsx), así que este guard es puntual a vendedor.
+  useEffect(() => {
+    if (user?.role === 'vendedor') navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
+  if (user?.role === 'vendedor') return null;
   // Se ofrecen las plantillas de fábrica y las creadas desde el editor,
   // siempre juntas (ver `selectableTemplates` en AppContext) — antes, apenas
   // existía una plantilla propia, tapaba el catálogo de fábrica entero.

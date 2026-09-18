@@ -5,6 +5,34 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.67.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Editor, armando la página de una orden de desarrollo: el botón "Ver mi página →" (que lleva al flujo de publicar/pagar del cliente final) ya no aparece para un developer — la única acción es "Vincular a la orden", en el cartel de arriba. "← Atrás" también vuelve al pool de órdenes (/dev) en vez de a un Dashboard que un developer no tiene.',
+      },
+      {
+        type: 'nuevo',
+        text: 'DevPanel: las órdenes ya vinculadas ("lista") tienen un botón "Editar" para que el developer pueda volver a entrar y corregir algo, sin depender de que ya tenga subdominio asignado.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Al vincular una orden, le llega un mail al vendedor avisando que la página está lista, con un link directo a "Mis órdenes" para generar el link del cliente.',
+      },
+    ],
+  },
+  {
+    version: '1.66.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'mejora',
+        text: 'Un vendedor ya no arma páginas propias — su única vía para conseguir una página es cargar una orden de desarrollo para que la arme un developer (ver "Mis órdenes"). El botón "Crear nueva página" y el acceso directo al quiz/plantillas quedaron reservados a cuentas admin y usuario.',
+      },
+    ],
+  },
+  {
     version: '1.65.0',
     date: '2026-09-18',
     changes: [

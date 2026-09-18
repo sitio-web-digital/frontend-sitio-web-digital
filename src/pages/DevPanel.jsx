@@ -17,7 +17,7 @@ const ESTADO_INFO = {
 // manual). Una vez agarrada, arma la página con el Gallery/Editor de
 // siempre (no hay editor aparte) y la vincula desde ahí.
 export default function DevPanel() {
-  const { user, authReady, logout, quiz, setQuiz, setPendingDevOrderId } = useApp();
+  const { user, authReady, logout, quiz, setQuiz, setPendingDevOrderId, switchSite } = useApp();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +61,15 @@ export default function DevPanel() {
     setQuiz({ ...quiz, nombreNegocio: order.nombreNegocio, whatsapp: order.telefonoCliente });
     setPendingDevOrderId(order.id);
     navigate('/plantillas');
+  };
+
+  // Una orden "lista" ya quedó vinculada a un sitio propio del developer —
+  // volver a editarla no pasa por el quiz/plantillas de nuevo, es el mismo
+  // switchSite que ya usa Dashboard.jsx para reabrir una página existente.
+  const editarPagina = async (order) => {
+    if (!order.siteId) return;
+    await switchSite(order.siteId);
+    navigate('/editor');
   };
 
   const pendientes = orders.filter((o) => o.estado === 'pendiente');
@@ -158,15 +167,25 @@ export default function DevPanel() {
                           Crear página para esta orden
                         </button>
                       )}
-                      {o.estado === 'lista' && o.subdomain && (
-                        <a
-                          href={`https://${o.subdomain}.${ROOT_DOMAIN}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-2 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors"
-                        >
-                          Ver página
-                        </a>
+                      {o.estado === 'lista' && (
+                        <>
+                          <button
+                            onClick={() => editarPagina(o)}
+                            className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+                          >
+                            Editar
+                          </button>
+                          {o.subdomain && (
+                            <a
+                              href={`https://${o.subdomain}.${ROOT_DOMAIN}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-2 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors"
+                            >
+                              Ver página
+                            </a>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

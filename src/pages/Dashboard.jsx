@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
 import Logo from '../components/Logo';
 import SupportTicketList from '../components/support/SupportTicketList';
@@ -68,7 +68,11 @@ export default function Dashboard() {
     shareSite,
   } = useApp();
   const navigate = useNavigate();
-  const [section, setSection] = useState('resumen');
+  const [searchParams] = useSearchParams();
+  // El mail de "orden lista" (ver sendDevOrderReadyEmail en el backend)
+  // linkea directo a ?tab=ordenes — sin esto, quien lo abre cae siempre en
+  // Resumen y tiene que ir a buscar la pestaña a mano.
+  const [section, setSection] = useState(searchParams.get('tab') === 'ordenes' ? 'ordenes' : 'resumen');
   // El modal vive afuera del contenedor con `animate-fade-in-up`: esa clase
   // deja un `transform` (aunque sea "sin desplazamiento") aplicado al
   // terminar la animación, y eso arma un nuevo contenedor para todo lo que
@@ -186,6 +190,10 @@ export default function Dashboard() {
   const primerNombre = user.name?.split(' ')[0] || user.email;
   const isVendedor = user.role === 'vendedor' || user.role === 'admin';
   const navItems = isVendedor ? [...NAV_ITEMS, { id: 'ordenes', label: 'Mis órdenes' }] : NAV_ITEMS;
+  // Un vendedor ya no arma páginas propias — solo carga órdenes de
+  // desarrollo para que un developer las arme (ver OrdenesSection). Un
+  // admin sigue pudiendo crear páginas directo, igual que un usuario común.
+  const canCreateSites = user.role !== 'vendedor';
 
   return (
     <div className="min-h-screen bg-navy-900 text-white">
@@ -213,6 +221,7 @@ export default function Dashboard() {
               startNewSite={startNewSite}
               isFree={(user.freeSubscriptions ?? 0) > 0}
               canShare={user.role === 'vendedor' || user.role === 'admin'}
+              canCreate={canCreateSites}
               shareSite={shareSite}
             />
           )}
@@ -226,6 +235,7 @@ export default function Dashboard() {
               onChanged={fetchMySites}
               navigate={navigate}
               freeSubscriptions={user.freeSubscriptions ?? 0}
+              canCreate={canCreateSites}
             />
           )}
           {section === 'soporte' && (
@@ -310,7 +320,18 @@ function SideNav({ items = NAV_ITEMS, section, onChange, unreadCount = 0 }) {
 // KPIs primero (arriba de todo, antes de la lista de páginas): son agregados
 // de las páginas publicadas, mismos íconos que /estadisticas para que se
 // sienta el mismo dato en los dos lugares.
-function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switchSite, startNewSite, isFree, canShare, shareSite }) {
+function ResumenSection({
+  primerNombre,
+  pages,
+  navigate,
+  updateSubdomain,
+  switchSite,
+  startNewSite,
+  isFree,
+  canShare,
+  canCreate,
+  shareSite,
+}) {
   const publicadas = pages.filter((p) => p.status === 'publicada');
   const visitas = publicadas.reduce((acc, p) => acc + p.kpis.visitas, 0);
   const whatsapp = publicadas.reduce((acc, p) => acc + p.kpis.whatsapp, 0);
@@ -332,16 +353,18 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switch
 
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Tus páginas</p>
-        <button
-          onClick={() => {
-            startNewSite();
-            navigate('/quiz');
-          }}
-          data-track="dashboard_crear_pagina"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
-        >
-          Crear nueva página
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => {
+              startNewSite();
+              navigate('/quiz');
+            }}
+            data-track="dashboard_crear_pagina"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
+          >
+            Crear nueva página
+          </button>
+        )}
       </div>
       <div className="space-y-3">
         {pages.map((p) => (
@@ -358,16 +381,25 @@ function ResumenSection({ primerNombre, pages, navigate, updateSubdomain, switch
         ))}
         {pages.length === 0 && (
           <div className="border border-dashed border-white/15 bg-navy-850 p-6 text-center">
-            <p className="text-ink-400 text-sm mb-4">Todavía no tenés una página propia.</p>
-            <button
-              onClick={() => {
-                startNewSite();
-                navigate('/quiz');
-              }}
-              className="px-5 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
-            >
-              Crear mi página web
-            </button>
+            {canCreate ? (
+              <>
+                <p className="text-ink-400 text-sm mb-4">Todavía no tenés una página propia.</p>
+                <button
+                  onClick={() => {
+                    startNewSite();
+                    navigate('/quiz');
+                  }}
+                  className="px-5 py-2.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-sm"
+                >
+                  Crear mi página web
+                </button>
+              </>
+            ) : (
+              <p className="text-ink-400 text-sm">
+                Todavía no tenés páginas propias — cargá una orden de desarrollo en "Mis órdenes" para que un
+                developer arme una.
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -589,6 +621,7 @@ function SubscriptionSection({
   onChanged,
   navigate,
   freeSubscriptions,
+  canCreate,
 }) {
   const isFree = (freeSubscriptions ?? 0) > 0;
   const publicadas = pages.filter((p) => p.status === 'publicada');
@@ -637,18 +670,20 @@ function SubscriptionSection({
         ))}
       </div>
 
-      {pages.length === 0 && <p className="text-xs text-ink-500 mt-4">Creá tu página para activar un plan.</p>}
+      {pages.length === 0 && canCreate && <p className="text-xs text-ink-500 mt-4">Creá tu página para activar un plan.</p>}
 
-      <button
-        onClick={() => {
-          startNewSite();
-          navigate('/quiz');
-        }}
-        data-track="dashboard_crear_pagina"
-        className="inline-flex items-center gap-1.5 mt-5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
-      >
-        Crear nueva página
-      </button>
+      {canCreate && (
+        <button
+          onClick={() => {
+            startNewSite();
+            navigate('/quiz');
+          }}
+          data-track="dashboard_crear_pagina"
+          className="inline-flex items-center gap-1.5 mt-5 px-3 py-1.5 bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950 font-bold text-xs"
+        >
+          Crear nueva página
+        </button>
+      )}
     </Panel>
   );
 }

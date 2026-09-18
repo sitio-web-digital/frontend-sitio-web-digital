@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import MiniSitePreview from '../components/MiniSitePreview';
@@ -21,7 +21,7 @@ import { validateArgentinePhone } from '../utils/phoneValidation';
 const TOTAL_STEPS = 4;
 
 export default function Quiz() {
-  const { quiz, setQuiz, logoUrl, setLogoUrl } = useApp();
+  const { user, quiz, setQuiz, logoUrl, setLogoUrl } = useApp();
   const [step, setStep] = useState(1);
   const [stage, setStage] = useState('form'); // 'form' | 'resultado' | 'loading'
   const [transitioning, setTransitioning] = useState(false);
@@ -29,6 +29,14 @@ export default function Quiz() {
   // pisa la recomendación por defecto hasta que vuelva a esta pantalla.
   const [templateOverride, setTemplateOverride] = useState(null);
   const navigate = useNavigate();
+
+  // Un vendedor ya no arma páginas propias, solo carga órdenes de desarrollo
+  // (ver OrdenesSection en Dashboard.jsx) — este guard cubre entrar acá
+  // directo por URL, no solo el botón ya escondido en el Dashboard.
+  useEffect(() => {
+    if (user?.role === 'vendedor') navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
+  if (user?.role === 'vendedor') return null;
 
   const { rubroTexto, draftTemplate, draftTheme, draftSiteData, previewLogoUrl } = useDraftPreview(templateOverride);
 
