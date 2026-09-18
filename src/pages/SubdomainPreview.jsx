@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext';
 
 export default function SubdomainPreview() {
   const {
+    user,
     template,
     siteData,
     logoUrl,
@@ -25,6 +26,12 @@ export default function SubdomainPreview() {
     widgets,
     textStyles,
   } = useApp();
+  // Un developer nunca publica/paga por la página que arma para una orden
+  // (eso es del cliente final, recién cuando la reclama) — la barra de
+  // "Publicar ahora" de acá abajo llevaba a Checkout y le quería cobrar la
+  // suscripción a su propia cuenta. Ver esta vista previa igual sirve, solo
+  // que sin esa barra.
+  const isDeveloper = user?.role === 'developer';
   const navigate = useNavigate();
 
   // Espera a authReady antes de redirigir — sin esto, volver acá con una
@@ -60,7 +67,23 @@ export default function SubdomainPreview() {
         raised={!published}
       />
 
-      {!published && (
+      {!published && isDeveloper && (
+        <div className="sticky bottom-0 inset-x-0 z-20">
+          <div className="bg-navy-950/95 backdrop-blur border-t border-white/10">
+            <div className="max-w-4xl mx-auto px-5 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-ink-400 text-center sm:text-left">
+                Así la va a ver el vendedor y el cliente — para terminar, volvé al editor y tocá "Vincular a la
+                orden".
+              </p>
+              <Button variant="secondary" onClick={() => navigate('/editor')} className="shrink-0">
+                <ChevronLeftIcon className="w-4 h-4" /> Volver
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!published && !isDeveloper && (
         <div className="sticky bottom-0 inset-x-0 z-20">
           <div className="bg-navy-950/95 backdrop-blur border-t border-gold-500/20">
             <div className="max-w-4xl mx-auto px-5 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">

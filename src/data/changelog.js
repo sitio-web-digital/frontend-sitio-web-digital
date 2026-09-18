@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.68.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Vista previa del developer: la barra de "Publicar ahora" (que llevaba a pagarle una suscripción a la propia cuenta del developer) ya no aparece armando la página de una orden — en su lugar, un aviso de que así la va a ver el vendedor y el cliente.',
+      },
+      {
+        type: 'fix',
+        text: 'Se sacaron los botones "Ver página" que dependían de un subdominio que todavía no existe (el cliente lo elige recién al reclamarla) — tanto en DevPanel como en Mis órdenes del vendedor. Ahora "Editar" (developer) y "Abrir" junto al link de Compartir (vendedor) muestran la página real sin depender de eso.',
+      },
+    ],
+  },
+  {
     version: '1.67.0',
     date: '2026-09-18',
     changes: [

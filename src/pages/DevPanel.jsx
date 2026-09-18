@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
 import { apiListDevOrders, apiClaimDevOrder } from '../api/client';
-import { ROOT_DOMAIN } from '../utils/rootDomain';
 
 const ESTADO_INFO = {
   pendiente: { label: 'Pendiente', textClass: 'text-ink-400', dotClass: 'bg-ink-500' },
@@ -167,25 +166,17 @@ export default function DevPanel() {
                           Crear página para esta orden
                         </button>
                       )}
+                      {/* No hay link "en vivo" que ofrecer acá: el subdominio
+                          lo elige el cliente recién al reclamarla. "Editar"
+                          reabre el sitio real en el editor, con "Ver mi
+                          página →" para verla armada sin depender de eso. */}
                       {o.estado === 'lista' && (
-                        <>
-                          <button
-                            onClick={() => editarPagina(o)}
-                            className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
-                          >
-                            Editar
-                          </button>
-                          {o.subdomain && (
-                            <a
-                              href={`https://${o.subdomain}.${ROOT_DOMAIN}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3 py-2 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors"
-                            >
-                              Ver página
-                            </a>
-                          )}
-                        </>
+                        <button
+                          onClick={() => editarPagina(o)}
+                          className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+                        >
+                          Editar
+                        </button>
                       )}
                     </div>
                   </div>

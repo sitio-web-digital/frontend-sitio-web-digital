@@ -1125,16 +1125,13 @@ function OrdenRow({ order, onChanged }) {
 
       {order.estado === 'lista' && (
         <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <RowButton onClick={handleShare}>{sharing ? 'Generando...' : 'Compartir'}</RowButton>
-            {order.subdomain && (
-              <RowButton
-                onClick={() => window.open(`https://${order.subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}
-              >
-                Ver página
-              </RowButton>
-            )}
-          </div>
+          {/* No hay un link "en vivo" para mostrar acá todavía — este sitio
+              recién tiene subdominio y queda publicado cuando el CLIENTE lo
+              reclama y paga (ver publicSites.js claim + subscription.js).
+              El link de "Compartir" de acá abajo ya arma la vista previa
+              real (mismo /#/compartida que ve el cliente), así que "Abrir"
+              apunta ahí en vez de a un subdominio que todavía no existe. */}
+          <RowButton onClick={handleShare}>{sharing ? 'Generando...' : 'Compartir'}</RowButton>
           {shareLink && (
             <div className="border border-gold-500/30 bg-gold-500/5 p-3 flex flex-wrap items-center gap-2">
               <input
@@ -1143,6 +1140,13 @@ function OrdenRow({ order, onChanged }) {
                 onFocus={(e) => e.target.select()}
                 className="flex-1 min-w-[200px] bg-navy-900 border border-white/10 px-2 py-1.5 text-xs text-gold-400 outline-none"
               />
+              <button
+                type="button"
+                onClick={() => window.open(shareLink, '_blank', 'noopener,noreferrer')}
+                className="px-3 py-1.5 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors text-white"
+              >
+                Abrir
+              </button>
               <button
                 type="button"
                 onClick={() => {
