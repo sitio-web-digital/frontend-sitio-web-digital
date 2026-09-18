@@ -5,6 +5,24 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.65.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Rol nuevo "Developer": arma páginas sin límite a partir de "órdenes de desarrollo" que carga un vendedor (redes sociales, teléfono y notas del cliente) desde un pool compartido — panel propio en /dev para agarrar una orden y armarla con el editor de siempre.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Dashboard del vendedor: sección "Mis órdenes" para cargar órdenes de desarrollo, compartir la página ya armada por un developer y llevar el registro manual de la venta (monto y cuotas).',
+      },
+      {
+        type: 'nuevo',
+        text: 'Las páginas armadas por este circuito son de marca blanca: el cliente que las reclama ve un cartel de "Pagar mantenimiento" en vez del cartel de venta genérico, y ni su panel ni el pie de página muestran la marca SitioWeb Digital.',
+      },
+    ],
+  },
+  {
     version: '1.64.0',
     date: '2026-09-06',
     changes: [
