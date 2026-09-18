@@ -467,6 +467,7 @@ function ResumenSection({
             isFree={isFree}
             canShare={canShare}
             shareSite={shareSite}
+            readOnly={!canCreate}
           />
         ))}
         {pages.length === 0 && (
@@ -521,7 +522,7 @@ function StatStrip({ items, cols = 3 }) {
   );
 }
 
-function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare, shareSite }) {
+function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare, shareSite, readOnly = false }) {
   const status = STATUS_INFO[page.status];
   const proximoCobro =
     page.status === 'publicada' && !isFree && page.mpStatus === 'authorized' && page.nextPaymentDate
@@ -589,7 +590,19 @@ function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare
         </div>
 
         <div className="flex flex-wrap gap-2 shrink-0">
-          {page.status === 'publicada' ? (
+          {readOnly ? (
+            // Un vendedor no arma ni publica páginas (ver canCreateSites) —
+            // si de todos modos es dueño de una (herencia de antes de esta
+            // regla, o un caso raro), acá solo puede mirarla, nunca tocarla.
+            page.status === 'publicada' && (
+              <RowButton
+                onClick={() => window.open(`https://${page.subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}
+                primary
+              >
+                Ver
+              </RowButton>
+            )
+          ) : page.status === 'publicada' ? (
             <>
               <RowButton
                 onClick={() => window.open(`https://${page.subdomain}.${ROOT_DOMAIN}`, '_blank', 'noopener,noreferrer')}

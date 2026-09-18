@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.75.0',
+    date: '2026-09-18',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Resumen (vendedor): si la cuenta es dueña de alguna página (herencia de antes de esta regla), ya no puede publicarla ni editarla — solo verla si está publicada. Armar y publicar páginas quedó reservado a admin/usuario, ver "Mis órdenes" para el circuito del vendedor.',
+      },
+      {
+        type: 'nuevo',
+        text: 'DevPanel: "Empezar de nuevo" para una orden ya vinculada, mientras el vendedor todavía no haya generado el link — desvincula la página armada (sin borrarla) para poder armar una distinta desde cero.',
+      },
+    ],
+  },
+  {
     version: '1.74.0',
     date: '2026-09-18',
     changes: [

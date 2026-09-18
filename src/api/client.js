@@ -786,6 +786,15 @@ export async function apiLinkDevOrderSite(orderId, siteId) {
   return request(`/dev-orders/${orderId}/link-site`, { method: 'POST', body: { siteId }, token });
 }
 
+// "Empezar de nuevo" (developer) — desvincula el sitio armado de la orden
+// para poder armar uno distinto desde cero. El backend lo niega si el
+// vendedor ya generó el link de esa página.
+export async function apiUnlinkDevOrderSite(orderId) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/dev-orders/${orderId}/unlink-site`, { method: 'POST', token });
+}
+
 // El vendedor comparte el sitio vinculado a SU orden (no necesita ser
 // dueño del sitio en sí, ver comentario en devOrders.js) — mismo formato
 // de respuesta que apiShareSite.

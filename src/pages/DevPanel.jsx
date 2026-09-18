@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
-import { apiListDevOrders, apiClaimDevOrder } from '../api/client';
+import { apiListDevOrders, apiClaimDevOrder, apiUnlinkDevOrderSite } from '../api/client';
 
 const ESTADO_INFO = {
   pendiente: { label: 'Pendiente', textClass: 'text-ink-400', dotClass: 'bg-ink-500' },
@@ -166,48 +166,15 @@ export default function DevPanel() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {mias.map((o) => {
-                    const estado = ESTADO_INFO[o.estado];
-                    return (
-                      <div
-                        key={o.id}
-                        className="border border-white/10 bg-navy-850 p-4 flex flex-wrap items-center justify-between gap-3"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-display font-semibold truncate">{o.nombreNegocio}</p>
-                          <span
-                            className={`inline-flex items-center gap-1.5 text-xs font-semibold mt-0.5 ${estado.textClass}`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
-                            {estado.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {o.estado === 'en_progreso' && (
-                            <button
-                              onClick={() => crearPagina(o)}
-                              className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
-                            >
-                              Crear página para esta orden
-                            </button>
-                          )}
-                          {/* No hay link "en vivo" que ofrecer acá: el
-                              subdominio lo elige el cliente recién al
-                              reclamarla. "Editar" reabre el sitio real en
-                              el editor, con "Ver mi página →" para verla
-                              armada sin depender de eso. */}
-                          {o.estado === 'lista' && (
-                            <button
-                              onClick={() => editarPagina(o)}
-                              className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
-                            >
-                              Editar
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {mias.map((o) => (
+                    <MiOrdenCard
+                      key={o.id}
+                      order={o}
+                      onCrearPagina={crearPagina}
+                      onEditarPagina={editarPagina}
+                      onChanged={reload}
+                    />
+                  ))}
                 </div>
               ))}
 
@@ -280,6 +247,94 @@ export default function DevPanel() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function MiOrdenCard({ order: o, onCrearPagina, onEditarPagina, onChanged }) {
+  const estado = ESTADO_INFO[o.estado];
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const unlink = async () => {
+    setBusy(true);
+    setError('');
+    const result = await apiUnlinkDevOrderSite(o.id);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setConfirming(false);
+    onChanged();
+  };
+
+  return (
+    <div className="border border-white/10 bg-navy-850 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-display font-semibold truncate">{o.nombreNegocio}</p>
+          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold mt-0.5 ${estado.textClass}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+            {estado.label}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {o.estado === 'en_progreso' && (
+            <button
+              onClick={() => onCrearPagina(o)}
+              className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+            >
+              Crear página para esta orden
+            </button>
+          )}
+          {/* No hay link "en vivo" que ofrecer acá: el subdominio lo elige
+              el cliente recién al reclamarla. "Editar" reabre el sitio
+              real en el editor, con "Ver información de la orden" en la
+              cabecera para verla armada sin depender de eso. */}
+          {o.estado === 'lista' && (
+            <button
+              onClick={() => onEditarPagina(o)}
+              className="px-3 py-2 text-xs font-semibold bg-gold-500 hover:bg-gold-400 transition-colors text-navy-950"
+            >
+              Editar
+            </button>
+          )}
+          {/* "Empezar de nuevo" — solo mientras el vendedor no haya
+              generado el link todavía (ver comentario en devOrders.js
+              POST /:id/unlink-site). Una vez compartida, ya no aplica. */}
+          {o.estado === 'lista' && !o.shareToken && !confirming && (
+            <button
+              onClick={() => setConfirming(true)}
+              className="px-3 py-2 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors text-ink-300"
+            >
+              Empezar de nuevo
+            </button>
+          )}
+        </div>
+      </div>
+      {confirming && (
+        <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center gap-2">
+          <p className="text-xs text-ink-400">
+            Desvincula la página que armaste — queda sin usar, podés armar una distinta para esta orden.
+          </p>
+          {error && <span className="text-xs text-red-400">{error}</span>}
+          <button
+            onClick={unlink}
+            disabled={busy}
+            className="px-3 py-1.5 bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-semibold hover:bg-red-500/25 transition-colors disabled:opacity-50"
+          >
+            {busy ? 'Desvinculando...' : 'Confirmar'}
+          </button>
+          <button
+            onClick={() => setConfirming(false)}
+            className="px-3 py-1.5 border border-white/15 text-xs font-semibold hover:bg-white/5 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
     </div>
   );
 }
