@@ -44,6 +44,8 @@ import {
   apiAdminSendMail,
   apiListDevOrders,
   apiAdminGetDevOrderVentaHistorial,
+  apiAdminListBugReports,
+  apiAdminUpdateBugReport,
 } from '../api/client';
 import { PLAN } from '../data/mockData';
 import { CHANGELOG, CURRENT_VERSION } from '../data/changelog';
@@ -58,6 +60,7 @@ const NAV_ITEMS = [
   { id: 'suscripciones', label: 'Suscripciones' },
   { id: 'vendedores', label: 'Vendedores' },
   { id: 'ordenesdev', label: 'Órdenes de desarrollo' },
+  { id: 'bugs', label: 'Bugs reportados' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'soporte', label: 'Soporte' },
   { id: 'terminos', label: 'Términos y Condiciones' },
@@ -119,6 +122,7 @@ export default function Admin() {
   const [customRubrosList, setCustomRubrosList] = useState([]);
   const [error, setError] = useState('');
   const [unreadSupport, setUnreadSupport] = useState({ count: 0, tickets: [] });
+  const [openBugsCount, setOpenBugsCount] = useState(0);
   const [supportToast, setSupportToast] = useState(null);
   // "Qué cambió" — se muestra una vez por versión nueva, comparando contra la
   // última que este navegador ya vio (no hace falta nada del lado del
@@ -162,8 +166,9 @@ export default function Admin() {
       apiAdminListUsers(),
       apiAdminListCatalogTemplates(),
       apiAdminListCatalogRubros(),
+      apiAdminListBugReports({ status: 'abierto' }),
     ])
-      .then(([s, subs, t, allSites, allUsers, allCustomTemplates, allCustomRubros]) => {
+      .then(([s, subs, t, allSites, allUsers, allCustomTemplates, allCustomRubros, openBugs]) => {
         setSummary(s);
         setSubscriptions(subs);
         setTickets(t);
@@ -171,9 +176,17 @@ export default function Admin() {
         setUsers(allUsers);
         setCustomTemplatesList(allCustomTemplates);
         setCustomRubrosList(allCustomRubros);
+        setOpenBugsCount(openBugs.length);
       })
       .catch(() => setError('No se pudo cargar la información de administración.'));
   }, [user]);
+
+  // Contador de la pestaña "Bugs reportados" (badge del nav, ver SideNav) —
+  // aparte del listado propio de BugsSection (que trae todos los estados y
+  // se filtra en pantalla), para no depender de que esa pestaña ya se haya
+  // abierto una vez.
+  const refreshOpenBugsCount = () =>
+    apiAdminListBugReports({ status: 'abierto' }).then((r) => setOpenBugsCount(r.length));
 
   // Sondea cada 10s si hay tickets/respuestas nuevas desde la última vez que
   // este admin entró a Soporte — corre siempre que el panel esté abierto, sin
@@ -381,7 +394,7 @@ export default function Admin() {
       )}
 
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 grid lg:grid-cols-[200px_1fr] gap-8 items-start">
-        <SideNav section={section} onChange={setSection} unreadCount={unreadSupport.count} />
+        <SideNav section={section} onChange={setSection} unreadCount={unreadSupport.count} openBugsCount={openBugsCount} />
 
         <div className="min-w-0 animate-fade-in-up">
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
@@ -418,6 +431,7 @@ export default function Admin() {
           )}
           {section === 'vendedores' && <VendedoresSection vendedores={users.filter((u) => u.role === 'vendedor')} />}
           {section === 'ordenesdev' && <OrdenesDevSection />}
+          {section === 'bugs' && <BugsSection onCountChange={refreshOpenBugsCount} />}
           {section === 'usuarios' && (
             <UsuariosSection
               users={users}
@@ -473,27 +487,31 @@ function AdminHeader({ user, logout, navigate }) {
   );
 }
 
-function SideNav({ section, onChange, unreadCount = 0 }) {
+function SideNav({ section, onChange, unreadCount = 0, openBugsCount = 0 }) {
+  const badgeFor = (id) => (id === 'soporte' ? unreadCount : id === 'bugs' ? openBugsCount : 0);
   return (
     <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:sticky lg:top-10 -mx-1 px-1 lg:mx-0 lg:p-1.5 lg:bg-black/20 lg:border lg:border-white/5 lg:rounded-xl">
-      {NAV_ITEMS.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onChange(item.id)}
-          className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            section === item.id
-              ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
-              : 'text-ink-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          {item.label}
-          {item.id === 'soporte' && unreadCount > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-red-500 text-white text-[0.68rem] font-bold leading-none">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </button>
-      ))}
+      {NAV_ITEMS.map((item) => {
+        const badge = badgeFor(item.id);
+        return (
+          <button
+            key={item.id}
+            onClick={() => onChange(item.id)}
+            className={`shrink-0 flex items-center gap-2 text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              section === item.id
+                ? 'bg-gold-500 text-navy-950 shadow-[0_2px_14px_-4px_rgba(255,193,7,0.5)]'
+                : 'text-ink-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            {item.label}
+            {badge > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-red-500 text-white text-[0.68rem] font-bold leading-none">
+                {badge > 9 ? '9+' : badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -1843,6 +1861,194 @@ function OrdenDevRow({ order: o, hoy }) {
                 })}
               </ul>
             )}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+const BUG_ESTADO_INFO = {
+  abierto: { label: 'Abierto', className: 'text-red-300' },
+  resuelto: { label: 'Resuelto', className: 'text-emerald-400' },
+};
+
+// Mismo cálculo que sectionCode() en SitePreview.jsx (ver SectionShell) —
+// duplicado a propósito en vez de importarlo: ese archivo es del editor
+// (component-heavy, con montones de contexto de secciones que acá no hace
+// falta), y esto es apenas un formateo de dos campos que ya vienen del
+// backend en cada reporte.
+const bugSectionCode = (r) => `${r.sectionType.slice(0, 4)}-${r.sectionId.slice(-5)}`.toUpperCase();
+
+function BugsSection({ onCountChange }) {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filtro, setFiltro] = useState('abierto'); // 'abierto' | 'resuelto' | 'todos'
+
+  const fetchReports = (estado) =>
+    apiAdminListBugReports(estado === 'todos' ? {} : { status: estado }).then((result) => {
+      setReports(result);
+      setLoading(false);
+    });
+
+  useEffect(() => {
+    setLoading(true);
+    fetchReports(filtro);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtro]);
+
+  // Después de marcar resuelto/reabrir hay que refrescar DOS listas: la de
+  // acá (filtrada por `filtro`) y el conteo del badge del nav (que siempre
+  // cuenta solo abiertos, sin importar qué filtro esté mirando este panel).
+  const handleUpdated = () => {
+    fetchReports(filtro);
+    onCountChange?.();
+  };
+
+  const vacioLabel = { abierto: 'abiertos', resuelto: 'resueltos', todos: '' }[filtro];
+
+  return (
+    <Panel title="Bugs reportados" action={<RefreshButton onRefresh={() => fetchReports(filtro)} />}>
+      <p className="text-sm text-ink-400 max-w-2xl mb-4">
+        Bugs que developers o admins reportan desde el propio Editor, sobre una sección puntual de una página — el
+        identificador de cada fila es el mismo que aparece en las opciones de esa sección (con una bandera roja
+        mientras el bug siga abierto), para ubicarla directo.
+      </p>
+
+      <div className="flex gap-1.5 mb-4">
+        {[
+          { id: 'abierto', label: 'Abiertos' },
+          { id: 'resuelto', label: 'Resueltos' },
+          { id: 'todos', label: 'Todos' },
+        ].map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFiltro(f.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              filtro === f.id ? 'bg-gold-500 text-navy-950' : 'bg-white/5 text-ink-400 hover:text-white'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-ink-400">Cargando...</p>
+      ) : reports.length === 0 ? (
+        <p className="text-sm text-ink-400">No hay reportes {vacioLabel}.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-white/10">
+                <th className="pb-2 pr-4 font-semibold">Página</th>
+                <th className="pb-2 pr-4 font-semibold">Sección</th>
+                <th className="pb-2 pr-4 font-semibold">Descripción</th>
+                <th className="pb-2 pr-4 font-semibold">Reportado por</th>
+                <th className="pb-2 pr-4 font-semibold">Fecha</th>
+                <th className="pb-2 pr-4 font-semibold">Estado</th>
+                <th className="pb-2 font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.map((r) => (
+                <BugReportRow key={r.id} report={r} onUpdated={handleUpdated} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function BugReportRow({ report: r, onUpdated }) {
+  const estado = BUG_ESTADO_INFO[r.status] ?? { label: r.status, className: 'text-ink-400' };
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [note, setNote] = useState(r.adminNote || '');
+  const [saving, setSaving] = useState(false);
+
+  const setStatus = async (status) => {
+    setSaving(true);
+    await apiAdminUpdateBugReport(r.id, { status });
+    setSaving(false);
+    onUpdated();
+  };
+
+  const saveNote = async () => {
+    setSaving(true);
+    await apiAdminUpdateBugReport(r.id, { adminNote: note });
+    setSaving(false);
+    setNoteOpen(false);
+    onUpdated();
+  };
+
+  return (
+    <>
+      <tr className="border-b border-white/5 hover:bg-white/[0.03] transition-colors align-top">
+        <td className="py-2.5 pr-4">
+          <span className="font-semibold">{r.siteNombre || `Página #${r.siteId}`}</span>
+          <span className="block text-xs text-ink-500">{r.siteOwnerEmail}</span>
+        </td>
+        <td className="py-2.5 pr-4">
+          <span className="font-mono text-xs text-ink-300">{bugSectionCode(r)}</span>
+          <span className="block text-xs text-ink-500">{r.sectionLabel || r.sectionType}</span>
+        </td>
+        <td className="py-2.5 pr-4 text-ink-300 max-w-sm">{r.description}</td>
+        <td className="py-2.5 pr-4 text-ink-300">
+          {r.reportedByName || r.reportedByEmail}
+          <span className="block text-xs text-ink-500 capitalize">{r.reportedByRole}</span>
+        </td>
+        <td className="py-2.5 pr-4 text-xs text-ink-400 whitespace-nowrap">{fechaCorta(r.createdAt)}</td>
+        <td className="py-2.5 pr-4">
+          <span className={`text-xs font-semibold ${estado.className}`}>{estado.label}</span>
+        </td>
+        <td className="py-2.5 text-right whitespace-nowrap">
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              onClick={() => setNoteOpen((v) => !v)}
+              className="text-xs font-semibold text-ink-400 hover:text-white transition-colors"
+            >
+              {r.adminNote ? 'Ver nota' : 'Agregar nota'}
+            </button>
+            {r.status === 'abierto' ? (
+              <button
+                onClick={() => setStatus('resuelto')}
+                disabled={saving}
+                className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-40"
+              >
+                Marcar resuelto
+              </button>
+            ) : (
+              <button
+                onClick={() => setStatus('abierto')}
+                disabled={saving}
+                className="text-xs font-semibold text-ink-400 hover:text-white transition-colors disabled:opacity-40"
+              >
+                Reabrir
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+      {noteOpen && (
+        <tr className="border-b border-white/5">
+          <td colSpan={7} className="py-3 pr-4 bg-black/20">
+            <label className="block text-xs text-ink-500 mb-1.5">Nota del admin — qué pasó o qué se hizo</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              className="w-full text-sm rounded-lg border border-white/10 bg-navy-900 px-2.5 py-2 outline-none focus:border-gold-500 resize-none text-white"
+            />
+            <button
+              onClick={saveNote}
+              disabled={saving}
+              className="mt-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-gold-500 text-navy-950 disabled:opacity-40"
+            >
+              Guardar nota
+            </button>
           </td>
         </tr>
       )}

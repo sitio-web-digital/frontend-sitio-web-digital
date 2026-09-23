@@ -826,3 +826,41 @@ export async function apiAdminGetDevOrderVentaHistorial(orderId) {
   const result = await request(`/dev-orders/${orderId}/venta-historial`, { token });
   return result.ok ? result.historial : [];
 }
+
+// Reportar un bug de una sección puntual, desde el propio Editor — lo usa
+// quien está armando/corrigiendo la página (developer o admin), no es un
+// ticket de soporte del cliente.
+export async function apiReportSectionBug({ siteId, sectionId, sectionType, sectionLabel, description }) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request('/bug-reports', {
+    method: 'POST',
+    body: { siteId, sectionId, sectionType, sectionLabel, description },
+    token,
+  });
+}
+
+// Reportes de UNA página puntual — el Editor los usa para marcar con una
+// bandera qué secciones tienen un bug abierto mientras se está trabajando.
+export async function apiListSiteBugReports(siteId) {
+  const token = getToken();
+  if (!token || !siteId) return [];
+  const result = await request(`/bug-reports?siteId=${siteId}`, { token });
+  return result.ok ? result.reports : [];
+}
+
+// Admin > Bugs reportados — todos los reportes de todas las páginas, o
+// filtrados por estado ('abierto' | 'resuelto').
+export async function apiAdminListBugReports({ status } = {}) {
+  const token = getToken();
+  if (!token) return [];
+  const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+  const result = await request(`/bug-reports${qs}`, { token });
+  return result.ok ? result.reports : [];
+}
+
+export async function apiAdminUpdateBugReport(id, { status, adminNote }) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión.' };
+  return request(`/bug-reports/${id}`, { method: 'PATCH', body: { status, adminNote }, token });
+}

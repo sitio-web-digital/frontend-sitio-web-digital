@@ -53,6 +53,8 @@ import {
   apiAdminCreateTemplate,
   apiAdminUpdateTemplate,
   apiAdminCreateRubro,
+  apiReportSectionBug,
+  apiListSiteBugReports,
 } from '../api/client';
 import { extractPalette } from '../utils/extractColor';
 import { trackEvent } from '../utils/analytics';
@@ -170,6 +172,12 @@ export function AppProvider({ children }) {
   // volver a pedirla. Vive en el contexto (no en el estado local del
   // Editor) porque sobrevive a la navegación /dev -> /plantillas -> /editor.
   const [pendingDevOrder, setPendingDevOrder] = useState(null);
+  // Bugs ABIERTOS reportados sobre secciones de la página que se está
+  // editando ahora mismo (propia, o la de adminEditingSite si es un admin
+  // editando otra cuenta) — el Editor los usa para marcar con una bandera
+  // qué sección corregir, sin tener que ir a buscarlos a Admin > Bugs
+  // reportados (que sí trae TODOS los sitios, ver apiAdminListBugReports).
+  const [siteBugReports, setSiteBugReports] = useState([]);
   // Espejo síncrono de activeSiteId — un `useState` recién se refleja en el
   // próximo render, así que un código que llama setActiveSiteId(id) y al
   // toque (mismo tick, antes de que React vuelva a renderizar) le pasa ESE
@@ -1080,6 +1088,32 @@ export function AppProvider({ children }) {
     setPublished(pub);
   };
 
+  // La página que "cuenta" para reportar/leer bugs no siempre es
+  // activeSiteId: si un admin está editando la cuenta de otra persona
+  // (adminEditingSite), los guardados y esto van dirigidos a esa otra
+  // página, no a la propia del admin (ver startAdminEditSite más abajo).
+  const editingSiteId = () => adminEditingSite?.id ?? activeSiteId;
+
+  const refreshSiteBugReports = async () => {
+    const siteId = editingSiteId();
+    if (!siteId || !(user?.role === 'developer' || user?.role === 'admin')) {
+      setSiteBugReports([]);
+      return;
+    }
+    setSiteBugReports(await apiListSiteBugReports(siteId));
+  };
+
+  // El Editor lo llama desde el botón "Reportar bug" de cada sección (ver
+  // SectionShell en SitePreview.jsx) — no hace falta que la sección sea
+  // "propia" ni que el sitio ya esté guardado del todo, solo que ya tenga id.
+  const reportSectionBug = async (sectionId, sectionType, sectionLabel, description) => {
+    const siteId = editingSiteId();
+    if (!siteId) return { ok: false, error: 'Todavía no se guardó esta página — esperá unos segundos e intentá de nuevo.' };
+    const result = await apiReportSectionBug({ siteId, sectionId, sectionType, sectionLabel, description });
+    if (result.ok) await refreshSiteBugReports();
+    return result;
+  };
+
   // Todas las páginas de la cuenta logueada (Dashboard).
   const fetchMySites = async () => {
     const sites = await apiListMySites();
@@ -1528,6 +1562,9 @@ export function AppProvider({ children }) {
     pendingDevOrder,
     setPendingDevOrder,
     linkActiveSiteToDevOrder,
+    siteBugReports,
+    refreshSiteBugReports,
+    reportSectionBug,
     supportTickets,
     addSupportTicket,
     adminEditingSite,

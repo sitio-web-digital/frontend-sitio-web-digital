@@ -53,6 +53,7 @@ import {
   TypeIcon,
   AlignLeftIcon,
   ImagesIcon,
+  BugIcon,
 } from './icons';
 import {
   SECCIONES_CATALOGO,
@@ -113,6 +114,19 @@ const seccionLabelConNumero = (allSections, sec) => {
   const numero = mismoTipo.findIndex((s) => s.id === sec.id) + 1;
   return `${base} ${numero}`;
 };
+
+// Identificador corto y legible de una sección, para que un developer pueda
+// escribirlo/leerlo a mano (ej. en un reporte de bug) sin tener que copiar
+// el id interno entero (largo, con timestamp). Se deriva del id real —
+// siempre el mismo para la misma sección, sin agregar ningún campo nuevo al
+// esquema — tomando los últimos 5 caracteres, que en las secciones creadas
+// desde el editor (ver addSection en AppContext.jsx) son el sufijo random
+// que ya las hace únicas; en las que trae la plantilla de arranque
+// (chooseTemplate, sin sufijo random) son la cola del timestamp, que en la
+// práctica alcanza para no repetirse entre las pocas secciones de una misma
+// página. Nunca se usa para nada que necesite exactitud real (eso es
+// section.id completo, lo que de verdad se guarda en cada reporte).
+const sectionCode = (sec) => `${sec.type.slice(0, 4)}-${sec.id.slice(-5)}`.toUpperCase();
 
 const fontFamilyById = (id) => FONT_OPTIONS.find((f) => f.id === id)?.family;
 
@@ -311,6 +325,9 @@ export default function SitePreview({
   onCreateBooking,
   staticPreview = false,
   whiteLabel = false,
+  canReportBugs = false,
+  bugReports = [],
+  onReportSectionBug,
 }) {
   // Los hooks van antes que el `return null` de abajo: si no, el orden de
   // hooks cambiaría entre renders según `template`/`siteData` estén cargados
@@ -479,6 +496,12 @@ export default function SitePreview({
             hasButton={['productos', 'contacto', 'precios', 'cta'].includes(sec.type)}
             onSetStyle={(patch) => onSetSectionStyle?.(sec.id, patch)}
             logoPalette={logoPalette}
+            code={sectionCode(sec)}
+            canReportBugs={canReportBugs}
+            openBugReports={bugReports.filter((r) => r.sectionId === sec.id && r.status === 'abierto')}
+            onReportBug={(description) =>
+              onReportSectionBug?.(sec.id, sec.type, seccionLabelConNumero(sections, sec), description)
+            }
           >
             {sec.type === 'header' && (
               <SeccionHeader
@@ -2621,15 +2644,20 @@ function SectionShell({
   hasButton,
   onSetStyle,
   logoPalette = [],
+  code,
+  canReportBugs = false,
+  openBugReports = [],
+  onReportBug,
   children,
 }) {
   const toolbarRef = useRef(null);
-  // Un solo estado para los 3 popovers (en vez de 3 booleanos): más simple de
-  // mantener mutuamente excluyentes, y le da a cada popover un ancla estable
-  // (`toolbarRef`) para posicionarse con `position:fixed` — así ninguno queda
-  // recortado por el `overflow-hidden` de la tarjeta del editor, ni se corta
-  // contra el borde inferior de la pantalla cuando la sección está muy abajo.
-  const [openPanel, setOpenPanel] = useState(null); // null | 'help' | 'variant' | 'color'
+  // Un solo estado para los popovers (en vez de un booleano por cada uno):
+  // más simple de mantener mutuamente excluyentes, y le da a cada popover un
+  // ancla estable (`toolbarRef`) para posicionarse con `position:fixed` — así
+  // ninguno queda recortado por el `overflow-hidden` de la tarjeta del
+  // editor, ni se corta contra el borde inferior de la pantalla cuando la
+  // sección está muy abajo.
+  const [openPanel, setOpenPanel] = useState(null); // null | 'help' | 'variant' | 'color' | 'bug'
   const variantes = SECTION_VARIANTS[type];
   if (!editable) return children;
   // Header y footer son secciones angostas: su propio contenido (logo, menú)
@@ -2641,6 +2669,23 @@ function SectionShell({
   return (
     <div className="relative group/section">
       {children}
+      {/* A diferencia del resto del toolbar (que solo aparece al pasar el
+          mouse), esta bandera queda SIEMPRE visible cuando hay un bug
+          abierto — el sentido es justamente poder escanear la página entera
+          y detectar de un vistazo qué sección corregir, sin tener que
+          hover una por una. */}
+      {canReportBugs && openBugReports.length > 0 && (
+        <button
+          type="button"
+          onClick={togglePanel('bug')}
+          title={openBugReports.map((r) => r.description).join('\n\n')}
+          className="absolute top-2 left-3 z-10 flex items-center gap-1.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 shadow-lg transition-colors"
+        >
+          <BugIcon className="w-3 h-3" />
+          {code}
+          {openBugReports.length > 1 && <span>· {openBugReports.length}</span>}
+        </button>
+      )}
       <div
         ref={toolbarRef}
         data-tour="section-controls"
@@ -2648,6 +2693,14 @@ function SectionShell({
           compact ? 'left-1/2 -translate-x-1/2' : 'right-3 @lg:right-6'
         }`}
       >
+        {canReportBugs && (
+          <>
+            <span className="px-1.5 font-mono text-[10px] text-white/45 select-all" title="Identificador de esta sección">
+              {code}
+            </span>
+            <div className="w-px h-4 bg-white/15" />
+          </>
+        )}
         <button
           type="button"
           onClick={togglePanel('help')}
@@ -2724,6 +2777,22 @@ function SectionShell({
             </button>
           </>
         )}
+        {canReportBugs && (
+          <>
+            <div className="w-px h-4 bg-white/15" />
+            <button
+              type="button"
+              onClick={togglePanel('bug')}
+              aria-label="Reportar bug"
+              title="Reportar un bug de esta sección"
+              className={`transition-colors p-1.5 ${
+                openBugReports.length > 0 ? 'text-red-400 hover:text-red-300' : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <BugIcon className="w-3.5 h-3.5" />
+            </button>
+          </>
+        )}
         <div className="w-px h-4 bg-white/15" />
         <button
           type="button"
@@ -2734,6 +2803,16 @@ function SectionShell({
           <XIcon className="w-3.5 h-3.5" />
         </button>
       </div>
+      {openPanel === 'bug' && (
+        <SectionBugReportPopover
+          code={code}
+          openReports={openBugReports}
+          anchorRef={toolbarRef}
+          align={compact ? 'center' : 'end'}
+          onSubmit={onReportBug}
+          onClose={closePanel}
+        />
+      )}
       {openPanel === 'variant' && (
         <SectionVariantPicker
           type={type}
@@ -3670,6 +3749,81 @@ function SectionHelpPopover({ type, onClose, anchorRef, align }) {
           )
         )}
       </ul>
+    </FixedPopover>
+  );
+}
+
+// Popover del botón de bug de cada sección: lista los reportes ABIERTOS que
+// ya tiene (si hay — para no cargar el mismo bug dos veces) y un formulario
+// para cargar uno nuevo. No deja cerrar/reabrir desde acá a propósito — eso
+// es de Admin > Bugs reportados, para que un developer no pueda "hacer
+// desaparecer" su propio reporte sin que un admin lo vea primero.
+function SectionBugReportPopover({ code, openReports, onSubmit, onClose, anchorRef, align }) {
+  const [description, setDescription] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const submit = async () => {
+    if (!description.trim() || sending) return;
+    setSending(true);
+    setError('');
+    const result = await onSubmit?.(description.trim());
+    setSending(false);
+    if (result?.ok) {
+      setSent(true);
+      setDescription('');
+    } else {
+      setError(result?.error || 'No se pudo reportar el bug.');
+    }
+  };
+
+  return (
+    <FixedPopover
+      anchorRef={anchorRef}
+      align={align}
+      onClose={onClose}
+      className="w-80 rounded-xl border border-neutral-200 bg-white shadow-xl p-4 text-left"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-bold text-neutral-800">Reportar bug</p>
+        <span className="font-mono text-[10px] text-neutral-400" title="Identificador de esta sección">
+          {code}
+        </span>
+      </div>
+
+      {openReports.length > 0 && (
+        <div className="mb-3 space-y-1.5">
+          {openReports.map((r) => (
+            <div key={r.id} className="text-xs bg-red-50 border border-red-100 text-red-700 rounded-lg px-2.5 py-1.5">
+              {r.description}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sent ? (
+        <p className="text-xs font-semibold text-emerald-600">Reportado — el admin lo va a ver.</p>
+      ) : (
+        <>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="¿Qué está fallando o se podría mejorar en esta sección?"
+            rows={3}
+            className="w-full text-sm rounded-lg border border-neutral-200 px-2.5 py-2 outline-none focus:border-gold-500 resize-none"
+          />
+          {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={sending || !description.trim()}
+            className="mt-2 w-full text-xs font-bold bg-navy-950 text-white rounded-lg py-2 disabled:opacity-40 transition-opacity"
+          >
+            {sending ? 'Enviando...' : 'Reportar'}
+          </button>
+        </>
+      )}
     </FixedPopover>
   );
 }

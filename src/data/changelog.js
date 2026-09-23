@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.85.0',
+    date: '2026-09-23',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Reportar bug en una sección: developers y admins pueden marcar un problema puntual desde las opciones de cada sección del Editor, con un identificador único que queda visible ahí mismo (bandera roja mientras siga abierto).',
+      },
+      {
+        type: 'nuevo',
+        text: 'Admin > Bugs reportados: listado de todos los reportes de todas las páginas, con filtros por estado, nota del admin y marcar resuelto/reabrir.',
+      },
+    ],
+  },
+  {
     version: '1.84.0',
     date: '2026-09-18',
     changes: [

@@ -107,6 +107,9 @@ export default function Editor() {
     siteLocked,
     refreshSiteStatus,
     activeSiteId,
+    siteBugReports,
+    refreshSiteBugReports,
+    reportSectionBug,
     rubros,
     saveAsTemplate,
     createRubro,
@@ -194,6 +197,14 @@ export default function Editor() {
     const interval = setInterval(refreshSiteStatus, 3000);
     return () => clearInterval(interval);
   }, [adminEditingSite, activeSiteId, refreshSiteStatus]);
+
+  // Bugs reportados en esta página puntual (propia o la de adminEditingSite)
+  // — se traen al entrar y de nuevo cada vez que se cambia de página sin
+  // salir del editor, para que la bandera de cada sección quede al día.
+  useEffect(() => {
+    refreshSiteBugReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminEditingSite, activeSiteId, user?.role]);
 
   // Sondea cada 10s si soporte respondió algo nuevo mientras se está editando
   // — sin esto, alguien que se queda un buen rato en el editor recién se
@@ -550,6 +561,9 @@ export default function Editor() {
             onRemoveSection={removeSection}
             onDuplicateSection={duplicateSection}
             onMoveSection={moveSection}
+            canReportBugs={user?.role === 'developer' || user?.role === 'admin'}
+            bugReports={siteBugReports}
+            onReportSectionBug={reportSectionBug}
             onReorderSection={reorderSection}
             onSetSectionStyle={setSectionStyle}
             onAddProducto={addProducto}

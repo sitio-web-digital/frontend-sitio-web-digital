@@ -394,6 +394,18 @@ export function HelpCircleIcon({ className = 'w-4 h-4' }) {
   );
 }
 
+// Botón "Reportar bug" del toolbar de cada sección (ver SectionShell en
+// SitePreview.jsx) — un bicho simple, no el ícono genérico de alerta/exclamación
+// que ya usan otros avisos de la app, para que se distinga de un vistazo.
+export function BugIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <rect x="8" y="8" width="8" height="10" rx="4" />
+      <path d="M9 8c0-1.7 1.3-3 3-3s3 1.3 3 3M5 11h3M16 11h3M5 15h3M16 15h3M9 19l-2 2M15 19l2 2M10 8L8 6M14 8l2-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SendIcon({ className = 'w-4 h-4' }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
