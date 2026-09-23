@@ -133,7 +133,9 @@ export async function apiGetSite(siteId) {
   const token = getToken();
   if (!token) return null;
   const result = await request(`/sites/${siteId}`, { token });
-  return result.ok ? { site: result.site, locked: result.locked, subdomain: result.subdomain } : null;
+  return result.ok
+    ? { site: result.site, locked: result.locked, subdomain: result.subdomain, whiteLabel: result.whiteLabel }
+    : null;
 }
 
 export async function apiUpdateSite(siteId, siteJSON) {
@@ -441,7 +443,13 @@ export async function apiAdminGetSite(siteId) {
   if (!token) return null;
   const result = await request(`/admin/sites/${siteId}`, { token });
   return result.ok
-    ? { site: result.site, subdomain: result.subdomain, ownerEmail: result.ownerEmail, ownerName: result.ownerName }
+    ? {
+        site: result.site,
+        subdomain: result.subdomain,
+        whiteLabel: result.whiteLabel,
+        ownerEmail: result.ownerEmail,
+        ownerName: result.ownerName,
+      }
     : null;
 }
 

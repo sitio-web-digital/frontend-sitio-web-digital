@@ -113,6 +113,14 @@ export function AppProvider({ children }) {
   // LogoFramePopover) y se resetea a default cada vez que se sube un logo
   // NUEVO (el encuadre de la imagen anterior no tiene sentido para otra).
   const [logoFrame, setLogoFrame] = useState(initialHydrated?.logoFrame ?? DEFAULT_LOGO_FRAME);
+  // Marca blanca de ESTE sitio puntual (columna sites.white_label, no vive en
+  // `data` como el resto del estado de acá arriba — ver switchSite/
+  // startAdminEditSite más abajo, que son los únicos lugares que la cargan).
+  // Aparte de user.whiteLabel (de la CUENTA, que ya cubre al cliente que
+  // reclamó un sitio blanco): esto es lo que le permite a un developer o
+  // admin ver el pie de página SIN la marca mientras arma/edita la página de
+  // otra cuenta, antes de que nadie la reclame todavía.
+  const [siteWhiteLabel, setSiteWhiteLabel] = useState(false);
   // A propósito NUNCA arranca de initialHydrated (el borrador de
   // localStorage) — ese borrador es un mecanismo viejo de antes de que
   // existiera el backend real (ver siteSchema.js, saveSiteToStorage /
@@ -458,6 +466,12 @@ export function AppProvider({ children }) {
     // queda descartada acá.
     setEditingTemplate(null);
     clearHistory();
+    // Una plantilla nueva nunca arranca siendo marca blanca (eso lo pone
+    // recién link-site cuando un developer la vincula a una orden) — sin
+    // este reset, empezar una página nueva sin pasar por resetAll() primero
+    // (ver el mismo bug ya visto una vez con crearPagina en DevPanel.jsx)
+    // podía heredar el siteWhiteLabel de lo último que se haya editado.
+    setSiteWhiteLabel(false);
     // Busca en fábrica + admin combinadas — una plantilla creada por el
     // admin no existe en el TEMPLATES estático, así que getTemplateById(id)
     // solo (sin la lista combinada) nunca la encontraría.
@@ -1024,6 +1038,7 @@ export function AppProvider({ children }) {
     if (!result) return { ok: false, error: 'No se pudo cargar esa página.' };
     applyHydratedSite(hydrateSite(result.site));
     setSubdomain(result.subdomain ?? null);
+    setSiteWhiteLabel(Boolean(result.whiteLabel));
     setAdminEditingSite({ id: siteId, ownerEmail: result.ownerEmail, ownerName: result.ownerName });
     return { ok: true };
   };
@@ -1047,16 +1062,19 @@ export function AppProvider({ children }) {
     let siteJson = found?.data;
     let subdomainValue = found?.subdomain ?? null;
     let lockedValue = found?.locked ?? false;
+    let whiteLabelValue = found?.whiteLabel ?? false;
     if (!found) {
       const result = await apiGetSite(siteId);
       if (!result) return { ok: false, error: 'No se pudo cargar esa página.' };
       siteJson = result.site;
       subdomainValue = result.subdomain ?? null;
       lockedValue = result.locked ?? false;
+      whiteLabelValue = result.whiteLabel ?? false;
     }
     applyHydratedSite(hydrateSite(siteJson));
     setSubdomain(subdomainValue);
     setSiteLocked(lockedValue);
+    setSiteWhiteLabel(Boolean(whiteLabelValue));
     applyActiveSiteId(siteId);
     try {
       localStorage.setItem(ACTIVE_SITE_KEY, String(siteId));
@@ -1385,6 +1403,7 @@ export function AppProvider({ children }) {
     setSubdomain(null);
     setLogoUrl(null);
     setLogoFrame(DEFAULT_LOGO_FRAME);
+    setSiteWhiteLabel(false);
     setPublished(false);
     setTheme(null);
     setSections([]);
@@ -1514,6 +1533,7 @@ export function AppProvider({ children }) {
     setLogoUrl,
     logoFrame,
     setLogoFrame,
+    siteWhiteLabel,
     logoPalette,
     subdomain,
     published,

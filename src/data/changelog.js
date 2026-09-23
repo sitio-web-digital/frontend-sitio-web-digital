@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.87.0',
+    date: '2026-09-23',
+    changes: [
+      {
+        type: 'fix',
+        text: 'El pie de página seguía mostrando "Sitio creado con SitioWeb Digital" en el Editor/Admin aunque la página ya fuera marca blanca (sites.white_label) — solo miraba la cuenta del developer/admin editando, nunca la del sitio en sí.',
+      },
+    ],
+  },
+  {
     version: '1.86.0',
     date: '2026-09-23',
     changes: [

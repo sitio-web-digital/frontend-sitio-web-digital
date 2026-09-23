@@ -53,6 +53,7 @@ export default function Editor() {
     setLogoUrl,
     logoFrame,
     setLogoFrame,
+    siteWhiteLabel,
     logoPalette,
     theme,
     setPalette,
@@ -604,7 +605,13 @@ export default function Editor() {
             widgets={widgets}
             textStyles={textStyles}
             onSetTextStyle={setTextStyle}
-            whiteLabel={Boolean(user?.whiteLabel)}
+            // user.whiteLabel cubre a un cliente que YA reclamó un sitio blanco
+            // (todo su panel queda sin marca) — siteWhiteLabel cubre al developer
+            // o admin editando el sitio de OTRO todavía sin reclamar: sin esto,
+            // el pie de página mostraba igual "Sitio creado con SitioWeb Digital"
+            // aunque sites.white_label ya estuviera en true (bug real, ver
+            // comentario en sites.js > GET /:id).
+            whiteLabel={Boolean(user?.whiteLabel || siteWhiteLabel)}
           />
         </div>
       </div>

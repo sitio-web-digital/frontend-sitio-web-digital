@@ -12,6 +12,7 @@ export default function SubdomainPreview() {
     siteData,
     logoUrl,
     logoFrame,
+    siteWhiteLabel,
     published,
     authReady,
     theme,
@@ -54,6 +55,7 @@ export default function SubdomainPreview() {
         siteData={siteData}
         logoUrl={logoUrl}
         logoFrame={logoFrame}
+        whiteLabel={Boolean(user?.whiteLabel || siteWhiteLabel)}
         theme={theme}
         sections={sections}
         productos={productos}
