@@ -8,6 +8,14 @@
 
 const STORAGE_KEY = 'sitiowebdigital.site.v1';
 
+// Encuadre del logo dentro de su marco (header) — zoom + desplazamiento, en
+// vez de un recorte cuadrado forzado (ver LogoFramePopover en
+// SitePreview.jsx). zoom=1, x=0, y=0 es "logo completo, centrado, sin
+// recortar" — el estado correcto por default para un logo recién subido,
+// sea cuadrado o no. x/y son un desplazamiento en % del marco (-50..50),
+// no "object-position" (que no compone bien con zoom).
+export const DEFAULT_LOGO_FRAME = { zoom: 1, x: 0, y: 0 };
+
 // Tipos de sección cuyo contenido no vive "suelto" en el estado de React sino
 // en su propio arreglo separado (productos, faqs, testimonios) — para armar el
 // JSON, ese arreglo pasa a vivir adentro del elemento que lo usa.
@@ -31,6 +39,7 @@ export function serializeSite({
   siteData,
   theme,
   logoUrl,
+  logoFrame,
   widgets,
   textStyles,
   published,
@@ -65,6 +74,7 @@ export function serializeSite({
     siteData: siteData || null,
     theme: theme || null,
     logoUrl: logoUrl || null,
+    logoFrame: logoFrame || DEFAULT_LOGO_FRAME,
     widgets: widgets || {},
     textStyles: textStyles || {},
     published: !!published,
@@ -99,6 +109,7 @@ export function hydrateSite(json) {
     siteData: json.siteData ?? null,
     theme: json.theme ?? null,
     logoUrl: json.logoUrl ?? null,
+    logoFrame: json.logoFrame ?? DEFAULT_LOGO_FRAME,
     widgets: json.widgets ?? { whatsappFloating: true },
     textStyles: json.textStyles ?? {},
     published: !!json.published,

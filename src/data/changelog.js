@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.86.0',
+    date: '2026-09-23',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Logo del header: encuadre real (zoom + arrastrar) en vez de un recorte cuadrado forzado — soporta logos no cuadrados y PNG transparentes sin agregarles fondo.',
+      },
+      {
+        type: 'mejora',
+        text: 'Tocar el logo ahora abre un panel para encuadrar el que ya está puesto; "Reemplazar imagen" queda como una acción aparte, explícita, en vez de disparar directo el selector de archivos.',
+      },
+    ],
+  },
+  {
     version: '1.85.0',
     date: '2026-09-23',
     changes: [

@@ -30,6 +30,7 @@ import { FONT_OPTIONS, MAX_PRODUCTOS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { validateImageFile } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
+import { DEFAULT_LOGO_FRAME } from '../utils/siteSchema';
 
 const TUTORIAL_SEEN_KEY = 'sitiowebdigital.editorTutorialSeen';
 
@@ -50,6 +51,8 @@ export default function Editor() {
     canRedo,
     logoUrl,
     setLogoUrl,
+    logoFrame,
+    setLogoFrame,
     logoPalette,
     theme,
     setPalette,
@@ -263,6 +266,10 @@ export default function Editor() {
     if (!file) return;
     if (!(await validateImageFile(file, 'logo'))) return;
     setLogoUrl(await uploadImage(file));
+    // El encuadre (zoom/posición) de un logo NUEVO no tiene sentido heredado
+    // del anterior — arranca en "completo, centrado, sin recortar" y desde
+    // ahí el LogoFramePopover se lo ajusta.
+    setLogoFrame(DEFAULT_LOGO_FRAME);
   };
 
   const shuffleGallery = () => {
@@ -549,6 +556,8 @@ export default function Editor() {
             template={template}
             siteData={siteData}
             logoUrl={logoUrl}
+            logoFrame={logoFrame}
+            onSetLogoFrame={setLogoFrame}
             logoPalette={logoPalette}
             theme={theme}
             sections={sections}

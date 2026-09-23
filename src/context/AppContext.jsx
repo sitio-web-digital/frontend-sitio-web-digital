@@ -17,7 +17,7 @@ import {
   seedPosts,
   MAX_PRODUCTOS,
 } from '../data/mockData';
-import { serializeSite, hydrateSite, saveSiteToStorage, loadSiteFromStorage } from '../utils/siteSchema';
+import { serializeSite, hydrateSite, saveSiteToStorage, loadSiteFromStorage, DEFAULT_LOGO_FRAME } from '../utils/siteSchema';
 import {
   apiLogin,
   apiRegister,
@@ -108,6 +108,11 @@ export function AppProvider({ children }) {
   const [templateId, setTemplateId] = useState(initialHydrated?.templateId ?? null);
   const [siteData, setSiteData] = useState(initialHydrated?.siteData ?? null);
   const [logoUrl, setLogoUrl] = useState(initialHydrated?.logoUrl ?? null);
+  // Encuadre del logo dentro de su marco (ver DEFAULT_LOGO_FRAME) — separado
+  // de logoUrl porque cambia con controles propios (zoom/arrastrar en
+  // LogoFramePopover) y se resetea a default cada vez que se sube un logo
+  // NUEVO (el encuadre de la imagen anterior no tiene sentido para otra).
+  const [logoFrame, setLogoFrame] = useState(initialHydrated?.logoFrame ?? DEFAULT_LOGO_FRAME);
   // A propósito NUNCA arranca de initialHydrated (el borrador de
   // localStorage) — ese borrador es un mecanismo viejo de antes de que
   // existiera el backend real (ver siteSchema.js, saveSiteToStorage /
@@ -320,6 +325,7 @@ export function AppProvider({ children }) {
       siteData,
       theme,
       logoUrl,
+      logoFrame,
       widgets,
       textStyles,
       published,
@@ -402,6 +408,7 @@ export function AppProvider({ children }) {
     siteData,
     theme,
     logoUrl,
+    logoFrame,
     widgets,
     textStyles,
     published,
@@ -547,6 +554,7 @@ export function AppProvider({ children }) {
     });
     setTheme({ accent: BLANK_TEMPLATE.accent, accentSoft: BLANK_TEMPLATE.accentSoft });
     setLogoUrl(null);
+    setLogoFrame(DEFAULT_LOGO_FRAME);
     setPublished(false);
     setSections([]);
     setWidgets({ whatsappFloating: true });
@@ -587,6 +595,7 @@ export function AppProvider({ children }) {
     }));
     setSections(nextSections);
     setLogoUrl(null);
+    setLogoFrame(DEFAULT_LOGO_FRAME);
     setWidgets({
       whatsappFloating: true,
       carrito: !!t.rubros?.includes('gastronomia') || !!t.tags?.includes('carrito'),
@@ -962,6 +971,7 @@ export function AppProvider({ children }) {
     setSiteData(hydrated.siteData);
     setTheme(hydrated.theme);
     setLogoUrl(hydrated.logoUrl);
+    setLogoFrame(hydrated.logoFrame ?? DEFAULT_LOGO_FRAME);
     setWidgets(hydrated.widgets);
     setTextStyles(hydrated.textStyles ?? {});
     setPublished(hydrated.published);
@@ -1270,6 +1280,7 @@ export function AppProvider({ children }) {
       siteData,
       theme,
       logoUrl,
+      logoFrame,
       widgets,
       textStyles,
       published,
@@ -1373,6 +1384,7 @@ export function AppProvider({ children }) {
     setSiteData(null);
     setSubdomain(null);
     setLogoUrl(null);
+    setLogoFrame(DEFAULT_LOGO_FRAME);
     setPublished(false);
     setTheme(null);
     setSections([]);
@@ -1500,6 +1512,8 @@ export function AppProvider({ children }) {
     updateSiteData,
     logoUrl,
     setLogoUrl,
+    logoFrame,
+    setLogoFrame,
     logoPalette,
     subdomain,
     published,

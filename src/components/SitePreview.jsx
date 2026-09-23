@@ -82,6 +82,7 @@ import {
 } from '../data/mockData';
 import { validateImageFile, validateImageFiles } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
+import { DEFAULT_LOGO_FRAME } from '../utils/siteSchema';
 import { useCart } from '../hooks/useCart';
 
 // Variants de motion/react para cada animación de texto — se reproducen una
@@ -278,6 +279,8 @@ export default function SitePreview({
   template,
   siteData,
   logoUrl,
+  logoFrame,
+  onSetLogoFrame,
   logoPalette = [],
   theme,
   sections = [],
@@ -510,6 +513,8 @@ export default function SitePreview({
                 accent={accent}
                 logoUrl={logoUrl}
                 onLogoChange={onLogoChange}
+                logoFrame={logoFrame}
+                onSetLogoFrame={onSetLogoFrame}
                 nombreNegocio={nombreNegocio}
                 onUpdateNombre={field('nombreNegocio')}
                 editable={editable}
@@ -6202,6 +6207,140 @@ function AgregarRutaButton({ seccionesDisponibles, onAdd, fullWidth = false }) {
   );
 }
 
+// Checkerboard sutil para mostrar transparencia mientras se encuadra el logo
+// — solo en el editor (nunca en la página real, donde lo que se ve detrás
+// de un PNG transparente es el fondo real del header). Sin esto, un área
+// transparente y una blanca se ven exactamente igual mientras se ajusta.
+const LOGO_CHECKER_STYLE = {
+  backgroundImage:
+    'linear-gradient(45deg, #e5e5e5 25%, transparent 25%), linear-gradient(-45deg, #e5e5e5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e5e5 75%), linear-gradient(-45deg, transparent 75%, #e5e5e5 75%)',
+  backgroundSize: '12px 12px',
+  backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px',
+  backgroundColor: '#fff',
+};
+
+// El logo se muestra SIEMPRE completo (object-fit: contain, nunca cover) —
+// a diferencia de un recorte cuadrado forzado, esto no le corta los bordes a
+// un logo que no es cuadrado, y no le agrega ningún fondo a un PNG
+// transparente (el contenedor no tiene color propio, así que lo que se ve
+// detrás es el fondo real del header). zoom/x/y (ver DEFAULT_LOGO_FRAME en
+// siteSchema.js) son el único mecanismo para "acercar" la imagen — a zoom=1
+// se ve completa y centrada; al agrandarlo, lo que se sale del marco se
+// recorta con overflow:hidden, dando el efecto de rellenar el marco sin
+// perder nunca el control de qué parte se corta.
+function LogoFrame({ logoUrl, frame, size = 36, checker = false, className = '' }) {
+  const f = frame || DEFAULT_LOGO_FRAME;
+  return (
+    <div
+      className={`relative overflow-hidden shrink-0 ${className}`}
+      style={{ width: size, height: size, ...(checker ? LOGO_CHECKER_STYLE : {}) }}
+    >
+      <img
+        src={logoUrl}
+        alt="Logo"
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-contain select-none"
+        style={{ transform: `translate(${f.x}%, ${f.y}%) scale(${f.zoom})`, transformOrigin: 'center' }}
+      />
+    </div>
+  );
+}
+
+// Panel de encuadre del logo — a diferencia de antes (tocar el logo abría
+// directo el selector de archivos del sistema, sin forma de ajustar nada de
+// la imagen ya puesta), esto abre PRIMERO un editor con zoom + arrastrar
+// para encuadrarlo dentro de su marco. "Reemplazar imagen" queda como una
+// acción aparte, explícita, adentro del mismo panel — y al elegir un
+// archivo nuevo, el panel queda abierto mostrando ESE logo recién subido
+// (con su encuadre reseteado, ver onLogo en Editor.jsx) listo para
+// ajustarlo, en vez de cerrarse solo.
+function LogoFramePopover({ logoUrl, frame, onChangeFrame, onReplace, anchorRef, align, onClose }) {
+  const f = frame || DEFAULT_LOGO_FRAME;
+  const dragState = useRef(null);
+  const fileInputRef = useRef(null);
+  const PREVIEW_SIZE = 176;
+
+  const startDrag = (e) => {
+    if (!logoUrl) return;
+    e.preventDefault();
+    dragState.current = { startX: e.clientX, startY: e.clientY, baseX: f.x, baseY: f.y };
+    const onMove = (ev) => {
+      if (!dragState.current) return;
+      const { startX, startY, baseX, baseY } = dragState.current;
+      const dxPct = ((ev.clientX - startX) / PREVIEW_SIZE) * 100;
+      const dyPct = ((ev.clientY - startY) / PREVIEW_SIZE) * 100;
+      onChangeFrame({
+        x: Math.max(-50, Math.min(50, baseX + dxPct)),
+        y: Math.max(-50, Math.min(50, baseY + dyPct)),
+      });
+    };
+    const onUp = () => {
+      dragState.current = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  return (
+    <FixedPopover
+      anchorRef={anchorRef}
+      align={align}
+      onClose={onClose}
+      className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-4 text-left"
+    >
+      <p className="text-sm font-bold text-neutral-800 mb-1">Encuadre del logo</p>
+
+      {logoUrl ? (
+        <>
+          <p className="text-xs text-neutral-500 mb-3">Arrastrá para mover, y el control de abajo para acercar.</p>
+          <div
+            onPointerDown={startDrag}
+            className="mx-auto rounded-lg border border-neutral-200 cursor-grab active:cursor-grabbing touch-none"
+            style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
+          >
+            <LogoFrame logoUrl={logoUrl} frame={f} size={PREVIEW_SIZE} checker className="rounded-lg pointer-events-none" />
+          </div>
+
+          <div className="flex items-center gap-2 mt-3">
+            <span className="text-xs text-neutral-400 shrink-0">Zoom</span>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.05"
+              value={f.zoom}
+              onChange={(e) => onChangeFrame({ zoom: Number(e.target.value) })}
+              className="flex-1 accent-gold-500"
+            />
+          </div>
+          {(f.zoom !== 1 || f.x !== 0 || f.y !== 0) && (
+            <button
+              type="button"
+              onClick={() => onChangeFrame(DEFAULT_LOGO_FRAME)}
+              className="mt-2 text-xs font-semibold text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              Centrar y mostrar completo
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="text-xs text-neutral-500 mb-3">Todavía no subiste un logo.</p>
+      )}
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="mt-3 w-full text-xs font-bold border border-neutral-200 hover:border-gold-500 hover:text-gold-600 rounded-lg py-2 transition-colors"
+      >
+        {logoUrl ? 'Reemplazar imagen' : 'Subir logo'}
+      </button>
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onReplace} />
+    </FixedPopover>
+  );
+}
+
 // Header con logo + menú de rutas. Cada ruta lleva a una sección de esta misma
 // página (ancla con scroll suave) o a una URL externa (se abre en una pestaña
 // nueva). El menú se convierte en hamburguesa cuando el contenedor es angosto
@@ -6210,6 +6349,8 @@ function SeccionHeader({
   variant = 'clasico',
   logoUrl,
   onLogoChange,
+  logoFrame,
+  onSetLogoFrame,
   nombreNegocio,
   onUpdateNombre,
   editable,
@@ -6250,25 +6391,45 @@ function SeccionHeader({
     setMobileOpen(false);
   };
 
+  const [logoFrameOpen, setLogoFrameOpen] = useState(false);
+  const logoBtnRef = useRef(null);
+
   const logoImg = editable ? (
-    <label className="group/logo relative cursor-pointer shrink-0" title="Tocá para cambiar el logo">
-      {logoUrl ? (
-        <img src={logoUrl} alt="Logo" className="w-9 h-9 object-cover" />
-      ) : (
-        <div
-          className="w-9 h-9 flex items-center justify-center font-serif italic text-lg text-white"
-          style={{ background: accent }}
-        >
-          {initials(nombreNegocio)}
-        </div>
+    <>
+      <button
+        type="button"
+        ref={logoBtnRef}
+        onClick={() => setLogoFrameOpen((v) => !v)}
+        className="group/logo relative cursor-pointer shrink-0"
+        title="Tocá para encuadrar o cambiar el logo"
+      >
+        {logoUrl ? (
+          <LogoFrame logoUrl={logoUrl} frame={logoFrame} size={36} />
+        ) : (
+          <div
+            className="w-9 h-9 flex items-center justify-center font-serif italic text-lg text-white"
+            style={{ background: accent }}
+          >
+            {initials(nombreNegocio)}
+          </div>
+        )}
+        <span className="absolute inset-0 bg-black/0 group-hover/logo:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/logo:opacity-100">
+          <PencilIcon className="w-3.5 h-3.5 text-white" />
+        </span>
+      </button>
+      {logoFrameOpen && (
+        <LogoFramePopover
+          logoUrl={logoUrl}
+          frame={logoFrame}
+          onChangeFrame={(patch) => onSetLogoFrame?.({ ...(logoFrame || DEFAULT_LOGO_FRAME), ...patch })}
+          onReplace={onLogoChange}
+          anchorRef={logoBtnRef}
+          onClose={() => setLogoFrameOpen(false)}
+        />
       )}
-      <span className="absolute inset-0 bg-black/0 group-hover/logo:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/logo:opacity-100">
-        <PencilIcon className="w-3.5 h-3.5 text-white" />
-      </span>
-      <input type="file" accept="image/*" className="hidden" onChange={onLogoChange} />
-    </label>
+    </>
   ) : logoUrl ? (
-    <img src={logoUrl} alt="Logo" className="w-9 h-9 object-cover shrink-0" />
+    <LogoFrame logoUrl={logoUrl} frame={logoFrame} size={36} className="shrink-0" />
   ) : null; // Sin logo, en la página publicada: nada de cuadrado con iniciales
   // (eso todavía parece "un logo") — solo el nombre del negocio, tal como
   // lo pidió el dueño al no cargar uno en el quiz.

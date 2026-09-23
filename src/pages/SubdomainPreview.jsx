@@ -11,6 +11,7 @@ export default function SubdomainPreview() {
     template,
     siteData,
     logoUrl,
+    logoFrame,
     published,
     authReady,
     theme,
@@ -52,6 +53,7 @@ export default function SubdomainPreview() {
         template={template}
         siteData={siteData}
         logoUrl={logoUrl}
+        logoFrame={logoFrame}
         theme={theme}
         sections={sections}
         productos={productos}

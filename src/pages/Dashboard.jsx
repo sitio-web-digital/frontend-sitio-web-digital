@@ -237,6 +237,7 @@ export default function Dashboard() {
           siteData: hydrated?.siteData,
           theme: hydrated?.theme,
           logoUrl: hydrated?.logoUrl,
+          logoFrame: hydrated?.logoFrame,
           kpis: { visitas: s.totalVisitas, whatsapp: s.totalWhatsapp },
           codigo: codigoPagina(String(s.id)),
         };
@@ -707,6 +708,7 @@ function PageRow({ page, navigate, updateSubdomain, switchSite, isFree, canShare
             siteData={page.siteData}
             theme={page.theme}
             logoUrl={page.logoUrl}
+            logoFrame={page.logoFrame}
             sections={PREVIEW_SECTIONS}
             widgets={{ whatsappFloating: false }}
           />

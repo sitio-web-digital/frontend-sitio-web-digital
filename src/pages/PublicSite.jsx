@@ -75,6 +75,7 @@ export default function PublicSite({ subdomain }) {
       whiteLabel={whiteLabel}
       siteData={hydrated.siteData}
       logoUrl={hydrated.logoUrl}
+      logoFrame={hydrated.logoFrame}
       theme={hydrated.theme}
       sections={hydrated.sections}
       productos={hydrated.productos}
