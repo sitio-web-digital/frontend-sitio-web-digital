@@ -20,6 +20,7 @@ export default function SuscripcionConfirmar() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(false);
   const [tries, setTries] = useState(0);
+  const [payerEmail, setPayerEmail] = useState('');
 
   useEffect(() => {
     if (!authReady) return;
@@ -32,6 +33,7 @@ export default function SuscripcionConfirmar() {
     const check = async () => {
       const sub = await getSubscription();
       if (cancelado) return;
+      if (sub.payerEmail) setPayerEmail(sub.payerEmail);
       if (sub.status === 'authorized') {
         await refreshSiteStatus();
         trackEvent('funnel', 'pagina_publicada', {});
@@ -86,6 +88,27 @@ export default function SuscripcionConfirmar() {
           >
             {checking ? 'Revisando...' : 'Ya pagué, revisar de nuevo'}
           </button>
+        )}
+        {tries >= 5 && (
+          <div className="mt-8 border border-white/10 bg-navy-850 p-4 text-left">
+            <p className="text-sm font-semibold text-white mb-1">¿Mercado Pago te mostró un error o no pudiste pagar?</p>
+            <p className="text-xs text-ink-300 leading-relaxed mb-3">
+              {payerEmail ? (
+                <>
+                  Pedimos pagar con <strong className="text-white">{payerEmail}</strong>. Tenés que entrar a Mercado Pago
+                  con ese mismo correo. Si tu cuenta de Mercado Pago usa otro, volvé y cambialo.
+                </>
+              ) : (
+                <>Tenés que entrar a Mercado Pago con el mismo correo que indicaste al pagar. Si usa otro, volvé y cambialo.</>
+              )}
+            </p>
+            <button
+              onClick={() => navigate('/checkout')}
+              className="text-sm font-semibold text-gold-500 hover:text-gold-400 transition-colors underline"
+            >
+              Volver y cambiar el correo de Mercado Pago
+            </button>
+          </div>
         )}
       </div>
     </div>

@@ -1180,7 +1180,7 @@ export function AppProvider({ children }) {
   // necesariamente es la que está cargada en el editor.
   const getSubscription = () =>
     activeSiteId ? apiGetSubscription(activeSiteId) : Promise.resolve({ status: 'none', preapprovalId: null, published: false });
-  const startSubscription = () => apiStartSubscription(activeSiteId);
+  const startSubscription = (payerEmail) => apiStartSubscription(activeSiteId, payerEmail);
   const publishFree = async () => {
     const result = await apiPublishFree(activeSiteId);
     if (result.ok) await refreshUser();

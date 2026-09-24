@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import AuthGate from '../components/AuthGate';
@@ -6,6 +6,9 @@ import { useApp } from '../context/AppContext';
 import { PLAN, slugify } from '../data/mockData';
 import { trackEvent } from '../utils/analytics';
 import { ROOT_DOMAIN } from '../utils/rootDomain';
+
+const MP_EMAIL_KEY = 'sitiowebdigital.mpEmail';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Checkout() {
   const {
@@ -29,6 +32,24 @@ export default function Checkout() {
   const [error, setError] = useState('');
   const [autoAssignDone, setAutoAssignDone] = useState(false);
   const isFree = (user?.freeSubscriptions ?? 0) > 0;
+  // Correo de la cuenta de Mercado Pago de quien paga — puede ser distinto
+  // al de la cuenta de acá, y Mercado Pago rechaza el pago si se entra con
+  // otro. Se recuerda por usuario para no volver a escribirlo si reintenta.
+  const [mpEmail, setMpEmail] = useState('');
+  const [mpEmailConfirmed, setMpEmailConfirmed] = useState(false);
+  const mpEmailEdited = useRef(false);
+  const mpEmailValid = EMAIL_RE.test(mpEmail.trim());
+
+  useEffect(() => {
+    if (!user || mpEmailEdited.current) return;
+    let saved = '';
+    try {
+      saved = JSON.parse(localStorage.getItem(MP_EMAIL_KEY) || '{}')[user.id] || '';
+    } catch {
+      // localStorage puede fallar (modo privado) — se usa el del login.
+    }
+    setMpEmail(saved || user.email || '');
+  }, [user?.id, user?.email]);
 
   // Espera a que termine de restaurarse la sesión (authReady) antes de
   // decidir que no hay página armada — sin esto, volver acá con un refresh
@@ -72,11 +93,18 @@ export default function Checkout() {
   // puede vivir solo en el navegador) para tener un id real al que atar la
   // suscripción.
   const pagar = async () => {
-    if (!subdomain) return;
+    if (!subdomain || !mpEmailValid || !mpEmailConfirmed) return;
     setStatus('processing');
     setError('');
+    const payerEmail = mpEmail.trim().toLowerCase();
+    try {
+      const all = JSON.parse(localStorage.getItem(MP_EMAIL_KEY) || '{}');
+      localStorage.setItem(MP_EMAIL_KEY, JSON.stringify({ ...all, [user.id]: payerEmail }));
+    } catch {
+      // no es crítico: solo evita volver a escribirlo en el próximo intento.
+    }
     await saveSiteToBackend({ published: false });
-    const result = await startSubscription();
+    const result = await startSubscription(payerEmail);
     if (!result.ok) {
       setStatus('idle');
       setError(result.error || 'No se pudo iniciar la suscripción. Probá de nuevo en un momento.');
@@ -272,15 +300,67 @@ export default function Checkout() {
                 </p>
                 <p className="text-sm text-ink-400 mb-6">Suscripción mensual, cancelás cuando quieras.</p>
 
+                <div className="border border-[#009ee3]/30 bg-[#009ee3]/10 p-4 mb-5">
+                  <label htmlFor="mp-email" className="block text-sm font-semibold text-white mb-1">
+                    Tu correo de Mercado Pago
+                  </label>
+                  <p className="text-xs text-ink-300 leading-relaxed mb-3">
+                    Tiene que ser <strong className="text-white">el mismo correo con el que entrás a tu cuenta de Mercado
+                    Pago</strong>. Si usás otro, Mercado Pago rechaza el pago. Puede ser distinto al de tu cuenta acá.
+                  </p>
+                  <input
+                    id="mp-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={mpEmail}
+                    onChange={(e) => {
+                      mpEmailEdited.current = true;
+                      setMpEmail(e.target.value);
+                      setMpEmailConfirmed(false);
+                    }}
+                    placeholder="correo@de-mercado-pago.com"
+                    aria-invalid={mpEmail !== '' && !mpEmailValid}
+                    className={`w-full border bg-navy-900 px-4 py-3 text-sm text-white placeholder:text-ink-500 outline-none transition-colors ${
+                      mpEmail !== '' && !mpEmailValid ? 'border-red-400 focus:border-red-400' : 'border-white/10 focus:border-[#009ee3]'
+                    }`}
+                  />
+                  {mpEmail !== '' && !mpEmailValid && (
+                    <p className="text-xs text-red-400 mt-1.5">Revisá el correo: no parece válido.</p>
+                  )}
+                  <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={mpEmailConfirmed}
+                      onChange={(e) => setMpEmailConfirmed(e.target.checked)}
+                      disabled={!mpEmailValid}
+                      className="mt-0.5 accent-[#009ee3]"
+                    />
+                    <span className="text-xs text-ink-200 leading-relaxed">
+                      Confirmo que este es el correo con el que entro a Mercado Pago.
+                    </span>
+                  </label>
+                  <p className="text-[11px] text-ink-400 leading-relaxed mt-3">
+                    Al pasar a Mercado Pago, iniciá sesión con ese mismo correo. ¿No lo recordás? Fijate con qué
+                    correo entrás a la app o a la web de Mercado Pago.
+                  </p>
+                </div>
+
                 {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
                 <button
                   onClick={pagar}
-                  disabled={status === 'processing' || !subdomain}
+                  disabled={status === 'processing' || !subdomain || !mpEmailValid || !mpEmailConfirmed}
                   data-track="checkout_pagar"
-                  title={!subdomain ? 'Elegí tu subdominio en Configuración antes de publicar.' : undefined}
-                  className={`w-full font-bold py-3 flex items-center justify-center gap-2 transition-colors text-sm ${
+                  title={
                     !subdomain
+                      ? 'Elegí tu subdominio en Configuración antes de publicar.'
+                      : !mpEmailValid || !mpEmailConfirmed
+                        ? 'Completá y confirmá tu correo de Mercado Pago para continuar.'
+                        : undefined
+                  }
+                  className={`w-full font-bold py-3 flex items-center justify-center gap-2 transition-colors text-sm ${
+                    !subdomain || !mpEmailValid || !mpEmailConfirmed
                       ? 'bg-white/5 text-ink-500 cursor-not-allowed'
                       : 'bg-[#009ee3] hover:bg-[#0090cc] text-white disabled:opacity-80'
                   }`}
@@ -291,6 +371,8 @@ export default function Checkout() {
                     </>
                   ) : !subdomain ? (
                     'Elegí tu subdominio primero'
+                  ) : !mpEmailValid || !mpEmailConfirmed ? (
+                    'Confirmá tu correo de Mercado Pago'
                   ) : (
                     `Pagar $${PLAN.precio.toLocaleString('es-AR')}`
                   )}

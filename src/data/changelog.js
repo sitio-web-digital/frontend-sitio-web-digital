@@ -5,6 +5,20 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.93.0',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'mejora',
+        text: 'Checkout: ahora se pide el correo de la cuenta de Mercado Pago (puede ser distinto al de la cuenta de acá), con aviso claro de que tiene que ser el mismo con el que se entra a Mercado Pago y una confirmación antes de pagar. Evita que el pago rebote por usar otro correo.',
+      },
+      {
+        type: 'mejora',
+        text: 'Registro: aviso de que conviene usar el mismo correo de Mercado Pago. Pantalla de confirmación: si el pago no se completa, muestra con qué correo se pidió pagar y permite volver a cambiarlo.',
+      },
+    ],
+  },
+  {
     version: '1.92.0',
     date: '2026-09-24',
     changes: [

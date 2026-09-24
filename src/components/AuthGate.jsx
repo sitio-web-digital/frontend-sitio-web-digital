@@ -73,6 +73,12 @@ export default function AuthGate({ login, register, title = 'Iniciá sesión par
             placeholder="Email"
             className="w-full border border-white/10 bg-navy-900 px-4 py-3 text-sm text-white placeholder:text-ink-500 outline-none focus:border-gold-500 transition-colors"
           />
+          {mode === 'register' && (
+            <p className="text-[11px] text-ink-400 leading-relaxed -mt-1">
+              Te conviene usar el mismo correo de tu cuenta de Mercado Pago, con el que vas a pagar la suscripción. Si
+              es otro, podés indicarlo más adelante al pagar.
+            </p>
+          )}
           <input
             required
             type="password"

@@ -302,10 +302,10 @@ export async function apiGetSubscription(siteId) {
 // Se llama al tocar "Pagar" — antes de mandar al checkout de Mercado Pago,
 // avisa al backend que esta página está yendo a pagar (para poder
 // reconocerla después, ver server/src/routes/mercadopagoWebhook.js).
-export async function apiStartSubscription(siteId) {
+export async function apiStartSubscription(siteId, payerEmail) {
   const token = getToken();
   if (!token) return { ok: false, error: 'Iniciá sesión para publicar tu página.' };
-  return request(`/subscription/${siteId}/start`, { method: 'POST', token });
+  return request(`/subscription/${siteId}/start`, { method: 'POST', token, body: { payerEmail } });
 }
 
 // Publica directo, sin pasar por Mercado Pago — solo funciona si la cuenta
