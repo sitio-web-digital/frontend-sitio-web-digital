@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.90.0',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Botón "Quitar fondo" para logos que ya estaban subidos (no solo al elegir uno nuevo), con "Deshacer" si el resultado no queda bien.',
+      },
+    ],
+  },
+  {
     version: '1.89.0',
     date: '2026-09-24',
     changes: [

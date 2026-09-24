@@ -76,6 +76,24 @@ export async function apiUploadImage(file) {
   return { ok: true, url: data.url };
 }
 
+// Trae los BYTES de una imagen ya subida (ver GET /api/uploads/proxy) — para
+// poder reprocesarla en el navegador (ej. "Quitar fondo" sobre un logo que
+// ya está en S3, no recién elegido del disco). Devuelve un Blob, o null si
+// falla — quien llama decide qué avisar.
+export async function apiFetchUploadedImage(url) {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/uploads/proxy?url=${encodeURIComponent(url)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    return await res.blob();
+  } catch {
+    return null;
+  }
+}
+
 export async function apiLogin({ email, password }) {
   const result = await request('/auth/login', { method: 'POST', body: { email, password } });
   if (!result.ok) return result;

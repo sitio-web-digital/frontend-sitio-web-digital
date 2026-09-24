@@ -281,6 +281,8 @@ export default function SitePreview({
   logoUrl,
   logoFrame,
   onSetLogoFrame,
+  onSetLogoUrl,
+  onRemoveExistingLogoBg,
   removingLogoBg = false,
   logoPalette = [],
   theme,
@@ -533,6 +535,8 @@ export default function SitePreview({
                 onLogoChange={onLogoChange}
                 logoFrame={logoFrame}
                 onSetLogoFrame={onSetLogoFrame}
+                onSetLogoUrl={onSetLogoUrl}
+                onRemoveExistingLogoBg={onRemoveExistingLogoBg}
                 removingLogoBg={removingLogoBg}
                 showBusinessName={sec.showBusinessName}
                 onSetShowBusinessName={(v) => onSetSectionStyle?.(sec.id, { showBusinessName: v })}
@@ -6297,6 +6301,8 @@ function LogoFramePopover({
   frame,
   onChangeFrame,
   onReplace,
+  onSetLogoUrl,
+  onRemoveExistingBg,
   removingLogoBg = false,
   showBusinessName,
   onToggleBusinessName,
@@ -6308,6 +6314,34 @@ function LogoFramePopover({
   const dragState = useRef(null);
   const fileInputRef = useRef(null);
   const PREVIEW_SIZE = 176;
+
+  // "Quitar fondo" sobre el logo YA cargado (separado del que corre solo al
+  // subir uno nuevo, ver removingLogoBg) — guarda la URL de ANTES para
+  // poder deshacer con un click si el resultado no queda bien, en vez de
+  // mandar a usar el undo general del editor (menos obvio para esto puntual).
+  const [bgTool, setBgTool] = useState('idle'); // idle | processing | done | error
+  const [bgError, setBgError] = useState('');
+  const [undoUrl, setUndoUrl] = useState(null);
+
+  const handleRemoveExistingBg = async () => {
+    if (!onRemoveExistingBg) return;
+    setUndoUrl(logoUrl);
+    setBgTool('processing');
+    setBgError('');
+    const result = await onRemoveExistingBg();
+    if (result?.ok) {
+      setBgTool('done');
+    } else {
+      setBgTool('error');
+      setBgError(result?.error || 'No se pudo procesar el logo.');
+    }
+  };
+
+  const handleUndoBgRemoval = () => {
+    if (undoUrl) onSetLogoUrl?.(undoUrl);
+    setBgTool('idle');
+    setUndoUrl(null);
+  };
 
   const startDrag = (e) => {
     if (!logoUrl) return;
@@ -6392,6 +6426,39 @@ function LogoFramePopover({
             />
             <span className="text-xs text-neutral-400 w-7 text-right shrink-0">{f.size ?? 36}</span>
           </div>
+
+          {onRemoveExistingBg && (
+            <div className="mt-3 pt-3 border-t border-neutral-100">
+              {bgTool === 'processing' ? (
+                <div className="flex items-center gap-2 py-1.5">
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-gold-500 border-t-transparent animate-spin shrink-0" />
+                  <span className="text-xs text-neutral-500">Quitando el fondo...</span>
+                </div>
+              ) : bgTool === 'done' ? (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-emerald-600">Fondo quitado.</span>
+                  <button
+                    type="button"
+                    onClick={handleUndoBgRemoval}
+                    className="text-xs font-semibold text-neutral-500 hover:text-neutral-700 underline decoration-dotted transition-colors shrink-0"
+                  >
+                    Deshacer
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleRemoveExistingBg}
+                    className="w-full text-xs font-bold border border-neutral-200 hover:border-gold-500 hover:text-gold-600 rounded-lg py-2 transition-colors"
+                  >
+                    Quitar fondo
+                  </button>
+                  {bgTool === 'error' && <p className="text-[11px] text-red-500 mt-1.5">{bgError}</p>}
+                </>
+              )}
+            </div>
+          )}
         </>
       ) : (
         <p className="text-xs text-neutral-500 mb-3">Todavía no subiste un logo.</p>
@@ -6421,7 +6488,19 @@ function LogoFramePopover({
       <p className="text-[11px] text-neutral-400 mt-2 leading-snug">
         Si tiene fondo (una foto, un color de más), se lo sacamos solos al subirlo.
       </p>
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onReplace} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          // Un archivo nuevo deja obsoleto cualquier "Deshacer" de un
+          // "Quitar fondo" anterior — esa URL vieja ya no tiene nada que ver.
+          setBgTool('idle');
+          setUndoUrl(null);
+          onReplace?.(e);
+        }}
+      />
     </FixedPopover>
   );
 }
@@ -6436,6 +6515,8 @@ function SeccionHeader({
   onLogoChange,
   logoFrame,
   onSetLogoFrame,
+  onSetLogoUrl,
+  onRemoveExistingLogoBg,
   removingLogoBg = false,
   showBusinessName = true,
   onSetShowBusinessName,
@@ -6511,6 +6592,8 @@ function SeccionHeader({
           frame={logoFrame}
           onChangeFrame={(patch) => onSetLogoFrame?.({ ...(logoFrame || DEFAULT_LOGO_FRAME), ...patch })}
           onReplace={onLogoChange}
+          onSetLogoUrl={onSetLogoUrl}
+          onRemoveExistingBg={onRemoveExistingLogoBg}
           removingLogoBg={removingLogoBg}
           showBusinessName={showBusinessName !== false}
           onToggleBusinessName={onSetShowBusinessName}

@@ -7,7 +7,7 @@ import AuthGate from '../components/AuthGate';
 import SupportTicketList from '../components/support/SupportTicketList';
 import NewTicketModal from '../components/support/NewTicketModal';
 import SupportToast from '../components/support/SupportToast';
-import { apiGetSupportUnread, apiMarkSupportSeen } from '../api/client';
+import { apiGetSupportUnread, apiMarkSupportSeen, apiFetchUploadedImage } from '../api/client';
 import {
   MonitorIcon,
   TabletIcon,
@@ -272,11 +272,11 @@ export default function Editor() {
     if (!file) return;
     if (!(await validateImageFile(file, 'logo'))) return;
     // Le saca el fondo automáticamente ANTES de subirlo — corre en el propio
-    // navegador sobre el archivo recién elegido (nunca sobre uno ya subido:
-    // el bucket de fotos no tiene CORS habilitado, así que un logo que ya
-    // está en S3/CloudFront no se puede releer píxel a píxel desde acá). Si
-    // la imagen ya venía con fondo transparente, o el procesamiento falla
-    // por lo que sea, se sube el archivo tal cual — nunca bloquea la carga.
+    // navegador sobre el archivo recién elegido (el que YA está subido usa
+    // otro camino, ver removeExistingLogoBg más abajo: hace falta pasar por
+    // el proxy del backend porque el bucket no tiene CORS habilitado). Si la
+    // imagen ya venía con fondo transparente, o el procesamiento falla por
+    // lo que sea, se sube el archivo tal cual — nunca bloquea la carga.
     setRemovingLogoBg(true);
     const withoutBg = await removeLogoBackground(file).catch(() => null);
     setRemovingLogoBg(false);
@@ -285,6 +285,29 @@ export default function Editor() {
     // del anterior — arranca en "completo, centrado, sin recortar" y desde
     // ahí el LogoFramePopover se lo ajusta.
     setLogoFrame(DEFAULT_LOGO_FRAME);
+  };
+
+  // "Quitar fondo" sobre un logo YA subido (a diferencia de onLogo, que
+  // procesa el archivo recién elegido del disco) — el bucket no tiene CORS
+  // habilitado, así que hay que traer los bytes por el proxy del backend
+  // (apiFetchUploadedImage) antes de poder leerlos en un canvas. Si el
+  // logo ya es un data: URL (el respaldo que usa uploadImage.js cuando
+  // subir falla), no hace falta proxy — ya son bytes locales.
+  const removeExistingLogoBg = async () => {
+    if (!logoUrl) return { ok: false, error: 'Todavía no hay un logo cargado.' };
+    let blob;
+    if (logoUrl.startsWith('data:')) {
+      blob = await fetch(logoUrl).then((r) => r.blob());
+    } else {
+      blob = await apiFetchUploadedImage(logoUrl);
+    }
+    if (!blob) return { ok: false, error: 'No se pudo leer el logo actual.' };
+    const file = new File([blob], 'logo.png', { type: blob.type || 'image/png' });
+    const processed = await removeLogoBackground(file).catch(() => null);
+    if (!processed) return { ok: false, error: 'No encontré ningún fondo para sacarle a este logo.' };
+    const newUrl = await uploadImage(processed);
+    setLogoUrl(newUrl);
+    return { ok: true };
   };
 
   const shuffleGallery = () => {
@@ -573,6 +596,8 @@ export default function Editor() {
             logoUrl={logoUrl}
             logoFrame={logoFrame}
             onSetLogoFrame={setLogoFrame}
+            onSetLogoUrl={setLogoUrl}
+            onRemoveExistingLogoBg={removeExistingLogoBg}
             removingLogoBg={removingLogoBg}
             logoPalette={logoPalette}
             theme={theme}
