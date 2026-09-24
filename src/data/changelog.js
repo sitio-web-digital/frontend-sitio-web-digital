@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.92.0',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Nuevo botón "Fondo de la página" en el editor: un color entero o una imagen para todo el fondo de la página, detrás de cualquier sección que no tenga su propio color puesto (las que sí lo tienen no cambian).',
+      },
+    ],
+  },
+  {
     version: '1.91.1',
     date: '2026-09-24',
     changes: [

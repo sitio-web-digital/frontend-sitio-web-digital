@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SitePreview from '../components/SitePreview';
 import Logo from '../components/Logo';
@@ -23,6 +23,7 @@ import {
   PlusIcon,
   PaletteIcon,
   TypeIcon,
+  ImageIcon,
   UndoIcon,
   RedoIcon,
 } from '../components/icons';
@@ -61,6 +62,9 @@ export default function Editor() {
     setCustomColor,
     setSiteFont,
     importGoogleFont,
+    setPageBackgroundColor,
+    setPageBackgroundImage,
+    clearPageBackground,
     sections,
     addSection,
     removeSection,
@@ -137,6 +141,7 @@ export default function Editor() {
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [fontPickerOpen, setFontPickerOpen] = useState(false);
+  const [backgroundPickerOpen, setBackgroundPickerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [unreadSupport, setUnreadSupport] = useState({ count: 0, tickets: [] });
   const [supportToast, setSupportToast] = useState(null);
@@ -476,6 +481,16 @@ export default function Editor() {
               <TypeIcon className="w-4 h-4" />
             </button>
             <button
+              data-tour="background-picker"
+              type="button"
+              onClick={() => setBackgroundPickerOpen(true)}
+              title="Fondo de la página"
+              aria-label="Fondo de la página"
+              className="w-9 h-9 text-ink-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </button>
+            <button
               data-tour="widgets-fab"
               type="button"
               onClick={() => setWidgetsOpen(true)}
@@ -684,6 +699,16 @@ export default function Editor() {
           onSetFont={setSiteFont}
           onImportFont={importGoogleFont}
           onClose={() => setFontPickerOpen(false)}
+        />
+      )}
+
+      {backgroundPickerOpen && (
+        <PageBackgroundPopover
+          pageBackground={theme?.pageBackground}
+          onSetColor={setPageBackgroundColor}
+          onSetImage={setPageBackgroundImage}
+          onClear={clearPageBackground}
+          onClose={() => setBackgroundPickerOpen(false)}
         />
       )}
 
@@ -1257,6 +1282,106 @@ function ColorPickerPopover({ theme, template, logoPalette, onSetPalette, onSetC
             className="w-9 h-9 shrink-0"
           />
         </label>
+      </div>
+    </div>
+  );
+}
+
+// Botón de fondo de la página (barra del editor): un color entero o una
+// imagen para el fondo de TODA la página, detrás de cualquier sección que no
+// tenga su propio color puesto a mano — pedido de los developers para no
+// depender solo del color/foto de cada sección por separado. Vive en
+// theme.pageBackground (ver AppContext); el override real pasa por
+// palette.bg en SitePreview.
+function PageBackgroundPopover({ pageBackground, onSetColor, onSetImage, onClear, onClose }) {
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const current = pageBackground;
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !(await validateImageFile(file, 'fondo'))) return;
+    setUploading(true);
+    const url = await uploadImage(file);
+    setUploading(false);
+    onSetImage(url);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm border border-white/10 bg-navy-850 p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-display text-lg font-semibold text-white">Fondo de la página</h2>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-ink-400 hover:text-white transition-colors">
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+        <p className="text-xs text-ink-500 mb-5">
+          Un color entero o una imagen para todo el fondo de la página, detrás de las secciones que no tengan su
+          propio color puesto — esas siguen exactamente igual.
+        </p>
+
+        {current?.type === 'image' && current.url && (
+          <div className="mb-4">
+            <div className="relative aspect-video overflow-hidden border border-white/10">
+              <img src={current.url} alt="Fondo actual de la página" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs font-semibold text-ink-400 mb-2">Color</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {ACCENT_PRESETS.map((hex) => (
+            <button
+              key={hex}
+              type="button"
+              onClick={() => onSetColor(hex)}
+              title={hex}
+              className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                current?.type === 'color' && current.value === hex ? 'border-white' : 'border-white/15'
+              }`}
+              style={{ background: hex }}
+            />
+          ))}
+        </div>
+
+        <label className="flex items-center justify-between gap-3 border border-white/10 bg-navy-900 px-4 py-3 cursor-pointer mb-4">
+          <span className="text-sm font-semibold text-white">Color personalizado</span>
+          <input
+            type="color"
+            value={current?.type === 'color' ? current.value : '#ffffff'}
+            onChange={(e) => onSetColor(e.target.value)}
+            className="w-9 h-9 shrink-0"
+          />
+        </label>
+
+        <p className="text-xs font-semibold text-ink-400 mb-2">Imagen</p>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="w-full text-sm font-bold border border-white/15 hover:border-gold-500 hover:text-gold-400 text-ink-300 transition-colors disabled:opacity-40 py-2.5"
+        >
+          {uploading ? 'Subiendo...' : current?.type === 'image' ? 'Reemplazar imagen' : 'Subir imagen de fondo'}
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+
+        {current && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="w-full text-xs font-semibold text-ink-500 hover:text-white transition-colors mt-3"
+          >
+            Usar el fondo por default de la plantilla
+          </button>
+        )}
       </div>
     </div>
   );

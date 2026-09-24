@@ -687,6 +687,31 @@ export function AppProvider({ children }) {
     return { ok: true, font };
   };
 
+  // Fondo de TODA la página (Editor > botón "Fondo de la página") — a
+  // diferencia del color de cada sección (bgColor, puntual) y del acento
+  // (setPalette/setCustomColor, solo botones/detalles), esto pinta el
+  // fondo común detrás de cualquier sección que no tenga su propio color
+  // puesto. Se guarda en theme.pageBackground para no tocar el schema del
+  // backend (theme ya es un JSON de paso libre). type:'color' pisa el color
+  // de fondo por default de la plantilla; type:'image' además dibuja una
+  // sola imagen continua detrás de todas las secciones (ver el fondo fijo
+  // en SitePreview, justo debajo de `palette` con el override).
+  const setPageBackgroundColor = (hex) => {
+    setTheme((prev) => ({ ...prev, pageBackground: { type: 'color', value: hex } }));
+  };
+
+  const setPageBackgroundImage = (url) => {
+    setTheme((prev) => ({ ...prev, pageBackground: { type: 'image', url } }));
+  };
+
+  const clearPageBackground = () => {
+    setTheme((prev) => {
+      const next = { ...prev };
+      delete next.pageBackground;
+      return next;
+    });
+  };
+
   const addSection = (type, index, variant) => {
     const resolvedVariant = variant ?? SECTION_VARIANTS[type]?.[0]?.id;
     setSections((prev) => {
@@ -1543,6 +1568,9 @@ export function AppProvider({ children }) {
     setCustomColor,
     setSiteFont,
     importGoogleFont,
+    setPageBackgroundColor,
+    setPageBackgroundImage,
+    clearPageBackground,
     sections,
     addSection,
     removeSection,

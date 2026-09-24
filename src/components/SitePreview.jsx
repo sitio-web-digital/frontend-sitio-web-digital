@@ -376,7 +376,22 @@ export default function SitePreview({
   // la pisa el selector de color: se deriva del rubro Y del acento PROPIO de
   // esta plantilla (no el elegido en el selector), para que dos plantillas
   // del mismo rubro no terminen con el mismo fondo/bordes.
-  const palette = getTemplatePalette(template);
+  const rawPalette = getTemplatePalette(template);
+  // Fondo de TODA la página (Editor > botón "Fondo de la página", ver
+  // PageBackgroundPopover): pisa el fondo automático del rubro/acento en UN
+  // solo lugar — de acá para abajo, cualquiera de las 100+ secciones que
+  // usan `bgColor || palette.bg` (su color propio, si lo tienen, si no el
+  // de la página) ya respeta esta elección sin tocar cada sección una por
+  // una. En modo imagen, el fondo de cada sección pasa a transparente (para
+  // que se vea la imagen única de acá abajo) — SOLO en las secciones que no
+  // tengan puesto su propio color a mano, esas siguen exactamente igual.
+  const pageBg = theme?.pageBackground;
+  const palette =
+    pageBg?.type === 'color' && pageBg.value
+      ? { ...rawPalette, bg: pageBg.value }
+      : pageBg?.type === 'image' && pageBg.url
+        ? { ...rawPalette, bg: 'transparent' }
+        : rawPalette;
   const {
     nombreNegocio,
     rubroLabel,
@@ -444,6 +459,7 @@ export default function SitePreview({
     <div
       className="@container font-editorial"
       style={{
+        position: 'relative',
         background: wrapperBg,
         color: palette.ink,
         fontFamily: theme?.font?.family || undefined,
@@ -473,6 +489,17 @@ export default function SitePreview({
             : {}),
       }}
     >
+      {pageBg?.type === 'image' && pageBg.url && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: -1,
+            background: `linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)), url("${pageBg.url}") center/cover no-repeat`,
+          }}
+        />
+      )}
       {/* Zona reordenable: "+" entre cada bloque para insertar exactamente ahí,
           o (mientras se arrastra una sección) una línea que marca dónde caería */}
       {editable && sections.length === 0 && (

@@ -12,6 +12,7 @@ export const IMAGE_LIMITS = {
   blog: { maxMB: 5, maxWidth: 2400, maxHeight: 2400, label: 'la foto de la novedad' },
   hero: { maxMB: 6, maxWidth: 3000, maxHeight: 3000, label: 'las fotos del hero' },
   soporte: { maxMB: 3, maxWidth: 2400, maxHeight: 2400, label: 'las capturas adjuntas' },
+  fondo: { maxMB: 6, maxWidth: 3000, maxHeight: 3000, label: 'la imagen de fondo de la página' },
 };
 
 // Devuelve `true` si el archivo pasa los límites de esa sección; si no, avisa
