@@ -5,6 +5,24 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.88.0',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Elegir una tipografía general desde el editor (botón "T") no se aplicaba en la mayoría de los títulos/textos de cada sección, que seguían con la tipografía propia de la plantilla — ahora sí converge en toda la página.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Logo del header: tamaño configurable (antes fijo en 36px) y ya no se fuerza a un marco cuadrado — respeta la proporción real de logos rectangulares.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Opción para ocultar el nombre del negocio al lado del logo del header, para cuando el logo ya alcanza.',
+      },
+    ],
+  },
+  {
     version: '1.87.0',
     date: '2026-09-23',
     changes: [

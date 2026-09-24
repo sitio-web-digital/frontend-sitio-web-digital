@@ -14,7 +14,10 @@ const STORAGE_KEY = 'sitiowebdigital.site.v1';
 // recortar" — el estado correcto por default para un logo recién subido,
 // sea cuadrado o no. x/y son un desplazamiento en % del marco (-50..50),
 // no "object-position" (que no compone bien con zoom).
-export const DEFAULT_LOGO_FRAME = { zoom: 1, x: 0, y: 0 };
+// size = alto del logo en el header, en px (el ancho sigue su proporción
+// real vía object-fit:contain) — antes estaba fijo en 36px sin forma de
+// agrandarlo, ver LogoFramePopover.
+export const DEFAULT_LOGO_FRAME = { zoom: 1, x: 0, y: 0, size: 36 };
 
 // Tipos de sección cuyo contenido no vive "suelto" en el estado de React sino
 // en su propio arreglo separado (productos, faqs, testimonios) — para armar el

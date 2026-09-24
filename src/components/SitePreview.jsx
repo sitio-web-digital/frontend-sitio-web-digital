@@ -444,13 +444,30 @@ export default function SitePreview({
         background: wrapperBg,
         color: palette.ink,
         fontFamily: theme?.font?.family || undefined,
-        ...(fontsOverride
+        // La MAYORÍA de los títulos/textos de cada sección no heredan esto:
+        // usan clases fijas (font-serif/font-mono/font-editorial), que en
+        // CSS son una declaración más específica que este fontFamily
+        // heredado del wrapper y siempre ganan — por eso elegir una
+        // tipografía acá arriba (selector "T" del editor) se sentía sin
+        // efecto en la mayoría de las secciones (bug real, confirmado en
+        // vivo el 2026-09-24). La solución es pisar las 3 variables CSS que
+        // esas clases usan, no solo el fontFamily del wrapper. Una elección
+        // explícita acá gana sobre fontsOverride (la tipografía propia de
+        // la plantilla) — evitarlo sería ignorar lo que la persona
+        // justamente vino a cambiar.
+        ...(theme?.font?.family
           ? {
-              '--font-serif': fontsOverride.serif,
-              '--font-mono': fontsOverride.mono,
-              '--font-editorial': fontsOverride.editorial,
+              '--font-serif': theme.font.family,
+              '--font-mono': theme.font.family,
+              '--font-editorial': theme.font.family,
             }
-          : {}),
+          : fontsOverride
+            ? {
+                '--font-serif': fontsOverride.serif,
+                '--font-mono': fontsOverride.mono,
+                '--font-editorial': fontsOverride.editorial,
+              }
+            : {}),
       }}
     >
       {/* Zona reordenable: "+" entre cada bloque para insertar exactamente ahí,
@@ -515,6 +532,8 @@ export default function SitePreview({
                 onLogoChange={onLogoChange}
                 logoFrame={logoFrame}
                 onSetLogoFrame={onSetLogoFrame}
+                showBusinessName={sec.showBusinessName}
+                onSetShowBusinessName={(v) => onSetSectionStyle?.(sec.id, { showBusinessName: v })}
                 nombreNegocio={nombreNegocio}
                 onUpdateNombre={field('nombreNegocio')}
                 editable={editable}
@@ -6228,17 +6247,34 @@ const LOGO_CHECKER_STYLE = {
 // se ve completa y centrada; al agrandarlo, lo que se sale del marco se
 // recorta con overflow:hidden, dando el efecto de rellenar el marco sin
 // perder nunca el control de qué parte se corta.
-function LogoFrame({ logoUrl, frame, size = 36, checker = false, className = '' }) {
+// `natural=true` (el header real): el ALTO es `size` y el ANCHO sigue la
+// proporción real del logo (medida al cargar la imagen) — así un logo
+// panorámico no queda apretado en un cuadrado que le sobra o le falta
+// espacio. `natural=false` (el recuadro de encuadre del popover): se queda
+// cuadrado siempre, a propósito — ahí lo que importa es tener un marco de
+// trabajo estable para arrastrar/hacer zoom, no el tamaño final.
+function LogoFrame({ logoUrl, frame, size = 36, checker = false, className = '', natural = false }) {
   const f = frame || DEFAULT_LOGO_FRAME;
+  const [ratio, setRatio] = useState(1);
+  const height = size;
+  const width = natural ? Math.min(size * 4, Math.round(size * ratio) || size) : size;
   return (
     <div
       className={`relative overflow-hidden shrink-0 ${className}`}
-      style={{ width: size, height: size, ...(checker ? LOGO_CHECKER_STYLE : {}) }}
+      style={{ width, height, ...(checker ? LOGO_CHECKER_STYLE : {}) }}
     >
       <img
         src={logoUrl}
         alt="Logo"
         draggable={false}
+        onLoad={
+          natural
+            ? (e) => {
+                const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+                if (w && h) setRatio(w / h);
+              }
+            : undefined
+        }
         className="absolute inset-0 w-full h-full object-contain select-none"
         style={{ transform: `translate(${f.x}%, ${f.y}%) scale(${f.zoom})`, transformOrigin: 'center' }}
       />
@@ -6254,7 +6290,17 @@ function LogoFrame({ logoUrl, frame, size = 36, checker = false, className = '' 
 // archivo nuevo, el panel queda abierto mostrando ESE logo recién subido
 // (con su encuadre reseteado, ver onLogo en Editor.jsx) listo para
 // ajustarlo, en vez de cerrarse solo.
-function LogoFramePopover({ logoUrl, frame, onChangeFrame, onReplace, anchorRef, align, onClose }) {
+function LogoFramePopover({
+  logoUrl,
+  frame,
+  onChangeFrame,
+  onReplace,
+  showBusinessName,
+  onToggleBusinessName,
+  anchorRef,
+  align,
+  onClose,
+}) {
   const f = frame || DEFAULT_LOGO_FRAME;
   const dragState = useRef(null);
   const fileInputRef = useRef(null);
@@ -6324,10 +6370,37 @@ function LogoFramePopover({ logoUrl, frame, onChangeFrame, onReplace, anchorRef,
               Centrar y mostrar completo
             </button>
           )}
+
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-neutral-100">
+            <span className="text-xs text-neutral-400 shrink-0">Tamaño</span>
+            <input
+              type="range"
+              min="24"
+              max="80"
+              step="2"
+              value={f.size ?? 36}
+              onChange={(e) => onChangeFrame({ size: Number(e.target.value) })}
+              className="flex-1 accent-gold-500"
+            />
+            <span className="text-xs text-neutral-400 w-7 text-right shrink-0">{f.size ?? 36}</span>
+          </div>
         </>
       ) : (
         <p className="text-xs text-neutral-500 mb-3">Todavía no subiste un logo.</p>
       )}
+
+      <label className="flex items-start gap-2 mt-3 pt-3 border-t border-neutral-100 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showBusinessName}
+          onChange={(e) => onToggleBusinessName?.(e.target.checked)}
+          className="mt-0.5 accent-gold-500"
+        />
+        <span className="text-xs text-neutral-600 leading-snug">
+          Mostrar el nombre del negocio al lado del logo
+          <span className="block text-neutral-400">Si el logo ya lo dice, a veces sobra.</span>
+        </span>
+      </label>
 
       <button
         type="button"
@@ -6351,6 +6424,8 @@ function SeccionHeader({
   onLogoChange,
   logoFrame,
   onSetLogoFrame,
+  showBusinessName = true,
+  onSetShowBusinessName,
   nombreNegocio,
   onUpdateNombre,
   editable,
@@ -6404,7 +6479,7 @@ function SeccionHeader({
         title="Tocá para encuadrar o cambiar el logo"
       >
         {logoUrl ? (
-          <LogoFrame logoUrl={logoUrl} frame={logoFrame} size={36} />
+          <LogoFrame logoUrl={logoUrl} frame={logoFrame} size={logoFrame?.size ?? 36} natural />
         ) : (
           <div
             className="w-9 h-9 flex items-center justify-center font-serif italic text-lg text-white"
@@ -6423,13 +6498,15 @@ function SeccionHeader({
           frame={logoFrame}
           onChangeFrame={(patch) => onSetLogoFrame?.({ ...(logoFrame || DEFAULT_LOGO_FRAME), ...patch })}
           onReplace={onLogoChange}
+          showBusinessName={showBusinessName !== false}
+          onToggleBusinessName={onSetShowBusinessName}
           anchorRef={logoBtnRef}
           onClose={() => setLogoFrameOpen(false)}
         />
       )}
     </>
   ) : logoUrl ? (
-    <LogoFrame logoUrl={logoUrl} frame={logoFrame} size={36} className="shrink-0" />
+    <LogoFrame logoUrl={logoUrl} frame={logoFrame} size={logoFrame?.size ?? 36} natural className="shrink-0" />
   ) : null; // Sin logo, en la página publicada: nada de cuadrado con iniciales
   // (eso todavía parece "un logo") — solo el nombre del negocio, tal como
   // lo pidió el dueño al no cargar uno en el quiz.
@@ -6437,15 +6514,17 @@ function SeccionHeader({
   const logoBlock = (
     <div className="flex items-center gap-3 min-w-0">
       {logoImg}
-      <Editable
-        editable={editable}
-        value={nombreNegocio}
-        onChange={onUpdateNombre}
-        tag="span"
-        styleKey="header.nombreNegocio"
-        style={{ color: textColor || palette?.ink }}
-        className="font-serif italic text-lg truncate"
-      />
+      {showBusinessName !== false && (
+        <Editable
+          editable={editable}
+          value={nombreNegocio}
+          onChange={onUpdateNombre}
+          tag="span"
+          styleKey="header.nombreNegocio"
+          style={{ color: textColor || palette?.ink }}
+          className="font-serif italic text-lg truncate"
+        />
+      )}
     </div>
   );
 
