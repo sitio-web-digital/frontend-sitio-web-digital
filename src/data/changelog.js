@@ -5,6 +5,24 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.91.0',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Etapas de un proceso: las fotos ahora tienen el mismo encuadre (zoom + arrastrar) que el logo, sin el "Quitar fondo" (es solo para logos).',
+      },
+      {
+        type: 'mejora',
+        text: 'Etapas de un proceso: "Agregar etapa" ahora es un "+" chico junto al título que abre una ventana para cargar todos los datos de una — ya no una tarjeta grande en la fila que se reacomodaba cada vez que se sumaba una etapa.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Blog/Novedades: control de tamaño para el video embebido — ya no ocupa siempre el ancho completo de la tarjeta.',
+      },
+    ],
+  },
+  {
     version: '1.90.0',
     date: '2026-09-24',
     changes: [

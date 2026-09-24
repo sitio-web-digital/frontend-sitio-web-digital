@@ -82,7 +82,7 @@ import {
 } from '../data/mockData';
 import { validateImageFile, validateImageFiles } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
-import { DEFAULT_LOGO_FRAME } from '../utils/siteSchema';
+import { DEFAULT_LOGO_FRAME, DEFAULT_PHOTO_FRAME } from '../utils/siteSchema';
 import { useCart } from '../hooks/useCart';
 
 // Variants de motion/react para cada animación de texto — se reproducen una
@@ -29704,11 +29704,328 @@ function SeccionFooterBarberia({
   );
 }
 
+// Encuadre (zoom + arrastrar) para una foto de CONTENIDO — mismo mecanismo
+// que LogoFrame (ver más arriba), pero object-fit: cover en vez de contain:
+// una foto real, a diferencia de un logo, siempre tiene que llenar su marco
+// (nunca dejar franjas vacías), así que a zoom=1 esto se ve EXACTAMENTE
+// igual que el object-cover fijo de siempre — no cambia nada para quien no
+// toque los controles nuevos. Se reusa en cualquier sección con fotos
+// propias (por ahora Proceso del taller; el mismo componente sirve para la
+// próxima sección que se sume).
+function PhotoFrame({ photoUrl, frame, aspectClassName = 'aspect-[4/3]', className = '', filter }) {
+  const f = frame || DEFAULT_PHOTO_FRAME;
+  return (
+    <div className={`relative overflow-hidden ${aspectClassName} ${className}`}>
+      <img
+        src={photoUrl}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-cover select-none"
+        style={{ transform: `translate(${f.x}%, ${f.y}%) scale(${f.zoom})`, transformOrigin: 'center', filter }}
+      />
+    </div>
+  );
+}
+
+// Panel de encuadre de una foto de contenido — mismo patrón que
+// LogoFramePopover (tocar la foto abre esto en vez de disparar el picker
+// directo), pero sin "Quitar fondo" ni el toggle de nombre del negocio: eso
+// es específico de logos, una foto real no lleva ninguno de los dos.
+function PhotoFramePopover({ photoUrl, frame, onChangeFrame, onReplace, aspectClassName, previewWidth = 220, anchorRef, align, onClose }) {
+  const f = frame || DEFAULT_PHOTO_FRAME;
+  const dragState = useRef(null);
+  const previewRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const startDrag = (e) => {
+    if (!photoUrl) return;
+    e.preventDefault();
+    const rect = previewRef.current.getBoundingClientRect();
+    dragState.current = { startX: e.clientX, startY: e.clientY, baseX: f.x, baseY: f.y, w: rect.width, h: rect.height };
+    const onMove = (ev) => {
+      if (!dragState.current) return;
+      const { startX, startY, baseX, baseY, w, h } = dragState.current;
+      const dxPct = ((ev.clientX - startX) / w) * 100;
+      const dyPct = ((ev.clientY - startY) / h) * 100;
+      onChangeFrame({
+        x: Math.max(-50, Math.min(50, baseX + dxPct)),
+        y: Math.max(-50, Math.min(50, baseY + dyPct)),
+      });
+    };
+    const onUp = () => {
+      dragState.current = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  return (
+    <FixedPopover
+      anchorRef={anchorRef}
+      align={align}
+      onClose={onClose}
+      className="w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-4 text-left"
+    >
+      <p className="text-sm font-bold text-neutral-800 mb-1">Encuadre de la foto</p>
+
+      {photoUrl ? (
+        <>
+          <p className="text-xs text-neutral-500 mb-3">Arrastrá para mover, y el control de abajo para acercar.</p>
+          <div
+            ref={previewRef}
+            onPointerDown={startDrag}
+            className={`mx-auto rounded-lg border border-neutral-200 cursor-grab active:cursor-grabbing touch-none overflow-hidden ${aspectClassName}`}
+            style={{ width: previewWidth }}
+          >
+            <PhotoFrame photoUrl={photoUrl} frame={f} aspectClassName={aspectClassName} className="pointer-events-none" />
+          </div>
+
+          <div className="flex items-center gap-2 mt-3">
+            <span className="text-xs text-neutral-400 shrink-0">Zoom</span>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.05"
+              value={f.zoom}
+              onChange={(e) => onChangeFrame({ zoom: Number(e.target.value) })}
+              className="flex-1 accent-gold-500"
+            />
+          </div>
+          {(f.zoom !== 1 || f.x !== 0 || f.y !== 0) && (
+            <button
+              type="button"
+              onClick={() => onChangeFrame(DEFAULT_PHOTO_FRAME)}
+              className="mt-2 text-xs font-semibold text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              Centrar de nuevo
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="text-xs text-neutral-500 mb-3">Todavía no subiste una foto.</p>
+      )}
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="mt-3 w-full text-xs font-bold border border-neutral-200 hover:border-gold-500 hover:text-gold-600 rounded-lg py-2 transition-colors"
+      >
+        {photoUrl ? 'Reemplazar imagen' : 'Subir foto'}
+      </button>
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onReplace} />
+    </FixedPopover>
+  );
+}
+
+// Modal para cargar una etapa nueva DE UNA — a diferencia de agregar una
+// tarjeta en blanco y tener que ir a tocar cada campo suelto (que además
+// ocupaba un lugar fijo de tarjeta en la maqueta mientras tanto, corriendo
+// el resto cada vez que se agregaba una), esto pide los datos antes de
+// sumarla y no le agrega peso visual a la fila hasta que hay contenido real.
+function AddProcesoModal({ onAdd, onClose }) {
+  const [titulo, setTitulo] = useState('');
+  const [desc, setDesc] = useState('');
+  const [imagen, setImagen] = useState('');
+  const [subiendo, setSubiendo] = useState(false);
+
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !(await validateImageFile(file, 'galeria'))) return;
+    setSubiendo(true);
+    setImagen(await uploadImage(file));
+    setSubiendo(false);
+  };
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!titulo.trim()) return;
+    onAdd({ titulo: titulo.trim(), desc: desc.trim(), imagen });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-white rounded-xl shadow-2xl p-5 text-left"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-bold text-neutral-800">Nueva etapa</p>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-neutral-400 hover:text-neutral-600">
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        <label className="relative block w-full aspect-[4/3] bg-neutral-100 rounded-lg mb-3.5 overflow-hidden cursor-pointer border-2 border-dashed border-neutral-200 hover:border-gold-500 transition-colors">
+          {subiendo ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+            </div>
+          ) : imagen ? (
+            <img src={imagen} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-neutral-400">
+              <ImageIcon className="w-6 h-6" />
+              <span className="text-xs font-semibold">Subí una foto (opcional)</span>
+            </div>
+          )}
+          <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
+        </label>
+
+        <label className="block text-xs font-semibold text-neutral-500 mb-1">Título de la etapa</label>
+        <input
+          autoFocus
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          placeholder="Ej: Selección de la materia prima"
+          maxLength={50}
+          className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm mb-3 outline-none focus:border-gold-500"
+        />
+
+        <label className="block text-xs font-semibold text-neutral-500 mb-1">Descripción</label>
+        <textarea
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          placeholder="Describí esta etapa del proceso."
+          maxLength={160}
+          rows={3}
+          className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm mb-4 outline-none focus:border-gold-500 resize-none"
+        />
+
+        <button
+          type="submit"
+          disabled={!titulo.trim()}
+          className="w-full text-sm font-bold bg-neutral-900 hover:bg-neutral-700 disabled:opacity-40 text-white rounded-lg py-2.5 transition-colors"
+        >
+          Agregar etapa
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Tarjeta de una etapa puntual — su propio componente (no un closure inline
+// del .map) para poder tener el estado del popover de encuadre (cuál foto se
+// está editando) resuelto con un simple useState local, en vez de un mapa de
+// refs/ids a nivel de la sección entera.
+function ProcesoCard({ paso: p, index: i, isFirst, isLast, editable, accent, palette, textColor, onUpdate, onRemove, onDuplicate, onToggleOculto, onMoveUp, onMoveDown, onDragStart, dragging, registerRef }) {
+  const [frameOpen, setFrameOpen] = useState(false);
+  const photoBtnRef = useRef(null);
+
+  const handleImagen = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) onUpdate({ imagen: await uploadImage(file), frame: DEFAULT_PHOTO_FRAME });
+  };
+
+  return (
+    <div
+      ref={registerRef}
+      className={`relative shrink-0 w-[clamp(240px,26vw,320px)] ${p.oculto ? 'opacity-40' : ''} ${dragging ? 'opacity-30' : ''}`}
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      {editable && (
+        <div className="absolute top-2 right-2 z-10">
+          <ItemToolbar
+            variant="overlay"
+            oculto={p.oculto}
+            canMoveUp={!isFirst}
+            canMoveDown={!isLast}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onDuplicate={onDuplicate}
+            onToggleOculto={onToggleOculto}
+            onRemove={onRemove}
+            onDragStart={onDragStart}
+            removeLabel="Quitar etapa"
+          />
+        </div>
+      )}
+      {editable ? (
+        <>
+          <button
+            type="button"
+            ref={photoBtnRef}
+            onClick={() => setFrameOpen((v) => !v)}
+            className="relative block w-full aspect-[4/3] bg-black/5 mb-3.5 overflow-hidden cursor-pointer group/photo"
+            title="Tocá para encuadrar o cambiar la foto"
+          >
+            {p.imagen ? (
+              <PhotoFrame photoUrl={p.imagen} frame={p.frame} filter="contrast(1.03) saturate(0.96)" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
+              </div>
+            )}
+            <span className="absolute inset-0 bg-black/0 group-hover/photo:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover/photo:opacity-100">
+              <PencilIcon className="w-3.5 h-3.5 text-white" />
+            </span>
+          </button>
+          {frameOpen && (
+            <PhotoFramePopover
+              photoUrl={p.imagen}
+              frame={p.frame}
+              onChangeFrame={(patch) => onUpdate({ frame: { ...(p.frame || DEFAULT_PHOTO_FRAME), ...patch } })}
+              onReplace={handleImagen}
+              aspectClassName="aspect-[4/3]"
+              anchorRef={photoBtnRef}
+              onClose={() => setFrameOpen(false)}
+            />
+          )}
+        </>
+      ) : p.imagen ? (
+        <PhotoFrame photoUrl={p.imagen} frame={p.frame} className="mb-3.5" filter="contrast(1.03) saturate(0.96)" />
+      ) : (
+        <div className="w-full aspect-[4/3] bg-black/5 mb-3.5 flex items-center justify-center">
+          <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
+        </div>
+      )}
+      <div className="flex items-baseline gap-2.5 mb-1">
+        <span className="font-mono font-bold text-sm" style={{ color: accent }}>
+          {String(i + 1).padStart(2, '0')}
+        </span>
+        <Editable
+          editable={editable}
+          value={p.titulo}
+          onChange={(v) => onUpdate({ titulo: v })}
+          tag="span"
+          styleKey={`proceso.${p.id}.titulo`}
+          placeholder="Título de la etapa"
+          style={{ color: palette.ink }}
+          className="font-serif text-lg"
+          maxLength={50}
+        />
+      </div>
+      <Editable
+        editable={editable}
+        value={p.desc}
+        onChange={(v) => onUpdate({ desc: v })}
+        tag="p"
+        block
+        multiline
+        styleKey={`proceso.${p.id}.desc`}
+        placeholder="Descripción de esta etapa"
+        style={{ color: textColor || palette.inkSoft }}
+        className="text-sm leading-relaxed"
+        maxLength={160}
+      />
+    </div>
+  );
+}
+
 // Riel horizontal con scroll-snap: cada paso de un proceso productivo con su
 // propia foto, número y descripción — a diferencia de SeccionPasos (que no
 // tiene una foto por paso en ninguna de sus variantes), pensado para talleres
 // que quieren mostrar el "antes de que llegue el producto terminado" con
-// imágenes reales de cada etapa, una al lado de la otra para hojear.
+// imágenes reales de cada etapa, una al lado de la otra para hojear. El "+"
+// de agregar es chico y vive junto al título (no una tarjeta más en la fila,
+// ver AddProcesoModal) — así la fila solo tiene contenido real y no se
+// reacomoda de forma rara cada vez que se suma una etapa.
 function SeccionProcesoTaller({
   pasos = [],
   onAddPaso,
@@ -29728,126 +30045,88 @@ function SeccionProcesoTaller({
 }) {
   const update = (id, patch) => onUpdatePaso?.(id, patch);
   const remove = (id) => onRemovePaso?.(id);
-  const add = () =>
-    onAddPaso?.({ id: `proceso-${Date.now()}`, titulo: 'Nueva etapa', desc: 'Describí esta etapa del proceso.', imagen: '' });
+  const add = (data) => onAddPaso?.({ id: `proceso-${Date.now()}`, imagen: '', ...data });
   const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(pasos, onUpdate);
   const visibles = editable ? pasos : pasos.filter((p) => !p.oculto);
-
-  const handleImagen = (id) => async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (file && (await validateImageFile(file, 'galeria'))) update(id, { imagen: await uploadImage(file) });
-  };
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <section className="py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
-      <div className="max-w-5xl mx-auto px-6 @lg:px-10 mb-7">
-        <Editable
-          editable={editable}
-          value={eyebrow ?? 'El proceso'}
-          onChange={onUpdateEyebrow}
-          tag="span"
-          block
-          styleKey="proceso-taller.eyebrow"
-          style={{ color: accent }}
-          className="font-mono text-xs uppercase tracking-[0.16em] mb-2"
-          maxLength={40}
-        />
-        <Editable
-          editable={editable}
-          value={titulo ?? 'De la materia cruda a tu casa'}
-          onChange={onUpdateTitulo}
-          tag="h2"
-          block
-          styleKey="proceso-taller.titulo"
-          style={{ color: headingColor || palette.ink }}
-          className="font-serif text-2xl @lg:text-3xl max-w-[22ch]"
-          maxLength={90}
-        />
-      </div>
-      <div className="flex gap-4 overflow-x-auto px-6 @lg:px-10 pb-2" style={{ scrollSnapType: 'x mandatory' }}>
-        {visibles.map((p, i, arr) => (
-          <div
-            key={p.id}
-            ref={dnd.registerItemRef(p.id)}
-            className={`relative shrink-0 w-[clamp(240px,26vw,320px)] ${p.oculto ? 'opacity-40' : ''} ${
-              dnd.dragId === p.id ? 'opacity-30' : ''
-            }`}
-            style={{ scrollSnapAlign: 'start' }}
-          >
-            {editable && (
-              <div className="absolute top-2 right-2 z-10">
-                <ItemToolbar
-                  variant="overlay"
-                  oculto={p.oculto}
-                  canMoveUp={i > 0}
-                  canMoveDown={i < arr.length - 1}
-                  onMoveUp={() => move(p.id, -1)}
-                  onMoveDown={() => move(p.id, 1)}
-                  onDuplicate={() => duplicate(p.id)}
-                  onToggleOculto={() => toggleOculto(p.id)}
-                  onRemove={() => remove(p.id)}
-                  onDragStart={dnd.startDrag(p)}
-                  removeLabel="Quitar etapa"
-                />
-              </div>
-            )}
-            <label
-              className={`relative block w-full aspect-[4/3] bg-black/5 mb-3.5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`}
-              title={editable ? 'Cambiar foto' : undefined}
-            >
-              {p.imagen ? (
-                <img src={p.imagen} alt={p.titulo} className="w-full h-full object-cover" style={{ filter: 'contrast(1.03) saturate(0.96)' }} />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="w-6 h-6" style={{ color: palette.inkSoft }} />
-                </div>
-              )}
-              {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen(p.id)} />}
-            </label>
-            <div className="flex items-baseline gap-2.5 mb-1">
-              <span className="font-mono font-bold text-sm" style={{ color: accent }}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <Editable
-                editable={editable}
-                value={p.titulo}
-                onChange={(v) => update(p.id, { titulo: v })}
-                tag="span"
-                styleKey={`proceso.${p.id}.titulo`}
-                placeholder="Título de la etapa"
-                style={{ color: palette.ink }}
-                className="font-serif text-lg"
-                maxLength={50}
-              />
-            </div>
-            <Editable
-              editable={editable}
-              value={p.desc}
-              onChange={(v) => update(p.id, { desc: v })}
-              tag="p"
-              block
-              multiline
-              styleKey={`proceso.${p.id}.desc`}
-              placeholder="Descripción de esta etapa"
-              style={{ color: textColor || palette.inkSoft }}
-              className="text-sm leading-relaxed"
-              maxLength={160}
-            />
-          </div>
-        ))}
+      <div className="max-w-5xl mx-auto px-6 @lg:px-10 mb-7 flex items-start justify-between gap-4">
+        <div>
+          <Editable
+            editable={editable}
+            value={eyebrow ?? 'El proceso'}
+            onChange={onUpdateEyebrow}
+            tag="span"
+            block
+            styleKey="proceso-taller.eyebrow"
+            style={{ color: accent }}
+            className="font-mono text-xs uppercase tracking-[0.16em] mb-2"
+            maxLength={40}
+          />
+          <Editable
+            editable={editable}
+            value={titulo ?? 'De la materia cruda a tu casa'}
+            onChange={onUpdateTitulo}
+            tag="h2"
+            block
+            styleKey="proceso-taller.titulo"
+            style={{ color: headingColor || palette.ink }}
+            className="font-serif text-2xl @lg:text-3xl max-w-[22ch]"
+            maxLength={90}
+          />
+        </div>
         {editable && (
           <button
             type="button"
-            onClick={add}
-            className="shrink-0 w-[clamp(240px,26vw,320px)] aspect-[4/3] border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-colors"
+            onClick={() => setModalOpen(true)}
+            title="Agregar etapa"
+            className="shrink-0 w-8 h-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors hover:border-solid"
             style={{ borderColor: palette.line, color: palette.inkSoft }}
           >
-            <PlusIcon className="w-5 h-5" />
-            <span className="text-xs font-semibold">Agregar etapa</span>
+            <PlusIcon className="w-4 h-4" />
           </button>
         )}
       </div>
+      {editable && visibles.length === 0 && (
+        <div className="max-w-5xl mx-auto px-6 @lg:px-10">
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="w-full border-2 border-dashed rounded-lg py-8 flex flex-col items-center justify-center gap-1.5 transition-colors"
+            style={{ borderColor: palette.line, color: palette.inkSoft }}
+          >
+            <PlusIcon className="w-5 h-5" />
+            <span className="text-xs font-semibold">Agregar la primera etapa</span>
+          </button>
+        </div>
+      )}
+      <div className="flex gap-4 overflow-x-auto px-6 @lg:px-10 pb-2" style={{ scrollSnapType: 'x mandatory' }}>
+        {visibles.map((p, i, arr) => (
+          <ProcesoCard
+            key={p.id}
+            paso={p}
+            index={i}
+            isFirst={i === 0}
+            isLast={i === arr.length - 1}
+            editable={editable}
+            accent={accent}
+            palette={palette}
+            textColor={textColor}
+            onUpdate={(patch) => update(p.id, patch)}
+            onRemove={() => remove(p.id)}
+            onDuplicate={() => duplicate(p.id)}
+            onToggleOculto={() => toggleOculto(p.id)}
+            onMoveUp={() => move(p.id, -1)}
+            onMoveDown={() => move(p.id, 1)}
+            onDragStart={dnd.startDrag(p)}
+            dragging={dnd.dragId === p.id}
+            registerRef={dnd.registerItemRef(p.id)}
+          />
+        ))}
+      </div>
+      {modalOpen && <AddProcesoModal onAdd={add} onClose={() => setModalOpen(false)} />}
     </section>
   );
 }
@@ -32434,6 +32713,11 @@ function SeccionBlog({
 
   const Card = ({ post, canMoveUp, canMoveDown }) => {
     const embed = toEmbedUrl(post.videoUrl);
+    // El tamaño solo aplica a VIDEO — una foto siempre llena la tarjeta
+    // (mismo criterio que el resto de las fotos del sitio). Un video
+    // embebido a ancho completo se ve desproporcionado al lado de un
+    // título y un resumen cortos, de ahí el pedido de poder achicarlo.
+    const videoWidthPct = embed ? (post.videoSize ?? 100) : 100;
     return (
       <div
         ref={postsDnd.registerItemRef(post.id)}
@@ -32458,7 +32742,7 @@ function SeccionBlog({
             />
           </div>
         )}
-        <div className="relative aspect-video bg-black/5">
+        <div className="relative aspect-video bg-black/5" style={{ width: `${videoWidthPct}%`, marginLeft: 'auto', marginRight: 'auto' }}>
           {embed ? (
             <iframe src={embed} title={post.titulo} className="w-full h-full" allowFullScreen />
           ) : post.imagen ? (
@@ -32489,6 +32773,20 @@ function SeccionBlog({
               >
                 Video
               </button>
+            </div>
+          )}
+          {editable && embed && (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/60 rounded px-2 py-1">
+              <span className="text-[10px] font-semibold text-white/70 shrink-0">Tamaño</span>
+              <input
+                type="range"
+                min="40"
+                max="100"
+                step="5"
+                value={videoWidthPct}
+                onChange={(e) => onUpdatePost?.(post.id, { videoSize: Number(e.target.value) })}
+                className="w-16 accent-gold-500"
+              />
             </div>
           )}
         </div>

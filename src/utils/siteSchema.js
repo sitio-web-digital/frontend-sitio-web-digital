@@ -19,6 +19,14 @@ const STORAGE_KEY = 'sitiowebdigital.site.v1';
 // agrandarlo, ver LogoFramePopover.
 export const DEFAULT_LOGO_FRAME = { zoom: 1, x: 0, y: 0, size: 36 };
 
+// Mismo mecanismo de encuadre (zoom + desplazamiento) que DEFAULT_LOGO_FRAME,
+// para fotos de CONTENIDO (no el logo) — sin `size`, porque ahí el tamaño lo
+// define el propio layout de la sección (la tarjeta, la grilla), no la foto.
+// A diferencia del logo (que arranca en "contain", sin recortar), acá
+// arranca en "cover" — zoom=1 ya llena el marco igual que el object-cover
+// de siempre, sin cambiar nada para quien no toque los controles nuevos.
+export const DEFAULT_PHOTO_FRAME = { zoom: 1, x: 0, y: 0 };
+
 // Tipos de sección cuyo contenido no vive "suelto" en el estado de React sino
 // en su propio arreglo separado (productos, faqs, testimonios) — para armar el
 // JSON, ese arreglo pasa a vivir adentro del elemento que lo usa.
