@@ -32718,9 +32718,45 @@ function SeccionBlog({
     // embebido a ancho completo se ve desproporcionado al lado de un
     // título y un resumen cortos, de ahí el pedido de poder achicarlo.
     const videoWidthPct = embed ? (post.videoSize ?? 100) : 100;
+
+    // Arrastrar el borde derecho del marco para agrandarlo/achicarlo — un
+    // <input type="range"> quedaba DENTRO del propio marco que achica, así
+    // que a mitad de arrastre el control se corría de abajo del mouse
+    // (bug real, confirmado en vivo). Este handle no tiene ese problema:
+    // escucha el movimiento en `window`, no depende de seguir posicionado
+    // bajo el cursor mientras arrastrás. El ancho de referencia (100%) se
+    // mide UNA vez al empezar, de la tarjeta entera (que no cambia de
+    // tamaño) — nunca del marco del video (que sí, y complicaría el cálculo).
+    const resizeState = useRef(null);
+    const startResize = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const card = e.currentTarget.closest('[data-blog-card]');
+      const fullWidthPx = card?.getBoundingClientRect().width || 1;
+      resizeState.current = { startX: e.clientX, startSize: videoWidthPct, fullWidthPx };
+      const onMove = (ev) => {
+        if (!resizeState.current) return;
+        const { startX, startSize, fullWidthPx: fw } = resizeState.current;
+        // El marco está centrado (margin auto a los dos lados) — mover el
+        // borde derecho X px hacia afuera agranda el ancho total en 2X (el
+        // borde izquierdo se corre la misma distancia para seguir centrado).
+        const deltaPct = (((ev.clientX - startX) * 2) / fw) * 100;
+        const next = Math.max(40, Math.min(100, Math.round(startSize + deltaPct)));
+        onUpdatePost?.(post.id, { videoSize: next });
+      };
+      const onUp = () => {
+        resizeState.current = null;
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    };
+
     return (
       <div
         ref={postsDnd.registerItemRef(post.id)}
+        data-blog-card
         className={`relative flex flex-col text-left ${post.oculto ? 'opacity-40' : ''} ${
           postsDnd.dragId === post.id ? 'opacity-30' : ''
         }`}
@@ -32776,18 +32812,15 @@ function SeccionBlog({
             </div>
           )}
           {editable && embed && (
-            <div className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/60 rounded px-2 py-1">
-              <span className="text-[10px] font-semibold text-white/70 shrink-0">Tamaño</span>
-              <input
-                type="range"
-                min="40"
-                max="100"
-                step="5"
-                value={videoWidthPct}
-                onChange={(e) => onUpdatePost?.(post.id, { videoSize: Number(e.target.value) })}
-                className="w-16 accent-gold-500"
-              />
-            </div>
+            <button
+              type="button"
+              onPointerDown={startResize}
+              aria-label="Arrastrar para cambiar el tamaño del video"
+              title="Arrastrá para agrandar o achicar el video"
+              className="absolute top-1/2 -translate-y-1/2 -right-2 w-4 h-12 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center cursor-ew-resize touch-none hover:bg-gold-50 hover:border-gold-400 transition-colors"
+            >
+              <span className="w-0.5 h-5 bg-neutral-300 rounded-full" />
+            </button>
           )}
         </div>
         <div className="pt-4">

@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.91.1',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Blog/Novedades: el control de tamaño del video era un slider que se salía de abajo del mouse a mitad de arrastre (el marco que lo contenía se achicaba con él) — ahora es un borde en el propio marco del video, que se arrastra para adentro y afuera sin perderlo.',
+      },
+    ],
+  },
+  {
     version: '1.91.0',
     date: '2026-09-24',
     changes: [
