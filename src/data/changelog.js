@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.89.0',
+    date: '2026-09-24',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Al subir un logo con fondo (una foto, un color de más), se lo sacamos solos y automático — corre en el navegador, no depende de que el developer se acuerde de hacerlo aparte.',
+      },
+    ],
+  },
+  {
     version: '1.88.0',
     date: '2026-09-24',
     changes: [

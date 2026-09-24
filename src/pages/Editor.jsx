@@ -30,6 +30,7 @@ import { FONT_OPTIONS, MAX_PRODUCTOS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { validateImageFile } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
+import { removeLogoBackground } from '../utils/removeBackground';
 import { DEFAULT_LOGO_FRAME } from '../utils/siteSchema';
 
 const TUTORIAL_SEEN_KEY = 'sitiowebdigital.editorTutorialSeen';
@@ -125,6 +126,10 @@ export default function Editor() {
   } = useApp();
   const navigate = useNavigate();
   const [device, setDevice] = useState('desktop');
+  // Mientras se procesa la quita automática de fondo de un logo recién
+  // elegido (ver onLogo) — el popover del logo lo muestra como un estado de
+  // carga corto, no bloquea nada más del editor.
+  const [removingLogoBg, setRemovingLogoBg] = useState(false);
   const [widgetsOpen, setWidgetsOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -266,7 +271,16 @@ export default function Editor() {
     e.target.value = '';
     if (!file) return;
     if (!(await validateImageFile(file, 'logo'))) return;
-    setLogoUrl(await uploadImage(file));
+    // Le saca el fondo automáticamente ANTES de subirlo — corre en el propio
+    // navegador sobre el archivo recién elegido (nunca sobre uno ya subido:
+    // el bucket de fotos no tiene CORS habilitado, así que un logo que ya
+    // está en S3/CloudFront no se puede releer píxel a píxel desde acá). Si
+    // la imagen ya venía con fondo transparente, o el procesamiento falla
+    // por lo que sea, se sube el archivo tal cual — nunca bloquea la carga.
+    setRemovingLogoBg(true);
+    const withoutBg = await removeLogoBackground(file).catch(() => null);
+    setRemovingLogoBg(false);
+    setLogoUrl(await uploadImage(withoutBg || file));
     // El encuadre (zoom/posición) de un logo NUEVO no tiene sentido heredado
     // del anterior — arranca en "completo, centrado, sin recortar" y desde
     // ahí el LogoFramePopover se lo ajusta.
@@ -559,6 +573,7 @@ export default function Editor() {
             logoUrl={logoUrl}
             logoFrame={logoFrame}
             onSetLogoFrame={setLogoFrame}
+            removingLogoBg={removingLogoBg}
             logoPalette={logoPalette}
             theme={theme}
             sections={sections}

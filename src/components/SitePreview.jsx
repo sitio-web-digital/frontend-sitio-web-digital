@@ -281,6 +281,7 @@ export default function SitePreview({
   logoUrl,
   logoFrame,
   onSetLogoFrame,
+  removingLogoBg = false,
   logoPalette = [],
   theme,
   sections = [],
@@ -532,6 +533,7 @@ export default function SitePreview({
                 onLogoChange={onLogoChange}
                 logoFrame={logoFrame}
                 onSetLogoFrame={onSetLogoFrame}
+                removingLogoBg={removingLogoBg}
                 showBusinessName={sec.showBusinessName}
                 onSetShowBusinessName={(v) => onSetSectionStyle?.(sec.id, { showBusinessName: v })}
                 nombreNegocio={nombreNegocio}
@@ -6295,6 +6297,7 @@ function LogoFramePopover({
   frame,
   onChangeFrame,
   onReplace,
+  removingLogoBg = false,
   showBusinessName,
   onToggleBusinessName,
   anchorRef,
@@ -6338,7 +6341,12 @@ function LogoFramePopover({
     >
       <p className="text-sm font-bold text-neutral-800 mb-1">Encuadre del logo</p>
 
-      {logoUrl ? (
+      {removingLogoBg ? (
+        <div className="flex items-center gap-2.5 py-6 justify-center">
+          <span className="w-4 h-4 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+          <span className="text-xs text-neutral-500">Quitando el fondo automáticamente...</span>
+        </div>
+      ) : logoUrl ? (
         <>
           <p className="text-xs text-neutral-500 mb-3">Arrastrá para mover, y el control de abajo para acercar.</p>
           <div
@@ -6405,10 +6413,14 @@ function LogoFramePopover({
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="mt-3 w-full text-xs font-bold border border-neutral-200 hover:border-gold-500 hover:text-gold-600 rounded-lg py-2 transition-colors"
+        disabled={removingLogoBg}
+        className="mt-3 w-full text-xs font-bold border border-neutral-200 hover:border-gold-500 hover:text-gold-600 rounded-lg py-2 transition-colors disabled:opacity-40"
       >
         {logoUrl ? 'Reemplazar imagen' : 'Subir logo'}
       </button>
+      <p className="text-[11px] text-neutral-400 mt-2 leading-snug">
+        Si tiene fondo (una foto, un color de más), se lo sacamos solos al subirlo.
+      </p>
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onReplace} />
     </FixedPopover>
   );
@@ -6424,6 +6436,7 @@ function SeccionHeader({
   onLogoChange,
   logoFrame,
   onSetLogoFrame,
+  removingLogoBg = false,
   showBusinessName = true,
   onSetShowBusinessName,
   nombreNegocio,
@@ -6498,6 +6511,7 @@ function SeccionHeader({
           frame={logoFrame}
           onChangeFrame={(patch) => onSetLogoFrame?.({ ...(logoFrame || DEFAULT_LOGO_FRAME), ...patch })}
           onReplace={onLogoChange}
+          removingLogoBg={removingLogoBg}
           showBusinessName={showBusinessName !== false}
           onToggleBusinessName={onSetShowBusinessName}
           anchorRef={logoBtnRef}
