@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.95.2',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Contacto (variante "directo" con foto): los datos (dirección, horarios, teléfono, etc.) no se podían editar ni agregar/quitar — quedaban como texto fijo. Ahora son editables igual que en el resto de las variantes, sin que los botones de mover/duplicar/quitar se superpongan con el valor.',
+      },
+    ],
+  },
+  {
     version: '1.95.1',
     date: '2026-09-30',
     changes: [

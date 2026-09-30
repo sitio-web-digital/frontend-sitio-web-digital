@@ -19587,16 +19587,60 @@ function SeccionContacto({
                 maxLength={220}
               />
               <div className="flex flex-col gap-4 mb-7">
-                {(useCustomRows ? infoRows : rows).map((r) => (
-                  <div key={r.id ?? r.label} className="flex items-baseline justify-between gap-4 border-b pb-3.5" style={{ borderColor: palette.line }}>
-                    <span className="font-mono text-xs uppercase tracking-wide" style={{ color: palette.inkSoft }}>
-                      {r.label}
-                    </span>
-                    <span className="text-[15px] text-right" style={{ color: palette.ink }}>
-                      {r.value}
-                    </span>
+                {(useCustomRows ? infoRows : rows).map((r, i, arr) => (
+                  <div
+                    key={r.id ?? r.label}
+                    ref={useCustomRows ? infoRowsCrud.dnd.registerItemRef(r.id) : undefined}
+                    className={`flex items-baseline justify-between gap-3 border-b pb-3.5 ${useCustomRows && infoRowsCrud.dnd.dragId === r.id ? 'opacity-30' : ''}`}
+                    style={{ borderColor: palette.line }}
+                  >
+                    {useCustomRows ? (
+                      <Editable
+                        editable={editable}
+                        value={r.label}
+                        onChange={(v) => updateInfoRow(r.id, { label: v })}
+                        tag="span"
+                        placeholder="Etiqueta"
+                        style={{ color: palette.inkSoft }}
+                        className="font-mono text-xs uppercase tracking-wide shrink-0"
+                        maxLength={40}
+                      />
+                    ) : (
+                      <span className="font-mono text-xs uppercase tracking-wide shrink-0" style={{ color: palette.inkSoft }}>
+                        {r.label}
+                      </span>
+                    )}
+                    <Editable
+                      editable={editable}
+                      value={r.value ?? ''}
+                      onChange={useCustomRows ? (v) => updateInfoRow(r.id, { value: v }) : r.onChangeValue}
+                      tag="span"
+                      placeholder="—"
+                      style={{ color: palette.ink }}
+                      className="text-[15px] text-right"
+                      maxLength={useCustomRows ? 120 : r.maxLength}
+                    />
+                    {editable && useCustomRows && (
+                      <ItemToolbar
+                        variant="inline"
+                        color={palette.ink}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < arr.length - 1}
+                        onMoveUp={() => infoRowsCrud.move(r.id, -1)}
+                        onMoveDown={() => infoRowsCrud.move(r.id, 1)}
+                        onDuplicate={() => {}}
+                        onRemove={() => removeInfoRow(r.id)}
+                        onDragStart={infoRowsCrud.dnd.startDrag(r)}
+                        removeLabel={`Quitar ${r.label}`}
+                      />
+                    )}
                   </div>
                 ))}
+                {useCustomRows && editable && (
+                  <button type="button" onClick={addInfoRow} className="font-mono text-xs uppercase tracking-wide self-start" style={{ color: accent }}>
+                    + Agregar dato
+                  </button>
+                )}
               </div>
               <ButtonObject
                 value={botonesData.whatsapp}
