@@ -606,6 +606,10 @@ export default function SitePreview({
                 onUpdateHeroOfertas={(heroOfertas) => onSetSectionStyle?.(sec.id, { heroOfertas })}
                 heroImagen={sec.heroImagen}
                 onUpdateHeroImagen={(v) => onSetSectionStyle?.(sec.id, { heroImagen: v })}
+                heroImagenFrame={sec.heroImagenFrame}
+                onUpdateHeroImagenFrame={(patch) =>
+                  onSetSectionStyle?.(sec.id, { heroImagenFrame: { ...(sec.heroImagenFrame || DEFAULT_PHOTO_FRAME), ...patch } })
+                }
                 titulo={sec.titulo}
                 onUpdateTitulo={(v) => onSetSectionStyle?.(sec.id, { titulo: v })}
                 descripcion={sec.descripcion}
@@ -7155,6 +7159,8 @@ function SeccionHero({
   onUpdateHeroOfertas,
   heroImagen,
   onUpdateHeroImagen,
+  heroImagenFrame,
+  onUpdateHeroImagenFrame,
   titulo,
   onUpdateTitulo,
   descripcion,
@@ -7184,6 +7190,11 @@ function SeccionHero({
   imgAspect = '9/10',
 }) {
   const heroTargetDefaults = { whatsapp, telefono };
+  // Solo "solapada" usa esto (popover de encuadre de la foto), pero se
+  // declara siempre acá arriba por las reglas de hooks, igual que
+  // activeLookIndex más abajo.
+  const [heroFrameOpen, setHeroFrameOpen] = useState(false);
+  const heroPhotoBtnRef = useRef(null);
   // Solo la variante "carrusel" usa este estado, pero se declara siempre acá
   // arriba (nunca adentro de un `if (variant === ...)`) por las reglas de
   // hooks. El auto-avance se pausa mientras se edita, para no competir con
@@ -7324,7 +7335,10 @@ function SeccionHero({
   const handleHeroImagen = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (file && (await validateImageFile(file, 'galeria'))) onUpdateHeroImagen?.(await uploadImage(file));
+    if (file && (await validateImageFile(file, 'galeria'))) {
+      onUpdateHeroImagen?.(await uploadImage(file));
+      onUpdateHeroImagenFrame?.(DEFAULT_PHOTO_FRAME);
+    }
   };
 
   const imagePanel = (heroImg) => (
@@ -8336,23 +8350,45 @@ function SeccionHero({
     return (
       <section style={{ maxWidth: 1300, margin: '0 auto', padding: 'clamp(2rem,4vw,3.5rem) clamp(1.25rem,3vw,2.5rem) clamp(2.5rem,5vw,4rem)' }}>
         <div style={{ position: 'relative' }}>
-          <label className={`block relative aspect-[16/9] bg-black/5 overflow-hidden ${editable ? 'cursor-pointer' : ''}`} title={editable ? 'Cambiar foto' : undefined}>
-            {heroImg ? (
-              <img src={heroImg} alt={nombreNegocio || ''} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
-                Agregá fotos en tu galería
-              </div>
-            )}
-            {editable && (
-              <>
-                <span className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                  <span className="text-white text-xs font-semibold">Cambiar foto</span>
+          {editable ? (
+            <>
+              <button
+                type="button"
+                ref={heroPhotoBtnRef}
+                onClick={() => setHeroFrameOpen((v) => !v)}
+                className="relative block w-full aspect-[16/9] bg-black/5 overflow-hidden cursor-pointer group/hero"
+                title="Tocá para encuadrar o cambiar la foto"
+              >
+                {heroImg ? (
+                  <PhotoFrame photoUrl={heroImg} frame={heroImagenFrame} aspectClassName="aspect-[16/9]" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                    Agregá fotos en tu galería
+                  </div>
+                )}
+                <span className="absolute inset-0 bg-black/0 group-hover/hero:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/hero:opacity-100">
+                  <span className="text-white text-xs font-semibold">Encuadrar foto</span>
                 </span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleHeroImagen} />
-              </>
-            )}
-          </label>
+              </button>
+              {heroFrameOpen && (
+                <PhotoFramePopover
+                  photoUrl={heroImg}
+                  frame={heroImagenFrame}
+                  onChangeFrame={(patch) => onUpdateHeroImagenFrame?.({ ...(heroImagenFrame || DEFAULT_PHOTO_FRAME), ...patch })}
+                  onReplace={handleHeroImagen}
+                  aspectClassName="aspect-[16/9]"
+                  anchorRef={heroPhotoBtnRef}
+                  onClose={() => setHeroFrameOpen(false)}
+                />
+              )}
+            </>
+          ) : heroImg ? (
+            <PhotoFrame photoUrl={heroImg} frame={heroImagenFrame} aspectClassName="aspect-[16/9]" />
+          ) : (
+            <div className="aspect-[16/9] bg-black/5 flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+              Agregá fotos en tu galería
+            </div>
+          )}
           <div
             className="relative"
             style={{ background: bgColor || palette.bg, padding: 'clamp(1.5rem,3vw,2.5rem) clamp(1.5rem,3vw,2.75rem) 0', maxWidth: 'min(640px,92%)', marginTop: '-3.5rem' }}
@@ -10390,6 +10426,24 @@ function SeccionProductos({
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
   const [productoColorActivo, setProductoColorActivo] = useState({});
   const btnColor = buttonColor || palette.inkHex || '#171717';
+  // Solo "vitrina" usa esto (popover de encuadre de la foto del producto,
+  // uno a la vez) — mismo patrón que SeccionArchivo (frameOpenId/anchorRef
+  // en vez de un subcomponente por ítem, ver comentario ahí).
+  const [frameOpenId, setFrameOpenId] = useState(null);
+  const frameAnchorRef = useRef(null);
+  // Reemplaza la FOTO PRINCIPAL (imagenes[0], la que muestra vitrina) en vez
+  // de agregarla al final — antes usaba onAddProductoImagen (append-only),
+  // que en vitrina no se notaba: la vitrina siempre muestra imagenes[0], así
+  // que "cambiar la foto" con un producto que ya tenía una quedaba agregando
+  // una segunda invisible, sin reemplazar la que se ve.
+  const handleProductoImagen = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !(await validateImageFile(file, 'productos'))) return;
+    const url = await uploadImage(file);
+    const prod = productos.find((x) => x.id === id);
+    onUpdateProducto?.(id, { imagenes: [url, ...(prod?.imagenes || []).slice(1)], frame: DEFAULT_PHOTO_FRAME });
+  };
 
   const submit = (e) => {
     e.preventDefault();
@@ -11051,24 +11105,42 @@ function SeccionProductos({
                     />
                   </div>
                 )}
-                <label className={`relative block w-full overflow-hidden ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '3/4', marginBottom: '0.9rem' }} title={editable ? 'Cambiar foto' : undefined}>
-                  {p.imagenes?.[0] ? (
-                    <img src={p.imagenes[0]} alt={p.nombre || ''} className="w-full h-full object-cover" style={{ display: 'block' }} />
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '3/4', marginBottom: '0.9rem' }}>
+                  {editable ? (
+                    <button
+                      type="button"
+                      ref={frameOpenId === p.id ? frameAnchorRef : undefined}
+                      onClick={() => setFrameOpenId((v) => (v === p.id ? null : p.id))}
+                      className="absolute inset-0 w-full h-full cursor-pointer group/prodimg"
+                      title="Tocá para encuadrar o cambiar la foto"
+                    >
+                      {p.imagenes?.[0] ? (
+                        <PhotoFrame photoUrl={p.imagenes[0]} frame={p.frame} aspectClassName="aspect-[3/4]" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                          <ImageIcon className="w-5 h-5" />
+                        </div>
+                      )}
+                      <span className="absolute inset-0 bg-black/0 group-hover/prodimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/prodimg:opacity-100">
+                        <PencilIcon className="w-4 h-4 text-white" />
+                      </span>
+                    </button>
+                  ) : p.imagenes?.[0] ? (
+                    <PhotoFrame photoUrl={p.imagenes[0]} frame={p.frame} aspectClassName="aspect-[3/4]" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
                       <ImageIcon className="w-5 h-5" />
                     </div>
                   )}
-                  {editable && (
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        e.target.value = '';
-                        if (file && (await validateImageFile(file, 'productos'))) onAddProductoImagen?.(p.id, await uploadImage(file));
-                      }}
+                  {frameOpenId === p.id && (
+                    <PhotoFramePopover
+                      photoUrl={p.imagenes?.[0]}
+                      frame={p.frame}
+                      onChangeFrame={(patch) => onUpdateProducto?.(p.id, { frame: { ...(p.frame || DEFAULT_PHOTO_FRAME), ...patch } })}
+                      onReplace={handleProductoImagen(p.id)}
+                      aspectClassName="aspect-[3/4]"
+                      anchorRef={frameAnchorRef}
+                      onClose={() => setFrameOpenId(null)}
                     />
                   )}
                   {(p.etiqueta || editable) && (
@@ -11083,7 +11155,7 @@ function SeccionProductos({
                       maxLength={20}
                     />
                   )}
-                </label>
+                </div>
                 <Editable
                   editable={editable}
                   value={p.categoria}
@@ -25439,6 +25511,17 @@ function SeccionAmbientes({
 }) {
   const [roomIdx, setRoomIdx] = useState(0);
   const [spotIdx, setSpotIdx] = useState(0);
+  // Popover de encuadre de la foto del ambiente — un solo ambiente a la vez
+  // está a la vista (ver tabs más abajo), así que alcanza con un booleano en
+  // vez de trackear un id como en otras secciones con listas visibles todas
+  // juntas.
+  const [roomFrameOpen, setRoomFrameOpen] = useState(false);
+  const roomPhotoBtnRef = useRef(null);
+  // El marco de la foto (para el encuadre) Y el drag de los puntos numerados
+  // miden contra este mismo box — los puntos se posicionan en % relativos a
+  // él, así que el drag necesita su rect igual que PhotoFramePopover necesita
+  // el suyo.
+  const roomImgBoxRef = useRef(null);
   const { move, duplicate, toggleOculto, remove, dnd } = useLocalListCrud(ambientes, onUpdateAmbientes);
   const ambientesVisibles = editable ? ambientes : ambientes.filter((a) => !a.oculto);
   const room = ambientes[Math.min(roomIdx, Math.max(ambientes.length - 1, 0))];
@@ -25457,12 +25540,43 @@ function SeccionAmbientes({
   const handleImagenRoom = (id) => async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (file && (await validateImageFile(file, 'galeria'))) updateRoom(id, { imagen: await uploadImage(file) });
+    if (file && (await validateImageFile(file, 'galeria'))) updateRoom(id, { imagen: await uploadImage(file), frame: DEFAULT_PHOTO_FRAME });
   };
   const handleImagenPunto = (roomId, idx) => async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (file && (await validateImageFile(file, 'galeria'))) updatePunto(roomId, idx, { imagen: await uploadImage(file) });
+  };
+
+  // Arrastrar un punto numerado para reubicarlo sobre la foto — mismo
+  // mecanismo de pointerdown/pointermove/pointerup que PhotoFramePopover
+  // (ver más abajo en el archivo), pero acá calcula una posición ABSOLUTA
+  // dentro del box de la foto (no un delta desde un valor base). Si el
+  // puntero casi no se movió, se lo trata como un click normal (selecciona
+  // el punto en vez de moverlo) — así no hace falta un modo aparte para
+  // "seleccionar" vs "arrastrar".
+  const dragPunto = (roomId, idx) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const box = roomImgBoxRef.current;
+    if (!box) return;
+    const rect = box.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let moved = false;
+    const onMove = (ev) => {
+      if (!moved && (Math.abs(ev.clientX - startX) > 3 || Math.abs(ev.clientY - startY) > 3)) moved = true;
+      const leftPct = Math.max(0, Math.min(100, ((ev.clientX - rect.left) / rect.width) * 100));
+      const topPct = Math.max(0, Math.min(100, ((ev.clientY - rect.top) / rect.height) * 100));
+      updatePunto(roomId, idx, { left: `${leftPct.toFixed(1)}%`, top: `${topPct.toFixed(1)}%` });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (!moved) setSpotIdx(idx);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
   };
 
   if (!room) return editable ? (
@@ -25558,23 +25672,60 @@ function SeccionAmbientes({
         </div>
 
         <div className="grid grid-cols-1 @lg:grid-cols-[1.15fr_0.85fr] items-stretch" style={{ gap: 'clamp(1.25rem,3vw,2rem)' }}>
-          <label className={`relative block ${editable ? 'cursor-pointer' : ''}`} style={{ aspectRatio: '4/3' }} title={editable ? 'Cambiar foto' : undefined}>
-            {room.imagen ? (
-              <img src={room.imagen} alt={room.label} className="w-full h-full object-cover" style={{ display: 'block' }} />
+          <div ref={roomImgBoxRef} className="relative" style={{ aspectRatio: '4/3' }}>
+            {editable ? (
+              <>
+                <button
+                  type="button"
+                  ref={roomPhotoBtnRef}
+                  onClick={() => setRoomFrameOpen((v) => !v)}
+                  className="absolute inset-0 w-full h-full cursor-pointer group/roomimg"
+                  title="Tocá para encuadrar o cambiar la foto"
+                >
+                  {room.imagen ? (
+                    <PhotoFrame photoUrl={room.imagen} frame={room.frame} aspectClassName="aspect-[4/3]" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                  )}
+                  <span className="absolute inset-0 bg-black/0 group-hover/roomimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/roomimg:opacity-100">
+                    <span className="text-white text-xs font-semibold">Encuadrar foto</span>
+                  </span>
+                </button>
+                {roomFrameOpen && (
+                  <PhotoFramePopover
+                    photoUrl={room.imagen}
+                    frame={room.frame}
+                    onChangeFrame={(patch) => updateRoom(room.id, { frame: { ...(room.frame || DEFAULT_PHOTO_FRAME), ...patch } })}
+                    onReplace={handleImagenRoom(room.id)}
+                    aspectClassName="aspect-[4/3]"
+                    anchorRef={roomPhotoBtnRef}
+                    onClose={() => setRoomFrameOpen(false)}
+                  />
+                )}
+              </>
+            ) : room.imagen ? (
+              <PhotoFrame photoUrl={room.imagen} frame={room.frame} aspectClassName="aspect-[4/3]" />
             ) : (
               <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)', color: palette.inkSoft }}>
                 <ImageIcon className="w-6 h-6" />
               </div>
             )}
-            {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagenRoom(room.id)} />}
             {room.puntos.map((p, i) => (
               <div
                 key={i}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSpotIdx(i);
-                }}
-                className="absolute flex items-center justify-center rounded-full transition-transform hover:scale-[1.18]"
+                onPointerDown={editable ? dragPunto(room.id, i) : undefined}
+                onClick={
+                  !editable
+                    ? (e) => {
+                        e.preventDefault();
+                        setSpotIdx(i);
+                      }
+                    : undefined
+                }
+                className={`absolute flex items-center justify-center rounded-full transition-transform hover:scale-[1.18] touch-none ${editable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+                title={editable ? 'Arrastrá para reubicar' : undefined}
                 style={{
                   top: p.top,
                   left: p.left,
@@ -25587,14 +25738,13 @@ function SeccionAmbientes({
                   boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
                   fontSize: '0.8rem',
                   fontWeight: 500,
-                  cursor: 'pointer',
                   zIndex: 5,
                 }}
               >
                 {i + 1}
               </div>
             ))}
-          </label>
+          </div>
 
           <div style={{ background: palette.bg, padding: 'clamp(1.5rem,3vw,2rem)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.16em', color: palette.inkSoft, marginBottom: '1.1rem' }}>
@@ -25671,7 +25821,7 @@ function SeccionAmbientes({
         {editable && (
           <div className="flex flex-col" style={{ gap: '0.5rem', marginTop: '1.25rem', border: `1px solid ${palette.line}`, padding: '1rem' }}>
             <div className="text-xs font-semibold" style={{ color: palette.inkSoft }}>
-              Posición de los puntos de "{room.label}" (% desde arriba/izquierda)
+              Posición de los puntos de "{room.label}" — arrastralos directo sobre la foto, o ajustá el número acá (% desde arriba/izquierda)
             </div>
             {room.puntos.map((p, i) => (
               <div key={i} className="flex flex-wrap items-center" style={{ gap: '0.6rem' }}>

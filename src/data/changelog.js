@@ -5,6 +5,24 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.96.0',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'mejora',
+        text: 'Portada (variante con foto superpuesta): la foto ahora tiene el mismo editor de encuadre (zoom y arrastrar) que el resto de las secciones, en vez de solo poder reemplazarla entera.',
+      },
+      {
+        type: 'nuevo',
+        text: 'Explorador de ambientes: la foto de cada ambiente ahora se puede encuadrar (zoom y arrastrar), y los puntos numerados se pueden arrastrar directo sobre la foto para reubicarlos, sin tener que tipear el porcentaje a mano.',
+      },
+      {
+        type: 'fix',
+        text: 'Vitrina de productos: la foto de cada producto ahora se puede encuadrar igual que en el resto de las secciones. De paso se arregló que "cambiar la foto" de un producto que ya tenía una no la reemplazaba — quedaba agregada atrás, sin verse.',
+      },
+    ],
+  },
+  {
     version: '1.95.2',
     date: '2026-09-30',
     changes: [
