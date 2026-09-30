@@ -6346,10 +6346,11 @@ function LogoFramePopover({
   const fileInputRef = useRef(null);
   const PREVIEW_SIZE = 176;
 
-  // "Quitar fondo" sobre el logo YA cargado (separado del que corre solo al
-  // subir uno nuevo, ver removingLogoBg) — guarda la URL de ANTES para
-  // poder deshacer con un click si el resultado no queda bien, en vez de
-  // mandar a usar el undo general del editor (menos obvio para esto puntual).
+  // "Quitar fondo" sobre el logo YA cargado, a pedido — subir un logo nuevo
+  // ya NO le saca el fondo solo (pedido explícito, 2026-09-30: mostrarlo tal
+  // cual se sube). Guarda la URL de ANTES para poder deshacer con un click
+  // si el resultado no queda bien, en vez de mandar a usar el undo general
+  // del editor (menos obvio para esto puntual).
   const [bgTool, setBgTool] = useState('idle'); // idle | processing | done | error
   const [bgError, setBgError] = useState('');
   const [undoUrl, setUndoUrl] = useState(null);
@@ -6517,7 +6518,7 @@ function LogoFramePopover({
         {logoUrl ? 'Reemplazar imagen' : 'Subir logo'}
       </button>
       <p className="text-[11px] text-neutral-400 mt-2 leading-snug">
-        Si tiene fondo (una foto, un color de más), se lo sacamos solos al subirlo.
+        Se sube tal cual — si tiene fondo, usá "Quitar fondo" para sacárselo.
       </p>
       <input
         ref={fileInputRef}

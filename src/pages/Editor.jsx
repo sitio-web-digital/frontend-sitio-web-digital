@@ -131,10 +131,6 @@ export default function Editor() {
   } = useApp();
   const navigate = useNavigate();
   const [device, setDevice] = useState('desktop');
-  // Mientras se procesa la quita automática de fondo de un logo recién
-  // elegido (ver onLogo) — el popover del logo lo muestra como un estado de
-  // carga corto, no bloquea nada más del editor.
-  const [removingLogoBg, setRemovingLogoBg] = useState(false);
   const [widgetsOpen, setWidgetsOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -277,16 +273,12 @@ export default function Editor() {
     e.target.value = '';
     if (!file) return;
     if (!(await validateImageFile(file, 'logo'))) return;
-    // Le saca el fondo automáticamente ANTES de subirlo — corre en el propio
-    // navegador sobre el archivo recién elegido (el que YA está subido usa
-    // otro camino, ver removeExistingLogoBg más abajo: hace falta pasar por
-    // el proxy del backend porque el bucket no tiene CORS habilitado). Si la
-    // imagen ya venía con fondo transparente, o el procesamiento falla por
-    // lo que sea, se sube el archivo tal cual — nunca bloquea la carga.
-    setRemovingLogoBg(true);
-    const withoutBg = await removeLogoBackground(file).catch(() => null);
-    setRemovingLogoBg(false);
-    setLogoUrl(await uploadImage(withoutBg || file));
+    // Antes le sacaba el fondo automáticamente ANTES de subirlo — pedido
+    // explícito de sacarlo (2026-09-30): al reemplazar un logo por uno
+    // nuevo, mostrarlo tal cual se subió, no asumir que también hay que
+    // quitarle el fondo. "Quitar fondo" sigue disponible como botón aparte
+    // (ver removeExistingLogoBg) para pedirlo a propósito cuando haga falta.
+    setLogoUrl(await uploadImage(file));
     // El encuadre (zoom/posición) de un logo NUEVO no tiene sentido heredado
     // del anterior — arranca en "completo, centrado, sin recortar" y desde
     // ahí el LogoFramePopover se lo ajusta.
@@ -614,7 +606,6 @@ export default function Editor() {
             onSetLogoFrame={setLogoFrame}
             onSetLogoUrl={setLogoUrl}
             onRemoveExistingLogoBg={removeExistingLogoBg}
-            removingLogoBg={removingLogoBg}
             logoPalette={logoPalette}
             theme={theme}
             sections={sections}

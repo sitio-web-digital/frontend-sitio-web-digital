@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.95.1',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Logo: subir uno nuevo (o reemplazar el que ya había) ya no le saca el fondo solo — se muestra tal cual se sube, y "Quitar fondo" queda disponible como antes para pedirlo a propósito cuando haga falta.',
+      },
+    ],
+  },
+  {
     version: '1.95.0',
     date: '2026-09-30',
     changes: [
