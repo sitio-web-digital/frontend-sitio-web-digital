@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.94.0',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'mejora',
+        text: 'Series / colecciones, Archivo con zoom y Cómo funciona (con foto fija): las fotos ahora tienen el mismo encuadre que el resto de las secciones — se puede hacer zoom y arrastrar para elegir qué parte de la foto se ve, en vez de una foto fija sin poder ajustarla.',
+      },
+    ],
+  },
+  {
     version: '1.93.0',
     date: '2026-09-24',
     changes: [

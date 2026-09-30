@@ -2166,6 +2166,10 @@ export default function SitePreview({
                 onUpdateDescripcion={(v) => onSetSectionStyle?.(sec.id, { descripcion: v })}
                 imagen={sec.imagen}
                 onUpdateImagen={(v) => onSetSectionStyle?.(sec.id, { imagen: v })}
+                imagenFrame={sec.imagenFrame}
+                onUpdateImagenFrame={(patch) =>
+                  onSetSectionStyle?.(sec.id, { imagenFrame: { ...(sec.imagenFrame || DEFAULT_PHOTO_FRAME), ...patch } })
+                }
                 specs={sec.specs ?? []}
                 onUpdateSpecs={(specs) => onSetSectionStyle?.(sec.id, { specs })}
                 notaTitulo={sec.notaTitulo}
@@ -21893,6 +21897,8 @@ function SeccionPasos({
   onUpdateDescripcion,
   imagen,
   onUpdateImagen,
+  imagenFrame,
+  onUpdateImagenFrame,
   specs = [],
   onUpdateSpecs,
   notaTitulo,
@@ -21903,6 +21909,8 @@ function SeccionPasos({
   numeroEstilo = 'grande',
   imagenLado = 'derecha',
 }) {
+  const [imgFrameOpen, setImgFrameOpen] = useState(false);
+  const imgBtnRef = useRef(null);
   const update = (id, patch) => onUpdate?.(pasos.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const remove = (id) => onUpdate?.(pasos.filter((p) => p.id !== id));
   const add = () =>
@@ -21922,7 +21930,10 @@ function SeccionPasos({
     const handleImagen = async (e) => {
       const file = e.target.files?.[0];
       e.target.value = '';
-      if (file && (await validateImageFile(file, 'galeria'))) onUpdateImagen?.(await uploadImage(file));
+      if (file && (await validateImageFile(file, 'galeria'))) {
+        onUpdateImagen?.(await uploadImage(file));
+        onUpdateImagenFrame?.(DEFAULT_PHOTO_FRAME);
+      }
     };
     return (
       <section className="px-6 @lg:px-10 py-14 @lg:py-20 border-t" style={{ background: bgColor || palette.bg, borderColor: palette.line }}>
@@ -21963,26 +21974,47 @@ function SeccionPasos({
               className="text-sm leading-relaxed mb-6"
               maxLength={220}
             />
-            <label
-              className={`relative block aspect-[4/3] bg-black/5 overflow-hidden group/pasoimg ${editable ? 'cursor-pointer' : ''}`}
-              title={editable ? 'Cambiar foto' : undefined}
-            >
-              {imagen ? (
-                <img src={imagen} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
-                  Agregá una foto
-                </div>
-              )}
-              {editable && (
-                <>
+            {editable ? (
+              <>
+                <button
+                  type="button"
+                  ref={imgBtnRef}
+                  onClick={() => setImgFrameOpen((v) => !v)}
+                  className="relative block w-full aspect-[4/3] bg-black/5 overflow-hidden group/pasoimg"
+                  title="Tocá para encuadrar o cambiar la foto"
+                >
+                  {imagen ? (
+                    <PhotoFrame photoUrl={imagen} frame={imagenFrame} aspectClassName="aspect-[4/3]" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                      Agregá una foto
+                    </div>
+                  )}
                   <span className="absolute inset-0 bg-black/0 group-hover/pasoimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/pasoimg:opacity-100">
-                    <span className="text-white text-xs font-semibold">Cambiar foto</span>
+                    <PencilIcon className="w-4 h-4 text-white" />
                   </span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />
-                </>
-              )}
-            </label>
+                </button>
+                {imgFrameOpen && (
+                  <PhotoFramePopover
+                    photoUrl={imagen}
+                    frame={imagenFrame}
+                    onChangeFrame={onUpdateImagenFrame}
+                    onReplace={handleImagen}
+                    aspectClassName="aspect-[4/3]"
+                    anchorRef={imgBtnRef}
+                    onClose={() => setImgFrameOpen(false)}
+                  />
+                )}
+              </>
+            ) : imagen ? (
+              <div className="relative block aspect-[4/3] overflow-hidden">
+                <PhotoFrame photoUrl={imagen} frame={imagenFrame} aspectClassName="aspect-[4/3]" />
+              </div>
+            ) : (
+              <div className="relative block aspect-[4/3] bg-black/5 overflow-hidden flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+                Agregá una foto
+              </div>
+            )}
           </div>
           <div>
             <div className="flex flex-col">
@@ -30979,6 +31011,8 @@ function SeccionSeries({
   variant = 'tabs',
 }) {
   const [active, setActive] = useState(0);
+  const [imgFrameOpen, setImgFrameOpen] = useState(false);
+  const imgBtnRef = useRef(null);
   const activeIndex = Math.min(active, Math.max(items.length - 1, 0));
   const activeItem = items[activeIndex];
 
@@ -31000,7 +31034,7 @@ function SeccionSeries({
     const file = e.target.files?.[0];
     e.target.value = '';
     if (file && activeItem && (await validateImageFile(file, 'galeria'))) {
-      update(activeItem.id, { imagen: await uploadImage(file) });
+      update(activeItem.id, { imagen: await uploadImage(file), frame: DEFAULT_PHOTO_FRAME });
     }
   };
 
@@ -31032,28 +31066,67 @@ function SeccionSeries({
     />
   );
 
-  const imagePanel = (aspect) => (
-    <label
-      className={`relative block overflow-hidden ${aspect} bg-black/5 ${editable ? 'cursor-pointer' : ''}`}
-      title={editable ? 'Cambiar foto' : undefined}
-    >
-      {items.map((it, i) => (
-        <img
-          key={it.id}
-          src={it.imagen || undefined}
-          alt={it.title}
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
-          style={{ opacity: i === activeIndex ? 1 : 0, display: it.imagen ? 'block' : 'none' }}
-        />
-      ))}
-      {!activeItem?.imagen && (
-        <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
-          Subí una foto para esta serie
-        </div>
-      )}
-      {editable && <input type="file" accept="image/*" className="hidden" onChange={handleImagen} />}
-    </label>
-  );
+  const imagePanel = (aspect) => {
+    const stack = (extraClass = '') => (
+      <div className={`relative overflow-hidden ${aspect} bg-black/5 ${extraClass}`}>
+        {items.map((it, i) => {
+          const f = it.frame || DEFAULT_PHOTO_FRAME;
+          return (
+            <img
+              key={it.id}
+              src={it.imagen || undefined}
+              alt={it.title}
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover select-none transition-opacity duration-700"
+              style={{
+                opacity: i === activeIndex ? 1 : 0,
+                display: it.imagen ? 'block' : 'none',
+                transform: `translate(${f.x}%, ${f.y}%) scale(${f.zoom})`,
+                transformOrigin: 'center',
+              }}
+            />
+          );
+        })}
+        {!activeItem?.imagen && (
+          <div className="w-full h-full flex items-center justify-center text-sm text-center px-4" style={{ color: palette.inkSoft }}>
+            Subí una foto para esta serie
+          </div>
+        )}
+      </div>
+    );
+
+    if (!editable) return stack();
+
+    return (
+      <>
+        <button
+          type="button"
+          ref={imgBtnRef}
+          onClick={() => setImgFrameOpen((v) => !v)}
+          className="relative block group/serieimg"
+          title="Tocá para encuadrar o cambiar la foto"
+        >
+          {stack()}
+          <span className="absolute inset-0 bg-black/0 group-hover/serieimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/serieimg:opacity-100">
+            <PencilIcon className="w-4 h-4 text-white" />
+          </span>
+        </button>
+        {imgFrameOpen && (
+          <PhotoFramePopover
+            photoUrl={activeItem?.imagen}
+            frame={activeItem?.frame}
+            onChangeFrame={(patch) =>
+              activeItem && update(activeItem.id, { frame: { ...(activeItem.frame || DEFAULT_PHOTO_FRAME), ...patch } })
+            }
+            onReplace={handleImagen}
+            aspectClassName={aspect}
+            anchorRef={imgBtnRef}
+            onClose={() => setImgFrameOpen(false)}
+          />
+        )}
+      </>
+    );
+  };
 
   if (variant === 'lista') {
     return (
@@ -31305,6 +31378,8 @@ function SeccionArchivo({
   accent,
 }) {
   const [openIndex, setOpenIndex] = useState(null);
+  const [frameOpenId, setFrameOpenId] = useState(null);
+  const anchorRef = useRef(null);
   const update = (id, patch) => onUpdate?.(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   const remove = (id) => onUpdate?.(items.filter((it) => it.id !== id));
   const add = () =>
@@ -31313,6 +31388,14 @@ function SeccionArchivo({
       { id: `archivo-${Date.now()}`, imagen: '', titulo: 'Nueva foto', meta: '', colSpan: 1, rowSpan: 1 },
     ]);
   const cycleSpan = (it, key) => update(it.id, { [key]: it[key] >= 2 ? 1 : 2 });
+  const frameOpenItem = items.find((it) => it.id === frameOpenId) || null;
+  const handleImagenFor = (id) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file && (await validateImageFile(file, 'galeria'))) {
+      update(id, { imagen: await uploadImage(file), frame: DEFAULT_PHOTO_FRAME });
+    }
+  };
   const { duplicate, move, toggleOculto, dnd } = useLocalListCrud(items, onUpdate);
   // El lightbox solo se abre en modo lectura, así que `visibles` ahí siempre
   // es la lista filtrada real — el índice del modal nunca queda desalineado
@@ -31371,27 +31454,26 @@ function SeccionArchivo({
               style={{ gridColumn: `span ${it.colSpan || 1}`, gridRow: `span ${it.rowSpan || 1}` }}
             >
               {editable ? (
-                <label className="absolute inset-0 cursor-pointer" title="Cambiar foto">
+                <button
+                  type="button"
+                  ref={it.id === frameOpenId ? anchorRef : undefined}
+                  onClick={() => setFrameOpenId((v) => (v === it.id ? null : it.id))}
+                  className="absolute inset-0 cursor-pointer group/archivoimg"
+                  title="Tocá para encuadrar o cambiar la foto"
+                >
                   {it.imagen ? (
-                    <img src={it.imagen} alt="" className="w-full h-full object-cover" />
+                    <PhotoFrame photoUrl={it.imagen} frame={it.frame} aspectClassName="w-full h-full" className="absolute inset-0" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ color: palette.inkSoft }}>
                       <ImageIcon className="w-6 h-6" />
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = '';
-                      if (file && (await validateImageFile(file, 'galeria'))) {
-                        update(it.id, { imagen: await uploadImage(file) });
-                      }
-                    }}
-                  />
-                </label>
+                  {it.imagen && (
+                    <span className="absolute inset-0 bg-black/0 group-hover/archivoimg:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover/archivoimg:opacity-100">
+                      <PencilIcon className="w-4 h-4 text-white" />
+                    </span>
+                  )}
+                </button>
               ) : it.imagen ? (
                 <button
                   type="button"
@@ -31399,10 +31481,11 @@ function SeccionArchivo({
                   aria-label={`Ampliar ${it.titulo}`}
                   className="absolute inset-0 cursor-zoom-in"
                 >
-                  <img
-                    src={it.imagen}
-                    alt={it.titulo}
-                    className="w-full h-full object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover/archivo:scale-[1.07] group-hover/archivo:brightness-110"
+                  <PhotoFrame
+                    photoUrl={it.imagen}
+                    frame={it.frame}
+                    aspectClassName="w-full h-full"
+                    className="absolute inset-0 transition-transform duration-[1100ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover/archivo:scale-[1.07]"
                   />
                 </button>
               ) : null}
@@ -31505,6 +31588,20 @@ function SeccionArchivo({
             </div>
           </div>
         </div>
+      )}
+
+      {editable && frameOpenItem && (
+        <PhotoFramePopover
+          photoUrl={frameOpenItem.imagen}
+          frame={frameOpenItem.frame}
+          onChangeFrame={(patch) =>
+            update(frameOpenItem.id, { frame: { ...(frameOpenItem.frame || DEFAULT_PHOTO_FRAME), ...patch } })
+          }
+          onReplace={handleImagenFor(frameOpenItem.id)}
+          aspectClassName="aspect-[4/3]"
+          anchorRef={anchorRef}
+          onClose={() => setFrameOpenId(null)}
+        />
       )}
     </section>
   );
