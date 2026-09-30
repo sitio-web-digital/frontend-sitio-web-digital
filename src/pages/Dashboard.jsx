@@ -23,6 +23,7 @@ import {
 import { ROOT_DOMAIN } from '../utils/rootDomain';
 import { uploadImage } from '../utils/uploadImage';
 import { validateImageFile } from '../utils/imageValidation';
+import { hasRole, canBuildOwnSites } from '../utils/roles';
 
 const PREVIEW_SECTIONS = [
   { id: 'header', type: 'header' },
@@ -127,7 +128,7 @@ export default function Dashboard() {
   // solo parado en "Mis órdenes", para que la insignia y el aviso avisen
   // igual desde Resumen.
   useEffect(() => {
-    if (!user || (user.role !== 'vendedor' && user.role !== 'admin')) return undefined;
+    if (!user || (!hasRole(user, 'vendedor') && !hasRole(user, 'admin'))) return undefined;
     let cancelado = false;
     const check = async () => {
       const orders = await apiListDevOrders();
@@ -163,7 +164,7 @@ export default function Dashboard() {
   // el próximo sondeo no las vuelve a contar. Una orden nueva de verdad
   // (una distinta, no vista todavía) sigue avisando igual.
   useEffect(() => {
-    if (section !== 'ordenes' || !user || (user.role !== 'vendedor' && user.role !== 'admin')) return;
+    if (section !== 'ordenes' || !user || (!hasRole(user, 'vendedor') && !hasRole(user, 'admin'))) return;
     setOrdenToast(null);
     apiListDevOrders().then((orders) => {
       orders
@@ -248,15 +249,18 @@ export default function Dashboard() {
   if (!user) return null;
 
   const primerNombre = user.name?.split(' ')[0] || user.email;
-  const isVendedor = user.role === 'vendedor' || user.role === 'admin';
-  // Un vendedor ya no arma páginas propias — solo carga órdenes de
-  // desarrollo para que un developer las arme (ver OrdenesSection). Un
+  const isVendedor = hasRole(user, 'vendedor') || hasRole(user, 'admin');
+  // Un vendedor por defecto ya no arma páginas propias — solo carga órdenes
+  // de desarrollo para que un developer las arme (ver OrdenesSection). Un
   // admin sigue pudiendo crear páginas directo, igual que un usuario común.
-  const canCreateSites = user.role !== 'vendedor';
+  // Si un admin le sumó también el rol 'usuario' (Admin > Usuarios), puede
+  // hacer las dos cosas (ver src/utils/roles.js).
+  const canCreateSites = canBuildOwnSites(user);
   // Suscripción es sobre PAGAR una página propia — sin poder armar ni
   // publicar páginas, un vendedor no tiene nada que hacer ahí (a diferencia
-  // de admin, que sigue pudiendo tener sus propias páginas).
-  const baseNavItems = user.role === 'vendedor' ? NAV_ITEMS.filter((i) => i.id !== 'suscripcion') : NAV_ITEMS;
+  // de admin, que sigue pudiendo tener sus propias páginas, o un vendedor
+  // con el rol 'usuario' sumado).
+  const baseNavItems = canCreateSites ? NAV_ITEMS : NAV_ITEMS.filter((i) => i.id !== 'suscripcion');
   const navItems = isVendedor ? [...baseNavItems, { id: 'ordenes', label: 'Mis órdenes' }] : baseNavItems;
 
   return (
@@ -296,7 +300,7 @@ export default function Dashboard() {
               switchSite={switchSite}
               startNewSite={startNewSite}
               isFree={(user.freeSubscriptions ?? 0) > 0}
-              canShare={user.role === 'vendedor' || user.role === 'admin'}
+              canShare={hasRole(user, 'vendedor') || hasRole(user, 'admin')}
               canCreate={canCreateSites}
               shareSite={shareSite}
               onGoToOrdenes={() => setSection('ordenes')}

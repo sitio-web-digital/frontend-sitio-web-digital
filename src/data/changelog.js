@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.95.0',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'nuevo',
+        text: 'Admin > Usuarios: ahora se le pueden sumar roles extra a una cuenta ya creada (botón "Editar roles" en cada fila), además del rol principal con el que se la creó. Por ejemplo, un vendedor al que se le suma "Usuario" pasa a poder armar y publicar sus propias páginas, sin dejar de ser vendedor.',
+      },
+    ],
+  },
+  {
     version: '1.94.0',
     date: '2026-09-30',
     changes: [

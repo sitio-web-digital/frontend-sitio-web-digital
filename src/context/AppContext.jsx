@@ -58,6 +58,7 @@ import {
 } from '../api/client';
 import { extractPalette } from '../utils/extractColor';
 import { trackEvent } from '../utils/analytics';
+import { hasRole } from '../utils/roles';
 
 const AppCtx = createContext(null);
 
@@ -1149,7 +1150,7 @@ export function AppProvider({ children }) {
 
   const refreshSiteBugReports = async () => {
     const siteId = editingSiteId();
-    if (!siteId || !(user?.role === 'developer' || user?.role === 'admin')) {
+    if (!siteId || !(hasRole(user, 'developer') || user?.role === 'admin')) {
       setSiteBugReports([]);
       return;
     }

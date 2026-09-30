@@ -545,6 +545,15 @@ export async function apiAdminSetUserActive(userId, active) {
   return request(`/admin/users/${userId}/active`, { method: 'PATCH', body: { active }, token });
 }
 
+// Suma/saca roles extra a una cuenta ya creada (ej. un vendedor al que
+// también se le habilita crear sus propias páginas) — reemplaza la lista
+// entera, el rol principal siempre queda incluido del lado del backend.
+export async function apiAdminSetUserRoles(userId, roles) {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'Iniciá sesión como admin.' };
+  return request(`/admin/users/${userId}/roles`, { method: 'PATCH', body: { roles }, token });
+}
+
 // Pasa a otra cuenta todas las páginas sin publicar de esta (sus "leads en
 // curso") — para no perderlas cuando se deshabilita a quien las armó.
 export async function apiAdminReassignLeads(userId, toUserId) {

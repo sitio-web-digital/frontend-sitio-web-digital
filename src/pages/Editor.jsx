@@ -33,6 +33,7 @@ import { validateImageFile } from '../utils/imageValidation';
 import { uploadImage } from '../utils/uploadImage';
 import { removeLogoBackground } from '../utils/removeBackground';
 import { DEFAULT_LOGO_FRAME } from '../utils/siteSchema';
+import { hasRole } from '../utils/roles';
 
 const TUTORIAL_SEEN_KEY = 'sitiowebdigital.editorTutorialSeen';
 
@@ -626,7 +627,7 @@ export default function Editor() {
             onRemoveSection={removeSection}
             onDuplicateSection={duplicateSection}
             onMoveSection={moveSection}
-            canReportBugs={user?.role === 'developer' || user?.role === 'admin'}
+            canReportBugs={hasRole(user, 'developer') || user?.role === 'admin'}
             bugReports={siteBugReports}
             onReportSectionBug={reportSectionBug}
             onReorderSection={reorderSection}

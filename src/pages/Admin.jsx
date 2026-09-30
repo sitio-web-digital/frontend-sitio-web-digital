@@ -25,6 +25,7 @@ import {
   apiAdminSetFreeSubscriptions,
   apiAdminDeleteUser,
   apiAdminSetUserActive,
+  apiAdminSetUserRoles,
   apiAdminReassignLeads,
   apiAdminAnalyticsSummary,
   apiAdminListLeads,
@@ -318,6 +319,13 @@ export default function Admin() {
     return result;
   };
 
+  const setUserRoles = async (userId, roles) => {
+    const result = await apiAdminSetUserRoles(userId, roles);
+    if (!result.ok) return result;
+    setUsers((list) => list.map((u) => (u.id === userId ? { ...u, roles: result.roles } : u)));
+    return result;
+  };
+
   // Al reasignar, esas páginas dejan de contar como "pendingLeads" de quien
   // las tenía y pasan a sumarle a la cuenta destino — se refleja local sin
   // esperar el próximo refresh.
@@ -429,7 +437,9 @@ export default function Admin() {
               onRefresh={refreshSubscriptions}
             />
           )}
-          {section === 'vendedores' && <VendedoresSection vendedores={users.filter((u) => u.role === 'vendedor')} />}
+          {section === 'vendedores' && (
+            <VendedoresSection vendedores={users.filter((u) => u.role === 'vendedor' || u.roles?.includes('vendedor'))} />
+          )}
           {section === 'ordenesdev' && <OrdenesDevSection />}
           {section === 'bugs' && <BugsSection onCountChange={refreshOpenBugsCount} />}
           {section === 'usuarios' && (
@@ -439,6 +449,7 @@ export default function Admin() {
               onSetFreeSubscriptions={setFreeSubscriptions}
               onDelete={deleteUser}
               onSetActive={setUserActive}
+              onSetRoles={setUserRoles}
               onReassignLeads={reassignLeads}
               onSendMail={sendMailToUsers}
               onRefresh={refreshUsers}
@@ -2061,7 +2072,7 @@ function BugReportRow({ report: r, onUpdated }) {
 // Suscripciones/Resumen mientras freeSubscriptions sea >= 1.
 const BLANK_MAIL_FORM = { scope: 'all', userId: '', subject: '', message: '' };
 
-function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, onSetActive, onReassignLeads, onSendMail, onRefresh }) {
+function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, onSetActive, onSetRoles, onReassignLeads, onSendMail, onRefresh }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', freeSubscriptions: 0 });
   const [formError, setFormError] = useState('');
@@ -2320,6 +2331,7 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
                   onSetFreeSubscriptions={onSetFreeSubscriptions}
                   onDelete={onDelete}
                   onSetActive={onSetActive}
+                  onSetRoles={onSetRoles}
                   onReassignLeads={onReassignLeads}
                   onOpenMail={openMail}
                 />
@@ -2332,7 +2344,16 @@ function UsuariosSection({ users, onCreate, onSetFreeSubscriptions, onDelete, on
   );
 }
 
-function UserRow({ u, users, onSetFreeSubscriptions, onDelete, onSetActive, onReassignLeads, onOpenMail }) {
+// Los roles que un admin puede sumarle a una cuenta desde acá — 'admin'
+// queda afuera a propósito (ver PATCH /admin/users/:id/roles).
+const EXTRA_ROLE_OPTIONS = [
+  { value: 'usuario', label: 'Usuario (crea sus propias páginas)' },
+  { value: 'vendedor', label: 'Vendedor' },
+  { value: 'developer', label: 'Developer' },
+  { value: 'analytics', label: 'Analytics' },
+];
+
+function UserRow({ u, users, onSetFreeSubscriptions, onDelete, onSetActive, onSetRoles, onReassignLeads, onOpenMail }) {
   const [value, setValue] = useState(u.freeSubscriptions);
   const dirty = Number(value) !== Number(u.freeSubscriptions);
   const [confirming, setConfirming] = useState(false);
@@ -2346,6 +2367,35 @@ function UserRow({ u, users, onSetFreeSubscriptions, onDelete, onSetActive, onRe
   const [disableBusy, setDisableBusy] = useState(false);
   const [disableError, setDisableError] = useState('');
   const otrasCuentas = users.filter((o) => o.id !== u.id && o.active);
+
+  const currentRoles = u.roles?.length ? u.roles : [u.role];
+  const [rolesOpen, setRolesOpen] = useState(false);
+  const [rolesDraft, setRolesDraft] = useState(currentRoles);
+  const [rolesSaving, setRolesSaving] = useState(false);
+  const [rolesError, setRolesError] = useState('');
+
+  const abrirRoles = () => {
+    setRolesError('');
+    setRolesDraft(currentRoles);
+    setRolesOpen(true);
+  };
+
+  const toggleRoleDraft = (role) => {
+    if (role === u.role) return; // el rol principal siempre queda
+    setRolesDraft((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
+  };
+
+  const guardarRoles = async () => {
+    setRolesSaving(true);
+    setRolesError('');
+    const result = await onSetRoles(u.id, rolesDraft);
+    setRolesSaving(false);
+    if (!result.ok) {
+      setRolesError(result.error || 'No se pudieron guardar los roles.');
+      return;
+    }
+    setRolesOpen(false);
+  };
 
   const confirmarEliminar = async () => {
     setDeleting(true);
@@ -2419,6 +2469,59 @@ function UserRow({ u, users, onSetFreeSubscriptions, onDelete, onSetActive, onRe
                   ? 'Developer'
                   : 'Usuario'}
         </span>
+        {currentRoles
+          .filter((r) => r !== u.role)
+          .map((r) => (
+            <span
+              key={r}
+              className="ml-1.5 text-[0.65rem] px-1.5 py-0.5 border border-white/15 text-ink-300 whitespace-nowrap"
+            >
+              + {EXTRA_ROLE_OPTIONS.find((o) => o.value === r)?.label.split(' (')[0] || r}
+            </span>
+          ))}
+        {u.role !== 'admin' && (
+          <>
+            <button
+              onClick={() => (rolesOpen ? setRolesOpen(false) : abrirRoles())}
+              className="block mt-1 text-[0.65rem] text-gold-500 hover:text-gold-400 underline underline-offset-2"
+            >
+              {rolesOpen ? 'Cerrar' : 'Editar roles'}
+            </button>
+            {rolesOpen && (
+              <div className="mt-1.5 p-2.5 border border-white/10 bg-navy-900 max-w-[220px] space-y-1.5">
+                {EXTRA_ROLE_OPTIONS.map((opt) => (
+                  <label key={opt.value} className="flex items-start gap-1.5 text-[0.7rem] text-ink-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={opt.value === u.role || rolesDraft.includes(opt.value)}
+                      disabled={opt.value === u.role}
+                      onChange={() => toggleRoleDraft(opt.value)}
+                      className="mt-0.5 accent-gold-500"
+                    />
+                    <span className={opt.value === u.role ? 'text-ink-500' : ''}>{opt.label}</span>
+                  </label>
+                ))}
+                {rolesError && <p className="text-[0.7rem] text-red-400">{rolesError}</p>}
+                <div className="flex items-center gap-2 pt-0.5">
+                  <button
+                    onClick={guardarRoles}
+                    disabled={rolesSaving}
+                    className="px-2 py-1 bg-gold-500 hover:bg-gold-400 disabled:opacity-60 transition-colors text-navy-950 font-bold text-[0.65rem]"
+                  >
+                    {rolesSaving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button
+                    onClick={() => setRolesOpen(false)}
+                    disabled={rolesSaving}
+                    className="px-2 py-1 border border-white/15 hover:bg-white/5 transition-colors text-[0.65rem] font-semibold text-white"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </td>
       <td className="py-2.5 pr-4">
         {u.active ? (

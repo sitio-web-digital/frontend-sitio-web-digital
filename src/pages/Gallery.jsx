@@ -6,6 +6,7 @@ import Photo from '../components/Photo';
 import { StarIcon } from '../components/icons';
 import { useApp } from '../context/AppContext';
 import { recomendarPlantillaPorTexto, recomendarPlantillaPorTags } from '../data/mockData';
+import { canBuildOwnSites } from '../utils/roles';
 
 export default function Gallery() {
   const { user, quiz, selectableTemplates, rubros, chooseTemplate, logoUrl } = useApp();
@@ -13,11 +14,13 @@ export default function Gallery() {
 
   // Un vendedor ya no arma páginas propias (ni las suyas ni por esta vía) —
   // a diferencia de un developer, que SÍ llega acá para armar la página de
-  // una orden (ver DevPanel.jsx), así que este guard es puntual a vendedor.
+  // una orden (ver DevPanel.jsx), así que este guard es puntual a vendedor —
+  // salvo que un admin le haya sumado también el rol 'usuario' (ver
+  // Admin > Usuarios > "Editar roles"), caso en el que sí puede entrar.
   useEffect(() => {
-    if (user?.role === 'vendedor') navigate('/dashboard', { replace: true });
+    if (!canBuildOwnSites(user)) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
-  if (user?.role === 'vendedor') return null;
+  if (!canBuildOwnSites(user)) return null;
   // Se ofrecen las plantillas de fábrica y las creadas desde el editor,
   // siempre juntas (ver `selectableTemplates` en AppContext) — antes, apenas
   // existía una plantilla propia, tapaba el catálogo de fábrica entero.

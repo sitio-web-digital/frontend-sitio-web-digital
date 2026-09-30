@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useApp } from '../context/AppContext';
 import { apiListDevOrders, apiClaimDevOrder, apiUnlinkDevOrderSite } from '../api/client';
+import { hasRole } from '../utils/roles';
 
 const ESTADO_INFO = {
   pendiente: { label: 'Pendiente', textClass: 'text-ink-400', dotClass: 'bg-ink-500' },
@@ -42,7 +43,7 @@ export default function DevPanel() {
       navigate('/login', { replace: true });
       return;
     }
-    if (user.role !== 'developer') navigate('/dashboard', { replace: true });
+    if (!hasRole(user, 'developer')) navigate('/dashboard', { replace: true });
   }, [authReady, user, navigate]);
 
   const reload = async () => {
@@ -55,7 +56,7 @@ export default function DevPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!user || user.role !== 'developer') return null;
+  if (!user || !hasRole(user, 'developer')) return null;
 
   const claim = async (order) => {
     setClaimingId(order.id);
