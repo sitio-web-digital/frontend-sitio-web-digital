@@ -1084,19 +1084,19 @@ export function AppProvider({ children }) {
   // perder una edición que todavía no llegó a asentarse por el debounce).
   const switchSite = async (siteId) => {
     await saveSiteToBackend();
-    let found = mySites.find((s) => s.id === siteId);
-    let siteJson = found?.data;
-    let subdomainValue = found?.subdomain ?? null;
-    let lockedValue = found?.locked ?? false;
-    let whiteLabelValue = found?.whiteLabel ?? false;
-    if (!found) {
-      const result = await apiGetSite(siteId);
-      if (!result) return { ok: false, error: 'No se pudo cargar esa página.' };
-      siteJson = result.site;
-      subdomainValue = result.subdomain ?? null;
-      lockedValue = result.locked ?? false;
-      whiteLabelValue = result.whiteLabel ?? false;
-    }
+    // GET /api/sites (la lista del Dashboard) ya NO manda `sections` de cada
+    // página — una cuenta con muchas páginas viejas puede acumular cientos de
+    // MB en fotos incrustadas entre todas, y mandarlas todas de una en la
+    // lista hacía que el Dashboard se colgara (visto en vivo: un vendedor con
+    // 44 páginas, +100MB solo en `data`, 2026-09-30). Así que acá SIEMPRE se
+    // pide la página puntual completa, nunca se confía en el caché de la
+    // lista — un viaje más al servidor, pero uno solo, de una página a la vez.
+    const result = await apiGetSite(siteId);
+    if (!result) return { ok: false, error: 'No se pudo cargar esa página.' };
+    const siteJson = result.site;
+    const subdomainValue = result.subdomain ?? null;
+    const lockedValue = result.locked ?? false;
+    const whiteLabelValue = result.whiteLabel ?? false;
     applyHydratedSite(hydrateSite(siteJson));
     setSubdomain(subdomainValue);
     setSiteLocked(lockedValue);

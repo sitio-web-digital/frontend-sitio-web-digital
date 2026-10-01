@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.96.1',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'fix',
+        text: 'El Dashboard se colgaba (pantalla en blanco) en cuentas con muchas páginas — venían todas con sus fotos incluidas para armar la lista, aunque no hiciera falta. Ahora la lista pide solo lo necesario para mostrarse, y cada página trae sus fotos recién al entrar a editarla.',
+      },
+    ],
+  },
+  {
     version: '1.96.0',
     date: '2026-09-30',
     changes: [
