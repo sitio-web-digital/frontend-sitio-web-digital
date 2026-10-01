@@ -5,6 +5,16 @@
 // y Admin.jsx > VersionesSection).
 export const CHANGELOG = [
   {
+    version: '1.96.2',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'fix',
+        text: 'El arreglo anterior del Dashboard colgado no alcanzaba para todos los casos — faltaba recortar el logo y la galería cuando alguna subida vieja había quedado guardada "pesada" en vez de como un link liviano. Ya se recortan también esos dos.',
+      },
+    ],
+  },
+  {
     version: '1.96.1',
     date: '2026-09-30',
     changes: [
